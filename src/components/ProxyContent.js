@@ -29,7 +29,7 @@ const ProxyContent = ({ url }) => {
         console.log('Blob fetched successfully, type:', blob.type);
         await handleContentType(blob.type, blob);
       } else {
-        const proxyUrl = `http://localhost:5001/proxy?url=${encodeURIComponent(url)}`;
+        const proxyUrl = `https://split-screen-backend.vercel.app/proxy?url=${encodeURIComponent(url)}`;
         console.log('Attempting to fetch proxy URL:', proxyUrl);
         response = await fetch(proxyUrl, { method: 'GET' });
         if (!response.ok) throw new Error(`Proxy fetch failed: ${response.status} - ${response.statusText}`);
