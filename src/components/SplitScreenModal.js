@@ -337,7 +337,7 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/upload', { // Updated to relative path
+      const response = await fetch('/api/server/upload', { // Updated endpoint
         method: 'POST',
         body: formData,
       });
@@ -365,7 +365,6 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
     try {
       console.log(`Fetching patent data for ${patentNumber} on ${side}...`);
       setError(null);
-      // Since BigQueryPatentFetcher is missing, we'll mock the response
       const data = {
         title: `Patent ${patentNumber}`,
         abstract: 'This is a mock abstract.',

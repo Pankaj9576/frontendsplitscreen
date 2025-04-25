@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import Papa from 'papaparse'; // Add this dependency for CSV parsing
+import Papa from 'papaparse';
 
 const ProxyContent = ({ url }) => {
   const [content, setContent] = useState(null);
@@ -28,7 +28,7 @@ const ProxyContent = ({ url }) => {
         const blob = await response.blob();
         await handleContentType(blob.type, blob);
       } else {
-        const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`; // Updated to relative path
+        const proxyUrl = `/api/server/proxy?url=${encodeURIComponent(url)}`; // Updated endpoint
         response = await fetch(proxyUrl, { method: 'GET' });
         if (!response.ok) throw new Error(`Proxy fetch failed: ${response.status} - ${response.statusText}`);
         const contentType = response.headers.get('content-type') || 'application/octet-stream';
