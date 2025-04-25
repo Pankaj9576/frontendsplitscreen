@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import axios from 'axios';
 
 const Container = styled.div`
   font-family: Arial, sans-serif;
@@ -30,7 +29,19 @@ const PatentViewer = ({ patentNumber }) => {
   useEffect(() => {
     const fetchPatentData = async () => {
       try {
-        const response = await axios.post('http://localhost:3001/api/fetch-patent', { patentNumber });
+        // Mock data since BigQueryPatentFetcher is not provided
+        const response = {
+          data: {
+            title: `Patent ${patentNumber}`,
+            abstract: 'This is a mock abstract.',
+            publication_number: patentNumber,
+            filing_date: '2020-01-01',
+            grant_date: '2022-01-01',
+            inventor_harmonized: ['Inventor 1', 'Inventor 2'],
+            assignee_harmonized: ['Assignee 1'],
+            cpc_code: ['CPC1', 'CPC2'],
+          },
+        };
         setPatentData(response.data);
         setLoading(false);
       } catch (err) {

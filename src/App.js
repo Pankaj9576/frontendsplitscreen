@@ -7,7 +7,6 @@ function App() {
   const [leftUrl, setLeftUrl] = useState('');
   const [rightUrl, setRightUrl] = useState('');
 
-  
   const GOOGLE_SHEET_URL = 'https://www.wipo.int/export/sites/www/sme/en/documents/pdf/ip_panorama_3_learning_points.pdf';
   const PATENT_URL = 'https://patents.google.com/patent/US7654321B2';
 
@@ -22,7 +21,7 @@ function App() {
     setLeftUrl('');
     setRightUrl('');
   };
-  
+
   const buttonStyle = {
     padding: '10px 20px',
     margin: '0 10px',
@@ -35,12 +34,6 @@ function App() {
     fontSize: '16px',
   };
 
-  const linkStyle = {
-    textDecoration: 'none',
-    color: '#007bff',
-    fontSize: '16px',
-  };
-
   return (
     <div className="app-container">
       <header className="app-header">
@@ -50,13 +43,8 @@ function App() {
       <main className="app-content">
         <div className="button-group">
           <button 
-            href="#"
             style={buttonStyle}
-            onClick={(e) => {
-              e.preventDefault();
-              openModal(GOOGLE_SHEET_URL);
-            }}
-            // className="action-link"
+            onClick={() => openModal(GOOGLE_SHEET_URL)}
           >
             View Google Sheet
           </button>

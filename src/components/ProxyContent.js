@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
+import Papa from 'papaparse'; // Add this dependency for CSV parsing
 
 const ProxyContent = ({ url }) => {
   const [content, setContent] = useState(null);
@@ -22,25 +23,21 @@ const ProxyContent = ({ url }) => {
     try {
       let response;
       if (url.startsWith('blob:')) {
-        console.log('Attempting to fetch blob URL:', url);
         response = await fetch(url, { mode: 'cors' });
         if (!response.ok) throw new Error(`Blob fetch failed: ${response.status} - ${response.statusText}`);
         const blob = await response.blob();
-        console.log('Blob fetched successfully, type:', blob.type);
         await handleContentType(blob.type, blob);
       } else {
-        const proxyUrl = `https://split-screen-backend.vercel.app/proxy?url=${encodeURIComponent(url)}`;
-        console.log('Attempting to fetch proxy URL:', proxyUrl);
+        const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`; // Updated to relative path
         response = await fetch(proxyUrl, { method: 'GET' });
         if (!response.ok) throw new Error(`Proxy fetch failed: ${response.status} - ${response.statusText}`);
-        console.log('Proxy response received, status:', response.status);
         const contentType = response.headers.get('content-type') || 'application/octet-stream';
         const blob = await response.blob();
         await handleContentType(contentType, blob);
       }
     } catch (err) {
       console.error('Fetch error:', err);
-      setError(`Failed to load content: ${err.message}. Ensure the proxy server is running at http://localhost:5001.`);
+      setError(`Failed to load content: ${err.message}.`);
       if (url.startsWith('blob:')) {
         try {
           const blob = await fetch(url, { mode: 'cors' }).then((res) => res.blob());
@@ -61,7 +58,6 @@ const ProxyContent = ({ url }) => {
 
   const handleContentType = async (contentType, blob) => {
     const url = URL.createObjectURL(blob);
-    console.log('Handling content type:', contentType, 'for URL:', url);
     if (contentType.includes('application/pdf')) {
       setContent({ type: 'pdf', url });
     } else if (contentType.includes('image/')) {
@@ -76,12 +72,11 @@ const ProxyContent = ({ url }) => {
       workbook.SheetNames.forEach((sheetName) => {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: true, defval: '' });
-        console.log(`Processing sheet: ${sheetName}, Data length: ${jsonData.length}`);
-        if (jsonData.length > 0 || Object.keys(worksheet).length > 1) { // Include sheets with headers or data
+        if (jsonData.length > 0 || Object.keys(worksheet).length > 1) {
           const columns = jsonData[0]?.length > 0 ? jsonData[0].map((header, index) => ({
             key: index.toString(),
             name: header?.toString() || `Column ${index + 1}`,
-          })) : [{ key: '0', name: 'Column A' }]; // Default column if no headers
+          })) : [{ key: '0', name: 'Column A' }];
           const rows = jsonData.slice(1).map((row, rowIndex) =>
             columns.reduce((obj, col, colIndex) => {
               obj[col.key] = row[colIndex]?.toString() || '';
@@ -92,7 +87,6 @@ const ProxyContent = ({ url }) => {
         }
       });
       if (Object.keys(sheets).length === 0) throw new Error('No valid sheets found in the Excel file');
-      console.log('Sheets parsed:', Object.keys(sheets));
       setTableData({ sheets, activeSheet: Object.keys(sheets)[0] });
     } else if (contentType.includes('text/csv')) {
       const text = await blob.text();
@@ -143,7 +137,6 @@ const ProxyContent = ({ url }) => {
       if (link && link.href) {
         e.preventDefault();
         const newUrl = link.href;
-        console.log('Link clicked in ProxyContent:', newUrl);
         window.parent.postMessage({ type: 'linkClick', url: newUrl }, '*');
       }
     };
