@@ -28,11 +28,23 @@ const ProxyContent = ({ url }) => {
         const blob = await response.blob();
         await handleContentType(blob.type, blob);
       } else {
-        const proxyUrl = `/api/server/proxy?url=${encodeURIComponent(url)}`; // Updated endpoint
+        const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
         response = await fetch(proxyUrl, { method: 'GET' });
         if (!response.ok) throw new Error(`Proxy fetch failed: ${response.status} - ${response.statusText}`);
         const contentType = response.headers.get('content-type') || 'application/octet-stream';
         const blob = await response.blob();
+
+        // Special handling for Google Patents or dynamic pages
+        if (url.includes('patents.google.com') && contentType.includes('text/html')) {
+          setContent({
+            type: 'download',
+            url: url,
+            message: 'Google Patents page cannot be rendered directly. Click to open in a new tab.',
+            isExternalLink: true,
+          });
+          return;
+        }
+
         await handleContentType(contentType, blob);
       }
     } catch (err) {
@@ -157,8 +169,14 @@ const ProxyContent = ({ url }) => {
       <div style={{ color: '#ff4d4f', padding: 12, background: '#ffe6e6', borderRadius: 8, textAlign: 'center', fontSize: 16 }}>
         {error}
         {content?.type === 'download' && (
-          <a href={content.url} download style={{ marginLeft: 10, color: '#1a73e8', textDecoration: 'none' }}>
-            Download File
+          <a
+            href={content.url}
+            download={!content.isExternalLink}
+            target={content.isExternalLink ? '_blank' : undefined}
+            rel={content.isExternalLink ? 'noopener noreferrer' : undefined}
+            style={{ marginLeft: 10, color: '#1a73e8', textDecoration: 'none' }}
+          >
+            {content.isExternalLink ? 'Open in New Tab' : 'Download File'}
           </a>
         )}
         <button onClick={fetchContent} style={{ marginLeft: 10, padding: '5px 10px' }}>
@@ -255,8 +273,14 @@ const ProxyContent = ({ url }) => {
     return (
       <div style={{ textAlign: 'center', padding: 20 }}>
         <p style={{ color: '#666', marginBottom: 10 }}>{content.message || 'This file type is not directly renderable. Please download to view.'}</p>
-        <a href={content.url} download style={{ color: '#1a73e8', textDecoration: 'none' }}>
-          Download File
+        <a
+          href={content.url}
+          download={!content.isExternalLink}
+          target={content.isExternalLink ? '_blank' : undefined}
+          rel={content.isExternalLink ? 'noopener noreferrer' : undefined}
+          style={{ color: '#1a73e8', textDecoration: 'none' }}
+        >
+          {content.isExternalLink ? 'Open in New Tab' : 'Download File'}
         </a>
       </div>
     );

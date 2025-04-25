@@ -337,7 +337,7 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/server/upload', { // Updated endpoint
+      const response = await fetch('/api/upload', { // Updated to /api/upload
         method: 'POST',
         body: formData,
       });
