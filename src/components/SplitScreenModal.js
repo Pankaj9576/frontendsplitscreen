@@ -310,6 +310,9 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
   const [showSuccess, setShowSuccess] = useState(false);
   const [screenMode, setScreenMode] = useState('both');
 
+  // Backend URL for API requests
+  const BACKEND_URL = 'https://proxy-server-yourname.vercel.app'; // Replace with your actual backend URL
+
   const googleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => {
       console.log('Google login success:', tokenResponse);
@@ -330,23 +333,30 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
   }, [showSuccess]);
 
   const handleUploadComplete = async (side, file) => {
-    if (!file) return;
+    if (!file) {
+      setError('No file selected');
+      return;
+    }
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/upload', {
+      console.log(`Uploading file for ${side} side...`);
+      const response = await fetch(`${BACKEND_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`Upload failed: ${response.status} - ${errorText}`);
+        throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
       }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
+      console.log(`Upload successful for ${side} side, URL: ${url}`);
 
       if (side === 'left') {
         setLeftSrc(url);
@@ -407,10 +417,10 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
       const patentNumber = src.match(/patent\/([^\/]+)\//)?.[1] || 'unknown';
       return (
         <ContentWrapper>
-          <ProxyContent url={src} />
+          <ProxyContent url={src} backendUrl={BACKEND_URL} />
           <div style={{ padding: 10, textAlign: 'right' }}>
             <button
-              onClick={() => window.open(src, '_blank')}
+              onClick={() => window.open(src, '_blank', 'noopener,noreferrer')}
               style={{
                 background: '#4285f4',
                 color: '#ffffff',
@@ -435,7 +445,7 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
       );
     }
     try {
-      return <ProxyContent url={src} />;
+      return <ProxyContent url={src} backendUrl={BACKEND_URL} />;
     } catch (err) {
       console.error(`Error rendering ${src}:`, err);
       return (

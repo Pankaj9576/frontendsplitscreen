@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 
-const ProxyContent = ({ url }) => {
+const ProxyContent = ({ url, backendUrl }) => {
   const [content, setContent] = useState(null);
   const [error, setError] = useState(null);
   const [tableData, setTableData] = useState({ sheets: {}, activeSheet: null });
@@ -28,24 +28,29 @@ const ProxyContent = ({ url }) => {
         const blob = await response.blob();
         await handleContentType(blob.type, blob);
       } else {
-        const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+        const proxyUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
         response = await fetch(proxyUrl, { method: 'GET' });
-        if (!response.ok) throw new Error(`Proxy fetch failed: ${response.status} - ${response.statusText}`);
-        const contentType = response.headers.get('content-type') || 'application/octet-stream';
-        const blob = await response.blob();
-
-        // Special handling for Google Patents or dynamic pages
-        if (url.includes('patents.google.com') && contentType.includes('text/html')) {
-          setContent({
-            type: 'download',
-            url: url,
-            message: 'Google Patents page cannot be rendered directly. Click to open in a new tab.',
-            isExternalLink: true,
-          });
-          return;
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Proxy fetch failed: ${response.status} - ${errorText}`);
         }
 
-        await handleContentType(contentType, blob);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (data.message && data.url) {
+            setContent({
+              type: 'download',
+              url: data.url,
+              message: data.message,
+              isExternalLink: true,
+            });
+            return;
+          }
+        }
+
+        const blob = await response.blob();
+        await handleContentType(response.headers.get('content-type') || 'application/octet-stream', blob);
       }
     } catch (err) {
       console.error('Fetch error:', err);
