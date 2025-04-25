@@ -342,10 +342,13 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
     formData.append('file', file);
 
     try {
-      console.log(`Uploading file for ${side} side...`);
+      console.log(`Uploading file for ${side} side to ${BACKEND_URL}/api/upload`);
       const response = await fetch(`${BACKEND_URL}/api/upload`, {
         method: 'POST',
         body: formData,
+        headers: {
+          // Do not set Content-Type manually; let the browser set it to multipart/form-data with the correct boundary
+        },
       });
 
       if (!response.ok) {
