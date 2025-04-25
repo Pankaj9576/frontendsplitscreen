@@ -5,7 +5,6 @@ import { useGoogleLogin } from '@react-oauth/google';
 import PatentViewer from './PatentViewer';
 import ProxyContent from './ProxyContent';
 
-// Styled Components
 const ModalBackground = styled.div`
   position: fixed;
   top: 0;
@@ -330,35 +329,35 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
     }
   }, [showSuccess]);
 
- const handleUploadComplete = async (side, file) => {
-  if (!file) return;
+  const handleUploadComplete = async (side, file) => {
+    if (!file) return;
 
-  const formData = new FormData();
-  formData.append('file', file);
+    const formData = new FormData();
+    formData.append('file', file);
 
-  try {
-    const response = await fetch('/api/upload', { // Updated to /api/upload
-      method: 'POST',
-      body: formData,
-    });
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      if (side === 'left') {
+        setLeftSrc(url);
+      } else {
+        setRightSrc(url);
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError(`Failed to process file: ${err.message}`);
     }
-
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-
-    if (side === 'left') {
-      setLeftSrc(url);
-    } else {
-      setRightSrc(url);
-    }
-  } catch (err) {
-    console.error('Upload error:', err);
-    setError(`Failed to process file: ${err.message}`);
-  }
-};
+  };
 
   const fetchPatentData = async (patentNumber, side) => {
     setLoading(true);
