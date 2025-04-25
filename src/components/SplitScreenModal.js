@@ -330,35 +330,35 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
     }
   }, [showSuccess]);
 
-  const handleUploadComplete = async (side, file) => {
-    if (!file) return;
-  
-    const formData = new FormData();
-    formData.append('file', file);
-  
-    try {
-      const response = await fetch('/api/upload', { // Updated to /api/upload
-        method: 'POST',
-        body: formData,
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-  
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-  
-      if (side === 'left') {
-        setLeftSrc(url);
-      } else {
-        setRightSrc(url);
-      }
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError(`Failed to process file: ${err.message}`);
+ const handleUploadComplete = async (side, file) => {
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await fetch('/api/upload', { // Updated to /api/upload
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
-  };
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    if (side === 'left') {
+      setLeftSrc(url);
+    } else {
+      setRightSrc(url);
+    }
+  } catch (err) {
+    console.error('Upload error:', err);
+    setError(`Failed to process file: ${err.message}`);
+  }
+};
 
   const fetchPatentData = async (patentNumber, side) => {
     setLoading(true);
