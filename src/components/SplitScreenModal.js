@@ -311,7 +311,7 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
   const [screenMode, setScreenMode] = useState('both');
 
   // Backend URL for API requests
-  const BACKEND_URL = 'https://proxy-server-yourname.vercel.app'; // Replace with your actual backend URL
+  const BACKEND_URL = 'https://split-screen-backend.vercel.app'; // Updated to match deployed backend
 
   const googleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => {
