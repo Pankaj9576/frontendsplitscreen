@@ -19,3 +19,5 @@ yarn-error.log*
 
 # VS Code settings (optional)
 .vscode/
+
+//git remote add origin https://github.com/pankaj7809/splitscreenfrontend.git
