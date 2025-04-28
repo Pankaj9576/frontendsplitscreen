@@ -1,297 +1,164 @@
-import React, { useState, useEffect, useRef } from 'react';
-import * as XLSX from 'xlsx';
-import Papa from 'papaparse';
+import React, { useEffect, useState, useRef } from 'react';
+import styled from 'styled-components';
 
-const ProxyContent = ({ url, backendUrl }) => {
+const ContentWrapper = styled.div`
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+  position: relative;
+`;
+
+const FallbackMessage = styled.div`
+  text-align: center;
+  padding: 20px;
+  color: #666;
+`;
+
+const DownloadLink = styled.a`
+  color: #1a73e8;
+  text-decoration: underline;
+  cursor: pointer;
+  &:hover {
+    color: #1557b0;
+  }
+`;
+
+const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) => {
   const [content, setContent] = useState(null);
   const [error, setError] = useState(null);
-  const [tableData, setTableData] = useState({ sheets: {}, activeSheet: null });
-  const [htmlContent, setHtmlContent] = useState(null);
-  const contentRef = useRef(null);
+  const iframeRef = useRef(null);
 
-  const fetchContent = async () => {
-    if (!url) {
-      setError('No URL or link provided');
-      return;
-    }
-    console.log('Fetching content for URL:', url);
-    setContent(null);
-    setTableData({ sheets: {}, activeSheet: null });
-    setHtmlContent(null);
-    setError(null);
-
-    try {
-      let response;
-      if (url.startsWith('blob:')) {
-        response = await fetch(url, { mode: 'cors' });
-        if (!response.ok) throw new Error(`Blob fetch failed: ${response.status} - ${response.statusText}`);
-        const blob = await response.blob();
-        await handleContentType(blob.type, blob);
-      } else {
-        const proxyUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
-        response = await fetch(proxyUrl, { method: 'GET' });
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Proxy fetch failed: ${response.status} - ${errorText}`);
+  const fetchWithRetry = async (fetchUrl, retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(fetchUrl, {
+          headers: {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Referer': 'https://patents.google.com/',
+          },
+        });
+        if (response.ok) {
+          const text = await response.text();
+          // Check if the response is a search page
+          if (text.includes('Google Patents') && text.includes('Search and read the full text of patents')) {
+            throw new Error('Received search page instead of patent page');
+          }
+          return response;
         }
+        throw new Error(`Fetch failed: ${response.statusText}`);
+      } catch (err) {
+        if (i === retries - 1) throw err;
+        console.log(`Retrying fetch (${i + 1}/${retries})...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  };
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      if (!url) {
+        setContent(null);
+        return;
+      }
+
+      // Handle file uploads
+      if (isFileUpload) {
+        setContent({ type: 'file', url });
+        return;
+      }
+
+      // Handle URL-based content
+      try {
+        const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
+        console.log(`Fetching content from: ${fetchUrl}`);
+        const response = await fetchWithRetry(fetchUrl);
 
         const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await response.json();
-          if (data.message && data.url) {
-            setContent({
-              type: 'download',
-              url: data.url,
-              message: data.message,
-              isExternalLink: true,
-            });
-            return;
-          }
+        if (contentType.includes('text/html')) {
+          let html = await response.text();
+          // Inject script to intercept link clicks
+          const script = `
+            <script>
+              document.addEventListener('click', function(e) {
+                const target = e.target.closest('a');
+                if (target && target.href) {
+                  e.preventDefault();
+                  window.parent.postMessage({ type: 'linkClick', url: target.href }, '*');
+                }
+              });
+            </script>
+          `;
+          html = html.replace('</body>', `${script}</body>`);
+          setContent({ type: 'html', data: html });
+        } else {
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          setContent({ type: 'file', url: blobUrl });
         }
-
-        const blob = await response.blob();
-        await handleContentType(response.headers.get('content-type') || 'application/octet-stream', blob);
+      } catch (err) {
+        console.error('Error fetching content:', err);
+        setError(`Failed to load content: ${err.message}`);
       }
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setError(`Failed to load content: ${err.message}.`);
-      if (url.startsWith('blob:')) {
-        try {
-          const blob = await fetch(url, { mode: 'cors' }).then((res) => res.blob());
-          setContent({ type: 'download', url: URL.createObjectURL(blob) });
-        } catch (blobErr) {
-          console.error('Blob fallback error:', blobErr);
-        }
-      } else if (url.startsWith('http')) {
-        try {
-          const blob = await fetch(url, { mode: 'no-cors' }).then((res) => res.blob());
-          setContent({ type: 'download', url: URL.createObjectURL(blob) });
-        } catch (httpErr) {
-          console.error('HTTP fallback error:', httpErr);
-        }
-      }
-    }
-  };
+    };
 
-  const handleContentType = async (contentType, blob) => {
-    const url = URL.createObjectURL(blob);
-    if (contentType.includes('application/pdf')) {
-      setContent({ type: 'pdf', url });
-    } else if (contentType.includes('image/')) {
-      setContent({ type: 'image', url });
-    } else if (
-      contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') ||
-      contentType.includes('application/vnd.ms-excel')
-    ) {
-      const arrayBuffer = await blob.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-      const sheets = {};
-      workbook.SheetNames.forEach((sheetName) => {
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: true, defval: '' });
-        if (jsonData.length > 0 || Object.keys(worksheet).length > 1) {
-          const columns = jsonData[0]?.length > 0 ? jsonData[0].map((header, index) => ({
-            key: index.toString(),
-            name: header?.toString() || `Column ${index + 1}`,
-          })) : [{ key: '0', name: 'Column A' }];
-          const rows = jsonData.slice(1).map((row, rowIndex) =>
-            columns.reduce((obj, col, colIndex) => {
-              obj[col.key] = row[colIndex]?.toString() || '';
-              return obj;
-            }, {})
-          );
-          sheets[sheetName] = { columns, rows };
-        }
-      });
-      if (Object.keys(sheets).length === 0) throw new Error('No valid sheets found in the Excel file');
-      setTableData({ sheets, activeSheet: Object.keys(sheets)[0] });
-    } else if (contentType.includes('text/csv')) {
-      const text = await blob.text();
-      const result = Papa.parse(text, { header: false, skipEmptyLines: false });
-      if (result.data && result.data.length) {
-        const columns = result.data[0].map((header, index) => ({
-          key: index.toString(),
-          name: header?.toString() || `Column ${index + 1}`,
-        }));
-        const rows = result.data.slice(1).map((row, rowIndex) =>
-          columns.reduce((obj, col, colIndex) => {
-            obj[col.key] = row[colIndex]?.toString() || '';
-            return obj;
-          }, {})
-        );
-        setTableData({ sheets: { 'Sheet1': { columns, rows } }, activeSheet: 'Sheet1' });
-      } else {
-        throw new Error('No data found in the CSV file');
-      }
-    } else if (
-      contentType.includes('application/msword') ||
-      contentType.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document') ||
-      contentType.includes('text/html')
-    ) {
-      const text = await blob.text();
-      setHtmlContent(text);
-    } else if (
-      contentType.includes('application/vnd.ms-powerpoint') ||
-      contentType.includes('application/vnd.openxmlformats-officedocument.presentationml.presentation')
-    ) {
-      setContent({ type: 'download', url, message: 'PPT/PPTX files cannot be rendered directly. Please download to view.' });
-    } else {
-      setContent({ type: 'download', url, message: 'This file type is not directly renderable. Please download to view.' });
-    }
-  };
-
-  const handleSheetChange = (e) => {
-    setTableData((prev) => ({ ...prev, activeSheet: e.target.value }));
-  };
-
-  useEffect(() => {
     fetchContent();
-  }, [url]);
+  }, [url, backendUrl, isFileUpload]);
 
   useEffect(() => {
-    const handleClick = (e) => {
-      const link = e.target.closest('a');
-      if (link && link.href) {
-        e.preventDefault();
-        const newUrl = link.href;
-        window.parent.postMessage({ type: 'linkClick', url: newUrl }, '*');
+    const handleMessage = (event) => {
+      if (event.data.type === 'linkClick' && event.data.url) {
+        onLinkClick(event.data.url);
       }
     };
 
-    const contentElement = contentRef.current;
-    if (contentElement && htmlContent) {
-      contentElement.addEventListener('click', handleClick);
-    }
-    return () => {
-      if (contentElement && htmlContent) {
-        contentElement.removeEventListener('click', handleClick);
-      }
-    };
-  }, [htmlContent]);
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onLinkClick]);
 
   if (error) {
+    return <ContentWrapper>Error: {error}</ContentWrapper>;
+  }
+
+  if (!content) {
+    return <ContentWrapper>Loading...</ContentWrapper>;
+  }
+
+  if (content.type === 'html') {
     return (
-      <div style={{ color: '#ff4d4f', padding: 12, background: '#ffe6e6', borderRadius: 8, textAlign: 'center', fontSize: 16 }}>
-        {error}
-        {content?.type === 'download' && (
-          <a
-            href={content.url}
-            download={!content.isExternalLink}
-            target={content.isExternalLink ? '_blank' : undefined}
-            rel={content.isExternalLink ? 'noopener noreferrer' : undefined}
-            style={{ marginLeft: 10, color: '#1a73e8', textDecoration: 'none' }}
-          >
-            {content.isExternalLink ? 'Open in New Tab' : 'Download File'}
-          </a>
-        )}
-        <button onClick={fetchContent} style={{ marginLeft: 10, padding: '5px 10px' }}>
-          Reload
-        </button>
-      </div>
+      <ContentWrapper>
+        <iframe
+          ref={iframeRef}
+          srcDoc={content.data}
+          style={{ width: '100%', height: '100%', border: 'none' }}
+          title="Proxy Content"
+          sandbox="allow-scripts allow-same-origin"
+        />
+      </ContentWrapper>
     );
   }
 
-  if (!content && !tableData.sheets[tableData.activeSheet] && !htmlContent) {
-    return <div style={{ color: '#666', padding: 12, textAlign: 'center', fontSize: 16 }}>Loading content, please wait...</div>;
-  }
-
-  if (tableData.sheets[tableData.activeSheet]) {
-    const { columns, rows } = tableData.sheets[tableData.activeSheet];
+  if (content.type === 'file') {
     return (
-      <div style={{ height: '100%', width: '100%', border: '1px solid #ddd', background: '#fff', overflow: 'auto' }}>
-        <div style={{ padding: '10px', textAlign: 'center', background: '#f5f5f5', borderBottom: '1px solid #ddd' }}>
-          <select
-            value={tableData.activeSheet}
-            onChange={handleSheetChange}
-            style={{ padding: '5px', fontSize: '14px', border: '1px solid #ccc', borderRadius: '4px' }}
-          >
-            {Object.keys(tableData.sheets).map((sheetName) => (
-              <option key={sheetName} value={sheetName}>
-                {sheetName}
-              </option>
-            ))}
-          </select>
-        </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Arial, sans-serif' }}>
-          <thead>
-            <tr>
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  style={{
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    background: '#4a90e2',
-                    color: '#fff',
-                    textAlign: 'left',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {col.name}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, rowIndex) => (
-              <tr key={rowIndex} style={{ background: rowIndex % 2 === 0 ? '#f9f9f9' : '#fff' }}>
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    style={{
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      whiteSpace: 'pre-wrap',
-                      maxWidth: '200px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {row[col.key]}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ContentWrapper>
+        <iframe
+          src={content.url}
+          style={{ width: '100%', height: '100%', border: 'none' }}
+          title="File Content"
+          type={content.url.endsWith('.pdf') ? 'application/pdf' : content.url.endsWith('.xlsx') ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/octet-stream'}
+        />
+        <FallbackMessage>
+          If the file does not display, you can{' '}
+          <DownloadLink href={content.url} download={fileName || 'file'}>
+            download it here
+          </DownloadLink>.
+        </FallbackMessage>
+      </ContentWrapper>
     );
   }
 
-  if (htmlContent) {
-    return (
-      <div
-        ref={contentRef}
-        style={{ padding: 20, overflow: 'auto', maxHeight: '100%' }}
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
-      />
-    );
-  }
-
-  if (content?.type === 'pdf') {
-    return <embed src={content.url} type="application/pdf" width="100%" height="100%" />;
-  }
-  if (content?.type === 'image') {
-    return <img src={content.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: '100%' }} />;
-  }
-  if (content?.type === 'download') {
-    return (
-      <div style={{ textAlign: 'center', padding: 20 }}>
-        <p style={{ color: '#666', marginBottom: 10 }}>{content.message || 'This file type is not directly renderable. Please download to view.'}</p>
-        <a
-          href={content.url}
-          download={!content.isExternalLink}
-          target={content.isExternalLink ? '_blank' : undefined}
-          rel={content.isExternalLink ? 'noopener noreferrer' : undefined}
-          style={{ color: '#1a73e8', textDecoration: 'none' }}
-        >
-          {content.isExternalLink ? 'Open in New Tab' : 'Download File'}
-        </a>
-      </div>
-    );
-  }
-
-  return null;
+  return <ContentWrapper>Unsupported content type</ContentWrapper>;
 };
 
 export default ProxyContent;
