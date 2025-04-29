@@ -275,7 +275,7 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
     }
   };
 
-  const handleLinkClick = (side, newUrl) => {
+  const handleLinkClick = ( fyllside, newUrl) => {
     console.log(`Link clicked: ${newUrl} on ${side} side`);
     if (side === 'left') {
       setLeftSrc(newUrl);
