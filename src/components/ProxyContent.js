@@ -40,8 +40,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           },
         });
         if (response.ok) {
-          const text = await response.text();
-          // Check if the response is a search page
+          const text = await response.clone().text(); // Clone to avoid stream consumption
           if (text.includes('Google Patents') && text.includes('Search and read the full text of patents')) {
             throw new Error('Received search page instead of patent page');
           }
@@ -63,13 +62,16 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         return;
       }
 
-      // Handle file uploads
       if (isFileUpload) {
+        const fileExt = fileName?.split('.').pop().toLowerCase();
+        if (fileExt === 'xlsx' || fileExt === 'doc' || fileExt === 'docx') {
+          setContent({ type: 'download', url });
+          return;
+        }
         setContent({ type: 'file', url });
         return;
       }
 
-      // Handle URL-based content
       try {
         const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
         console.log(`Fetching content from: ${fetchUrl}`);
@@ -77,8 +79,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
         const contentType = response.headers.get('content-type');
         if (contentType.includes('text/html')) {
-          let html = await response.text();
-          // Inject script to intercept link clicks
+          const html = await response.clone().text(); // Clone to avoid stream consumption
           const script = `
             <script>
               document.addEventListener('click', function(e) {
@@ -90,8 +91,8 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
               });
             </script>
           `;
-          html = html.replace('</body>', `${script}</body>`);
-          setContent({ type: 'html', data: html });
+          const modifiedHtml = html.replace('</body>', `${script}</body>`);
+          setContent({ type: 'html', data: modifiedHtml });
         } else {
           const blob = await response.blob();
           const blobUrl = URL.createObjectURL(blob);
@@ -104,7 +105,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     };
 
     fetchContent();
-  }, [url, backendUrl, isFileUpload]);
+  }, [url, backendUrl, isFileUpload, fileName]);
 
   useEffect(() => {
     const handleMessage = (event) => {
@@ -146,12 +147,25 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           src={content.url}
           style={{ width: '100%', height: '100%', border: 'none' }}
           title="File Content"
-          type={content.url.endsWith('.pdf') ? 'application/pdf' : content.url.endsWith('.xlsx') ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/octet-stream'}
+          type={content.url.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream'}
         />
         <FallbackMessage>
           If the file does not display, you can{' '}
           <DownloadLink href={content.url} download={fileName || 'file'}>
             download it here
+          </DownloadLink>.
+        </FallbackMessage>
+      </ContentWrapper>
+    );
+  }
+
+  if (content.type === 'download') {
+    return (
+      <ContentWrapper>
+        <FallbackMessage>
+          This file type (e.g., .xlsx, .doc) is not supported for inline viewing.{' '}
+          <DownloadLink href={content.url} download={fileName}>
+            Download it here
           </DownloadLink>.
         </FallbackMessage>
       </ContentWrapper>

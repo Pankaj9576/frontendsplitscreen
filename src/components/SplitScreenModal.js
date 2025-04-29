@@ -261,13 +261,13 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
 
     try {
       const blobUrl = URL.createObjectURL(file);
-      console.log(`File uploaded for ${side} side, Blob URL: ${blobUrl} - Handling client-side`);
+      console.log(`File uploaded for ${side} side, Blob URL: ${blobUrl} - Handling client-side, File: ${file.name}`);
       if (side === 'left') {
         setLeftSrc(blobUrl);
-        setLeftFile(file); // Keep the file for the fileName prop
+        setLeftFile(file);
       } else {
         setRightSrc(blobUrl);
-        setRightFile(file); // Keep the file for the fileName prop
+        setRightFile(file);
       }
     } catch (err) {
       console.error('Upload error:', err);
@@ -293,15 +293,15 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
       );
     }
 
-    // Check if the src is a blob URL (from file upload)
     const isBlobUrl = src.startsWith('blob:');
+    const file = isBlobUrl ? (side === 'left' ? leftFile : rightFile) : null;
     return (
       <ProxyContent
         url={src}
         backendUrl={BACKEND_URL}
         onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
         isFileUpload={isBlobUrl}
-        fileName={isBlobUrl ? (side === 'left' ? leftFile?.name : rightFile?.name) : null}
+        fileName={file ? file.name : null}
       />
     );
   };
