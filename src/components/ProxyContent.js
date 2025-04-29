@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
+import * as XLSX from 'xlsx';
+import mammoth from 'mammoth';
 
 const ContentWrapper = styled.div`
   height: 100%;
@@ -55,6 +57,28 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     }
   };
 
+  const parseExcel = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const html = XLSX.utils.sheet_to_html(worksheet);
+        resolve(html);
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const parseDoc = (file) => {
+    return mammoth.convertToHtml({ arrayBuffer: file })
+      .then(result => `<div>${result.value}</div>`)
+      .catch(err => Promise.reject(err));
+  };
+
   useEffect(() => {
     const fetchContent = async () => {
       if (!url) {
@@ -62,8 +86,32 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         return;
       }
 
-      if (isFileUpload) {
-        setContent({ type: 'file', url });
+      if (isFileUpload && fileName) {
+        const fileExt = fileName.split('.').pop().toLowerCase();
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          const file = new File([blob], fileName, { type: blob.type });
+
+          let htmlContent;
+          if (fileExt === 'xlsx') {
+            htmlContent = await parseExcel(file);
+          } else if (fileExt === 'doc' || fileExt === 'docx') {
+            const arrayBuffer = await file.arrayBuffer();
+            htmlContent = await parseDoc(arrayBuffer);
+          } else if (fileExt === 'pdf') {
+            setContent({ type: 'file', url });
+            return;
+          } else {
+            setContent({ type: 'file', url });
+            return;
+          }
+
+          setContent({ type: 'html', data: htmlContent });
+        } catch (err) {
+          console.error('Error parsing file:', err);
+          setError(`Failed to parse file: ${err.message}`);
+        }
         return;
       }
 
