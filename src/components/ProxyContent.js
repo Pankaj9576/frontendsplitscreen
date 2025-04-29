@@ -40,7 +40,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           },
         });
         if (response.ok) {
-          const text = await response.clone().text(); // Clone to avoid stream consumption
+          const text = await response.clone().text();
           if (text.includes('Google Patents') && text.includes('Search and read the full text of patents')) {
             throw new Error('Received search page instead of patent page');
           }
@@ -63,11 +63,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       }
 
       if (isFileUpload) {
-        const fileExt = fileName?.split('.').pop().toLowerCase();
-        if (fileExt === 'xlsx' || fileExt === 'doc' || fileExt === 'docx') {
-          setContent({ type: 'download', url });
-          return;
-        }
         setContent({ type: 'file', url });
         return;
       }
@@ -79,7 +74,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
         const contentType = response.headers.get('content-type');
         if (contentType.includes('text/html')) {
-          const html = await response.clone().text(); // Clone to avoid stream consumption
+          const html = await response.clone().text();
           const script = `
             <script>
               document.addEventListener('click', function(e) {
@@ -153,19 +148,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           If the file does not display, you can{' '}
           <DownloadLink href={content.url} download={fileName || 'file'}>
             download it here
-          </DownloadLink>.
-        </FallbackMessage>
-      </ContentWrapper>
-    );
-  }
-
-  if (content.type === 'download') {
-    return (
-      <ContentWrapper>
-        <FallbackMessage>
-          This file type (e.g., .xlsx, .doc) is not supported for inline viewing.{' '}
-          <DownloadLink href={content.url} download={fileName}>
-            Download it here
           </DownloadLink>.
         </FallbackMessage>
       </ContentWrapper>
