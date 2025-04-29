@@ -62,10 +62,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           },
         });
         if (response.ok) {
-          const text = await response.clone().text();
-          if (text.includes('Google Patents') && text.includes('Search and read the full text of patents')) {
-            throw new Error('Received search page instead of patent page');
-          }
           return response;
         }
         throw new Error(`Fetch failed: ${response.statusText}`);
