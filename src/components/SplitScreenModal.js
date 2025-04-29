@@ -232,7 +232,7 @@ const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [screenMode, setScreenMode] = useState('both');
-  const BACKEND_URL = 'https://split-screen-backend.vercel.app';
+  const BACKEND_URL = 'https://backendsplitscreen.vercel.app';
 
   const googleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => {
