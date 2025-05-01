@@ -12,11 +12,14 @@ const SplitScreenContainer = styled.div`
 
 const Panel = styled.div`
   height: 100%;
-  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-x: auto; /* Enable native horizontal scrollbar */
+  overflow-y: auto; /* Enable vertical scrolling */
   border: 1px solid #e0e0e0;
   background: #f9f9f9;
   transition: width 0.3s ease;
-  position: relative; /* For positioning scroll buttons */
+  position: relative;
+  scroll-behavior: smooth; /* Smooth scrolling */
+  -webkit-overflow-scrolling: touch; /* Momentum-based scrolling for touch devices */
 
   &:first-child {
     border-right: none;
@@ -25,35 +28,36 @@ const Panel = styled.div`
   &:last-child {
     border-left: none;
   }
-`;
 
-const ScrollButton = styled.button`
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
-  z-index: 10;
-
-  &:hover {
-    background-color: #0056b3;
+  /* Ensure content inside panel allows scrolling */
+  & > * {
+    min-width: fit-content; /* Ensure content doesn't shrink */
   }
 
-  &:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
+  /* Customize the scrollbar for better visibility */
+  &::-webkit-scrollbar {
+    height: 14px; /* Increased height for better usability */
   }
-`;
 
-const LeftScrollButton = styled(ScrollButton)`
-  left: 5px;
-`;
+  &::-webkit-scrollbar-track {
+    background: #e0e0e0; /* Lighter track color */
+    border-radius: 7px;
+    margin: 5px; /* Add some margin for better appearance */
+  }
 
-const RightScrollButton = styled(ScrollButton)`
-  right: 5px;
+  &::-webkit-scrollbar-thumb {
+    background: #4a90e2; /* Blue thumb to match modern UI */
+    border-radius: 7px;
+    border: 2px solid #e0e0e0; /* Add border for contrast */
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #357abd; /* Darker blue on hover */
+  }
+
+  /* Firefox scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color:rgb(122, 127, 133) #e0e0e0;
 `;
 
 const ResizeHandle = styled.div`
@@ -87,6 +91,7 @@ const SplitScreen = ({ children, screenMode }) => {
 
   const [left, right] = children;
 
+  // Handle resizing
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isResizing || !containerRef.current) return;
@@ -111,17 +116,57 @@ const SplitScreen = ({ children, screenMode }) => {
     };
   }, [isResizing]);
 
-  const handleScrollLeft = (ref) => {
-    if (ref.current) {
-      ref.current.scrollLeft -= 100; // Adjust scroll distance as needed
-    }
-  };
+  // Handle keyboard scrolling
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA";
+      if (isInputFocused) return;
 
-  const handleScrollRight = (ref) => {
-    if (ref.current) {
-      ref.current.scrollLeft += 100; // Adjust scroll distance as needed
-    }
-  };
+      const scrollAmount = 50; // Pixels to scroll per key press
+      if (e.key === "ArrowLeft") {
+        if (leftPanelRef.current && screenMode !== "right") {
+          leftPanelRef.current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        }
+        if (rightPanelRef.current && screenMode !== "left") {
+          rightPanelRef.current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        }
+      } else if (e.key === "ArrowRight") {
+        if (leftPanelRef.current && screenMode !== "right") {
+          leftPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        }
+        if (rightPanelRef.current && screenMode !== "left") {
+          rightPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [screenMode]);
+
+  // Handle mouse wheel scrolling (horizontal)
+  useEffect(() => {
+    const handleWheel = (e) => {
+      const scrollAmount = e.deltaY * 0.5; // Adjust scroll speed based on vertical wheel movement
+      if (leftPanelRef.current && screenMode !== "right" && e.target.closest(`[ref="${leftPanelRef.current}"]`)) {
+        leftPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        e.preventDefault();
+      }
+      if (rightPanelRef.current && screenMode !== "left" && e.target.closest(`[ref="${rightPanelRef.current}"]`)) {
+        rightPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        e.preventDefault();
+      }
+    };
+
+    if (leftPanelRef.current) leftPanelRef.current.addEventListener("wheel", handleWheel, { passive: false });
+    if (rightPanelRef.current) rightPanelRef.current.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      if (leftPanelRef.current) leftPanelRef.current.removeEventListener("wheel", handleWheel);
+      if (rightPanelRef.current) rightPanelRef.current.removeEventListener("wheel", handleWheel);
+    };
+  }, [screenMode]);
 
   const leftStyle = {
     width: screenMode === "left" ? "100%" : screenMode === "right" ? "0%" : `${leftWidth}%`,
@@ -139,8 +184,6 @@ const SplitScreen = ({ children, screenMode }) => {
     <SplitScreenContainer ref={containerRef}>
       <Panel ref={leftPanelRef} style={leftStyle}>
         {left}
-        <LeftScrollButton onClick={() => handleScrollLeft(leftPanelRef)}>←</LeftScrollButton>
-        <RightScrollButton onClick={() => handleScrollRight(leftPanelRef)}>→</RightScrollButton>
       </Panel>
       <ResizeHandle
         ref={handleRef}
@@ -149,8 +192,6 @@ const SplitScreen = ({ children, screenMode }) => {
       />
       <Panel ref={rightPanelRef} style={rightStyle}>
         {right}
-        <LeftScrollButton onClick={() => handleScrollLeft(rightPanelRef)}>←</LeftScrollButton>
-        <RightScrollButton onClick={() => handleScrollRight(rightPanelRef)}>→</RightScrollButton>
       </Panel>
     </SplitScreenContainer>
   );
