@@ -277,7 +277,7 @@ const SplitScreenModal = ({
   const [screenMode, setScreenMode] = useState("both")
   const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
   const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
-  const BACKEND_URL = "http://split-screen-backend.vercel.app"
+  const BACKEND_URL = "https://split-screen-backend.vercel.app" // Changed to HTTPS
 
   const googleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => {
