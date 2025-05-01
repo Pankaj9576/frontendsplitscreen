@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components';
+import React, { useState, useRef, useEffect } from "react";
+import styled from "styled-components";
 
 const SplitScreenContainer = styled.div`
   display: flex;
@@ -12,10 +12,11 @@ const SplitScreenContainer = styled.div`
 
 const Panel = styled.div`
   height: 100%;
-  overflow-y: auto;
+  overflow-x: auto; /* Enable horizontal scrolling */
   border: 1px solid #e0e0e0;
   background: #f9f9f9;
   transition: width 0.3s ease;
+  position: relative; /* For positioning scroll buttons */
 
   &:first-child {
     border-right: none;
@@ -24,6 +25,35 @@ const Panel = styled.div`
   &:last-child {
     border-left: none;
   }
+`;
+
+const ScrollButton = styled.button`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 10;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+
+  &:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+`;
+
+const LeftScrollButton = styled(ScrollButton)`
+  left: 5px;
+`;
+
+const RightScrollButton = styled(ScrollButton)`
+  right: 5px;
 `;
 
 const ResizeHandle = styled.div`
@@ -52,6 +82,8 @@ const SplitScreen = ({ children, screenMode }) => {
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef(null);
   const handleRef = useRef(null);
+  const leftPanelRef = useRef(null);
+  const rightPanelRef = useRef(null);
 
   const [left, right] = children;
 
@@ -69,38 +101,57 @@ const SplitScreen = ({ children, screenMode }) => {
     };
 
     if (isResizing) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
     }
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isResizing]);
 
-  // Determine panel visibility and width based on screenMode
+  const handleScrollLeft = (ref) => {
+    if (ref.current) {
+      ref.current.scrollLeft -= 100; // Adjust scroll distance as needed
+    }
+  };
+
+  const handleScrollRight = (ref) => {
+    if (ref.current) {
+      ref.current.scrollLeft += 100; // Adjust scroll distance as needed
+    }
+  };
+
   const leftStyle = {
-    width: screenMode === 'left' ? '100%' : screenMode === 'right' ? '0%' : `${leftWidth}%`,
-    display: screenMode === 'right' ? 'none' : 'block',
+    width: screenMode === "left" ? "100%" : screenMode === "right" ? "0%" : `${leftWidth}%`,
+    display: screenMode === "right" ? "none" : "block",
   };
 
   const rightStyle = {
-    width: screenMode === 'right' ? '100%' : screenMode === 'left' ? '0%' : `${100 - leftWidth}%`,
-    display: screenMode === 'left' ? 'none' : 'block',
+    width: screenMode === "right" ? "100%" : screenMode === "left" ? "0%" : `${100 - leftWidth}%`,
+    display: screenMode === "left" ? "none" : "block",
   };
 
-  const handleVisibility = screenMode === 'both' ? 'visible' : 'hidden';
+  const handleVisibility = screenMode === "both" ? "visible" : "hidden";
 
   return (
     <SplitScreenContainer ref={containerRef}>
-      <Panel style={leftStyle}>{left}</Panel>
+      <Panel ref={leftPanelRef} style={leftStyle}>
+        {left}
+        <LeftScrollButton onClick={() => handleScrollLeft(leftPanelRef)}>←</LeftScrollButton>
+        <RightScrollButton onClick={() => handleScrollRight(leftPanelRef)}>→</RightScrollButton>
+      </Panel>
       <ResizeHandle
         ref={handleRef}
         onMouseDown={() => setIsResizing(true)}
         style={{ visibility: handleVisibility }}
       />
-      <Panel style={rightStyle}>{right}</Panel>
+      <Panel ref={rightPanelRef} style={rightStyle}>
+        {right}
+        <LeftScrollButton onClick={() => handleScrollLeft(rightPanelRef)}>←</LeftScrollButton>
+        <RightScrollButton onClick={() => handleScrollRight(rightPanelRef)}>→</RightScrollButton>
+      </Panel>
     </SplitScreenContainer>
   );
 };

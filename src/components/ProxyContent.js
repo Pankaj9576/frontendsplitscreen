@@ -1,9 +1,7 @@
-"use client"
-
-import { useEffect, useState, useRef } from "react"
-import styled from "styled-components"
-import mammoth from "mammoth"
-import ExcelViewer from "./ExcelViewer"
+import { useEffect, useState, useRef } from "react";
+import styled from "styled-components";
+import mammoth from "mammoth";
+import ExcelViewer from "./ExcelViewer";
 
 const ContentWrapper = styled.div`
   height: 100%;
@@ -12,13 +10,13 @@ const ContentWrapper = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
-`
+`;
 
 const FallbackMessage = styled.div`
   text-align: center;
   padding: 20px;
   color: #666;
-`
+`;
 
 const DownloadLink = styled.a`
   color: #1a73e8;
@@ -27,7 +25,7 @@ const DownloadLink = styled.a`
   &:hover {
     color: #1557b0;
   }
-`
+`;
 
 const LoadingIndicator = styled.div`
   display: flex;
@@ -37,7 +35,7 @@ const LoadingIndicator = styled.div`
   width: 100%;
   font-size: 16px;
   color: #666;
-`
+`;
 
 const ErrorContainer = styled.div`
   display: flex;
@@ -46,7 +44,7 @@ const ErrorContainer = styled.div`
   justify-content: center;
   padding: 20px;
   gap: 10px;
-`
+`;
 
 const RetryButton = styled.button`
   padding: 8px 16px;
@@ -59,26 +57,24 @@ const RetryButton = styled.button`
   &:hover {
     background-color: #1557b0;
   }
-`
+`;
 
 const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) => {
-  const [content, setContent] = useState(null)
-  const [error, setError] = useState(null)
-  const [htmlContent, setHtmlContent] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [directIframe, setDirectIframe] = useState(false)
-  const iframeRef = useRef(null)
+  const [content, setContent] = useState(null);
+  const [error, setError] = useState(null);
+  const [htmlContent, setHtmlContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [directIframe, setDirectIframe] = useState(false);
+  const iframeRef = useRef(null);
 
-  // Function to extract patent ID from URL
   const extractPatentId = (patentUrl) => {
-    const patentMatch = patentUrl.match(/patent\/([A-Z0-9]+)/i)
-    return patentMatch ? patentMatch[1] : null
-  }
+    const patentMatch = patentUrl.match(/patent\/([A-Z0-9]+)/i);
+    return patentMatch ? patentMatch[1] : null;
+  };
 
-  // Function to check if URL is a patent URL
   const isPatentUrl = (urlToCheck) => {
-    return urlToCheck && urlToCheck.includes("patents.google.com/patent")
-  }
+    return urlToCheck && urlToCheck.includes("patents.google.com/patent");
+  };
 
   const fetchWithRetry = async (fetchUrl, retries = 3, delay = 1000) => {
     for (let i = 0; i < retries; i++) {
@@ -91,199 +87,139 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             "Accept-Language": "en-US,en;q=0.5",
             Referer: "https://patents.google.com/",
           },
-        })
+        });
 
         if (response.ok) {
-          return response
+          return response;
         }
 
-        throw new Error(`Fetch failed: ${response.statusText}`)
+        throw new Error(`Fetch failed: ${response.statusText}`);
       } catch (err) {
-        if (i === retries - 1) throw err
-        console.log(`Retrying fetch (${i + 1}/${retries})...`)
-        await new Promise((resolve) => setTimeout(resolve, delay))
+        if (i === retries - 1) throw err;
+        console.log(`Retrying fetch (${i + 1}/${retries})...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
-  }
+  };
 
   const handleWordFile = async (blob) => {
     try {
-      const arrayBuffer = await blob.arrayBuffer()
-      const result = await mammoth.convertToHtml({ arrayBuffer })
-      setHtmlContent(`<div style="padding: 20px; font-family: 'Calibri', sans-serif;">${result.value}</div>`)
+      const arrayBuffer = await blob.arrayBuffer();
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      setHtmlContent(`<div style="padding: 20px; font-family: 'Calibri', sans-serif;">${result.value}</div>`);
     } catch (err) {
-      setError(`Failed to process Word document: ${err.message}`)
+      setError(`Failed to process Word document: ${err.message}`);
     }
-  }
+  };
 
   const fetchContent = async () => {
     if (!url) {
-      setError("No URL or link provided")
-      return
+      setError("No URL or link provided");
+      return;
     }
 
-    console.log("Fetching content for URL:", url)
-    setContent(null)
-    setHtmlContent(null)
-    setError(null)
-    setLoading(true)
-    setDirectIframe(false)
+    console.log("Fetching content for URL:", url);
+    setContent(null);
+    setHtmlContent(null);
+    setError(null);
+    setLoading(true);
+    setDirectIframe(false);
 
     try {
-      let response
-      let blob
+      let response;
+      let blob;
 
-      // Handle file uploads
       if (isFileUpload && fileName) {
         try {
-          response = await fetch(url, { mode: "cors" })
-          if (!response.ok) throw new Error(`Blob fetch failed: ${response.status} - ${response.statusText}`)
-          blob = await response.blob()
+          response = await fetch(url, { mode: "cors" });
+          if (!response.ok) throw new Error(`Blob fetch failed: ${response.status} - ${response.statusText}`);
+          blob = await response.blob();
 
-          const fileExt = fileName.split(".").pop().toLowerCase()
+          const fileExt = fileName.split(".").pop().toLowerCase();
 
           if (["xlsx", "xls"].includes(fileExt)) {
-            setContent({ type: "excel", blob })
+            setContent({ type: "excel", blob });
           } else if (["doc", "docx"].includes(fileExt)) {
-            await handleWordFile(blob)
+            await handleWordFile(blob);
           } else if (fileExt === "pdf") {
-            setContent({ type: "pdf", url })
+            setContent({ type: "pdf", url });
           } else {
             setContent({
               type: "download",
               url,
               message: "This file type is not directly renderable. Please download to view.",
-            })
+            });
           }
         } catch (err) {
-          throw new Error(`Failed to process file: ${err.message}`)
+          throw new Error(`Failed to process file: ${err.message}`);
         }
-      }
-      // Special handling for Google Patents
-      else if (isPatentUrl(url)) {
-        const patentId = extractPatentId(url)
-
-        if (patentId) {
-          // Try to get the PDF directly first
-          const pdfUrl = `https://patentimages.storage.googleapis.com/pdfs/${patentId}.pdf`
-
-          try {
-            // Check if PDF exists
-            const pdfResponse = await fetch(pdfUrl, { method: "HEAD" })
-
-            if (pdfResponse.ok) {
-              console.log(`Patent PDF found: ${pdfUrl}`)
-              setContent({ type: "pdf", url: pdfUrl })
-            } else {
-              // If PDF not available, try the proxy
-              console.log(`Patent PDF not found, using proxy: ${url}`)
-              const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`
-              await handleProxyContent(fetchUrl)
-            }
-          } catch (err) {
-            console.log(`Error checking patent PDF: ${err.message}, using proxy`)
-            const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`
-            await handleProxyContent(fetchUrl)
-          }
-        } else {
-          // No patent ID found, use proxy
-          const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`
-          await handleProxyContent(fetchUrl)
-        }
-      }
-      // Handle Google Docs, Sheets, etc.
-      else if (url.includes("docs.google.com") || url.includes("drive.google.com")) {
-        // Use direct iframe for Google Docs
-        setDirectIframe(true)
-        setContent({ type: "iframe", url })
-      }
-      // Handle other URLs through proxy
-      else {
-        const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`
-        await handleProxyContent(fetchUrl)
+      } else if (isPatentUrl(url)) {
+        const proxyUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
+        setDirectIframe(true);
+        setContent({ type: "iframe", url: proxyUrl });
+      } else if (url.includes("docs.google.com") || url.includes("drive.google.com")) {
+        setDirectIframe(true);
+        setContent({ type: "iframe", url });
+      } else {
+        const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
+        await handleProxyContent(fetchUrl);
       }
     } catch (err) {
-      console.error("Fetch error:", err)
-      setError(`Failed to load content: ${err.message}. Try opening in a new tab.`)
+      console.error("Fetch error:", err);
+      setError(`Failed to load content: ${err.message}. Try opening in a new tab.`);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // Helper function to handle proxy content
   const handleProxyContent = async (fetchUrl) => {
-    const response = await fetchWithRetry(fetchUrl)
-    const contentType = response.headers.get("content-type") || ""
+    const response = await fetchWithRetry(fetchUrl);
+    const contentType = response.headers.get("content-type") || "";
 
     if (contentType.includes("text/html")) {
-      const html = await response.clone().text()
-
-      // Check if it's a Google Patents search page
-      if (html.includes("Google Patents") && html.includes("Search and read the full text of patents")) {
-        const patentId = extractPatentId(url)
-        if (patentId) {
-          const pdfUrl = `https://patentimages.storage.googleapis.com/pdfs/${patentId}.pdf`
-          try {
-            const pdfResponse = await fetch(pdfUrl)
-            if (pdfResponse.ok) {
-              setContent({ type: "pdf", url: pdfUrl })
-              return
-            }
-          } catch (err) {
-            console.error("PDF fallback failed:", err)
-          }
-        }
-      }
-
-      // Process HTML to fix relative links
-      const processedHtml = processHtml(html, url)
-      setHtmlContent(processedHtml)
+      const html = await response.clone().text();
+      const processedHtml = processHtml(html, url);
+      setHtmlContent(processedHtml);
     } else {
-      const blob = await response.blob()
-      const blobUrl = URL.createObjectURL(blob)
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
 
       if (contentType.includes("application/pdf")) {
-        setContent({ type: "pdf", url: blobUrl })
+        setContent({ type: "pdf", url: blobUrl });
       } else if (
         contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
         contentType.includes("application/vnd.ms-excel")
       ) {
-        setContent({ type: "excel", blob })
+        setContent({ type: "excel", blob });
       } else if (
         contentType.includes("application/vnd.openxmlformats-officedocument.wordprocessingml.document") ||
         contentType.includes("application/msword")
       ) {
-        await handleWordFile(blob)
+        await handleWordFile(blob);
       } else {
         setContent({
           type: "download",
           url: blobUrl,
           message: "This file type is not directly renderable. Please download to view.",
-        })
+        });
       }
     }
-  }
+  };
 
-  // Process HTML to fix relative links and add click handlers
   const processHtml = (html, baseUrl) => {
-    // Fix relative URLs
-    let processedHtml = html
+    let processedHtml = html;
 
-    // Extract domain from baseUrl
-    let domain = ""
+    let domain = "";
     try {
-      const urlObj = new URL(baseUrl)
-      domain = `${urlObj.protocol}//${urlObj.hostname}`
+      const urlObj = new URL(baseUrl);
+      domain = `${urlObj.protocol}//${urlObj.hostname}`;
     } catch (e) {
-      console.error("Invalid URL:", baseUrl)
+      console.error("Invalid URL:", baseUrl);
     }
 
-    // Replace relative URLs with absolute URLs
     if (domain) {
-      // Fix relative links
-      processedHtml = processedHtml.replace(/(href|src)="\/([^"]*)"/g, `$1="${domain}/$2"`)
+      processedHtml = processedHtml.replace(/(href|src)="\/([^"]*)"/g, `$1="${domain}/$2"`);
 
-      // Add click handler for links
       processedHtml =
         processedHtml +
         `
@@ -298,29 +234,29 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             }
           });
         </script>
-      `
+      `;
     }
 
-    return processedHtml
-  }
+    return processedHtml;
+  };
 
   useEffect(() => {
-    fetchContent()
-  }, [url, backendUrl, isFileUpload, fileName])
+    fetchContent();
+  }, [url, backendUrl, isFileUpload, fileName]);
 
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data.type === "linkClick" && event.data.url) {
-        onLinkClick(event.data.url)
+        onLinkClick(event.data.url);
       }
-    }
+    };
 
-    window.addEventListener("message", handleMessage)
-    return () => window.removeEventListener("message", handleMessage)
-  }, [onLinkClick])
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [onLinkClick]);
 
   if (loading) {
-    return <LoadingIndicator>Loading content...</LoadingIndicator>
+    return <LoadingIndicator>Loading content...</LoadingIndicator>;
   }
 
   if (error) {
@@ -355,20 +291,22 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           </RetryButton>
         </ErrorContainer>
       </ContentWrapper>
-    )
+    );
   }
 
   if (directIframe) {
     return (
       <ContentWrapper>
         <iframe
-          src={url}
+          src={content.url}
           style={{ width: "100%", height: "100%", border: "none" }}
           title="External Content"
           allowFullScreen
+          referrerPolicy="no-referrer"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
         />
       </ContentWrapper>
-    )
+    );
   }
 
   if (content?.type === "iframe") {
@@ -379,13 +317,15 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           style={{ width: "100%", height: "100%", border: "none" }}
           title="External Content"
           allowFullScreen
+          referrerPolicy="no-referrer"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
         />
       </ContentWrapper>
-    )
+    );
   }
 
   if (content?.type === "excel") {
-    return <ExcelViewer blob={content.blob} />
+    return <ExcelViewer blob={content.blob} />;
   }
 
   if (htmlContent) {
@@ -396,10 +336,10 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           srcDoc={htmlContent}
           style={{ width: "100%", height: "100%", border: "none" }}
           title="Proxy Content"
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
         />
       </ContentWrapper>
-    )
+    );
   }
 
   if (content?.type === "pdf") {
@@ -419,7 +359,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           .
         </FallbackMessage>
       </ContentWrapper>
-    )
+    );
   }
 
   if (content?.type === "download") {
@@ -433,10 +373,10 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           .
         </FallbackMessage>
       </ContentWrapper>
-    )
+    );
   }
 
-  return <ContentWrapper>Unsupported content type</ContentWrapper>
-}
+  return <ContentWrapper>Unsupported content type</ContentWrapper>;
+};
 
-export default ProxyContent
+export default ProxyContent;
