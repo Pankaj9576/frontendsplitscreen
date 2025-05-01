@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef, Suspense } from "react";
 import styled from "styled-components";
 import mammoth from "mammoth";
 
-// Dynamically import ExcelViewer using React.lazy
 const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 
 const ContentWrapper = styled.div`
@@ -12,6 +11,14 @@ const ContentWrapper = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
+`;
+
+const PatentIframe = styled.iframe`
+  width: 100%;
+  height: 100%;
+  border: none;
+  min-width: 1500px; /* Ensure content is wide enough to scroll */
+  background: #fff;
 `;
 
 const FallbackMessage = styled.div`
@@ -296,27 +303,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     );
   }
 
-  if (directIframe) {
+  if (directIframe || content?.type === "iframe") {
     return (
       <ContentWrapper>
-        <iframe
+        <PatentIframe
           src={content.url}
-          style={{ width: "100%", height: "100%", border: "none", minWidth: "1500px" }}
-          title="External Content"
-          allowFullScreen
-          referrerPolicy="no-referrer"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-        />
-      </ContentWrapper>
-    );
-  }
-
-  if (content?.type === "iframe") {
-    return (
-      <ContentWrapper>
-        <iframe
-          src={content.url}
-          style={{ width: "100%", height: "100%", border: "none", minWidth: "1500px" }}
           title="External Content"
           allowFullScreen
           referrerPolicy="no-referrer"
@@ -337,10 +328,9 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   if (htmlContent) {
     return (
       <ContentWrapper>
-        <iframe
+        <PatentIframe
           ref={iframeRef}
           srcDoc={htmlContent}
-          style={{ width: "100%", height: "100%", border: "none", minWidth: "1500px" }}
           title="Proxy Content"
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
         />
@@ -351,9 +341,8 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   if (content?.type === "pdf") {
     return (
       <ContentWrapper>
-        <iframe
+        <PatentIframe
           src={content.url}
-          style={{ width: "100%", height: "100%", border: "none", minWidth: "1500px" }}
           title="File Content"
           type="application/pdf"
         />

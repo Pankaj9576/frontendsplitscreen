@@ -12,14 +12,14 @@ const SplitScreenContainer = styled.div`
 
 const Panel = styled.div`
   height: 100%;
-  overflow-x: auto; /* Enable native horizontal scrollbar */
+  overflow-x: auto; /* Enable horizontal scrolling */
   overflow-y: auto; /* Enable vertical scrolling */
   border: 1px solid #e0e0e0;
   background: #f9f9f9;
   transition: width 0.3s ease;
   position: relative;
-  scroll-behavior: smooth; /* Smooth scrolling */
-  -webkit-overflow-scrolling: touch; /* Momentum-based scrolling for touch devices */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 
   &:first-child {
     border-right: none;
@@ -29,39 +29,41 @@ const Panel = styled.div`
     border-left: none;
   }
 
-  /* Ensure content inside panel allows scrolling */
+  /* Ensure content inside panel is wide enough to trigger scrolling */
   & > * {
-    min-width: fit-content; /* Ensure content doesn't shrink */
+    min-width: 1500px; /* Match iframe min-width to ensure content is scrollable */
+    width: fit-content; /* Allow content to take its natural width */
   }
 
-  /* Customize the scrollbar for better visibility */
+  /* Always show horizontal scrollbar */
   &::-webkit-scrollbar {
-    height: 14px; /* Increased height for better usability */
+    height: 14px;
+    display: block !important; /* Force scrollbar visibility */
   }
 
   &::-webkit-scrollbar-track {
-    background: #e0e0e0; /* Lighter track color */
+    background: #e0e0e0;
     border-radius: 7px;
-    margin: 5px; /* Add some margin for better appearance */
+    margin: 5px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #4a90e2; /* Blue thumb to match modern UI */
+    background: #4a90e2;
     border-radius: 7px;
-    border: 2px solid #e0e0e0; /* Add border for contrast */
+    border: 2px solid #e0e0e0;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: #357abd; /* Darker blue on hover */
+    background: #357abd;
   }
 
   /* Firefox scrollbar styling */
   scrollbar-width: thin;
-  scrollbar-color: #4a90e2 #e0e0e0;
+  scrollbar-color:rgb(100, 103, 107) #e0e0e0;
 `;
 
 const ResizeHandle = styled.div`
-  width: 3px;
+  width: 5px; /* Slightly wider for better usability */
   background: #e0e0e0;
   cursor: col-resize;
   position: absolute;
@@ -91,10 +93,17 @@ const SplitScreen = ({ children, screenMode }) => {
 
   const [left, right] = children;
 
-  // Handle resizing
+  // Handle resizing with throttling for smoother performance
   useEffect(() => {
+    let lastUpdate = 0;
+    const throttleMs = 16; // ~60fps
+
     const handleMouseMove = (e) => {
       if (!isResizing || !containerRef.current) return;
+      const now = Date.now();
+      if (now - lastUpdate < throttleMs) return;
+      lastUpdate = now;
+
       const containerRect = containerRef.current.getBoundingClientRect();
       let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
       newWidth = Math.max(10, Math.min(90, newWidth));
@@ -123,7 +132,7 @@ const SplitScreen = ({ children, screenMode }) => {
       const isInputFocused = activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA";
       if (isInputFocused) return;
 
-      const scrollAmount = 50; // Pixels to scroll per key press
+      const scrollAmount = 50;
       if (e.key === "ArrowLeft") {
         if (leftPanelRef.current && screenMode !== "right") {
           leftPanelRef.current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
@@ -148,7 +157,7 @@ const SplitScreen = ({ children, screenMode }) => {
   // Handle mouse wheel scrolling (horizontal)
   useEffect(() => {
     const handleWheel = (e) => {
-      const scrollAmount = e.deltaY * 0.5; // Adjust scroll speed based on vertical wheel movement
+      const scrollAmount = e.deltaY * 0.5;
       if (leftPanelRef.current && screenMode !== "right" && e.target.closest(`[ref="${leftPanelRef.current}"]`)) {
         leftPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
         e.preventDefault();
