@@ -17,6 +17,7 @@ const PatentIframe = styled.iframe`
   width: 100%;
   height: 100%;
   border: none;
+  min-width: 1500px;
   background: #fff;
   font-family: 'Roboto', Arial, sans-serif;
 `;
