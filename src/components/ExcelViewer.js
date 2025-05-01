@@ -1,7 +1,4 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
-import { HotTable } from "@handsontable/react";
+import React, { useState, useEffect, Suspense } from "react";
 import { registerAllModules } from "handsontable/registry";
 import "handsontable/dist/handsontable.full.css";
 import styled from "styled-components";
@@ -10,6 +7,9 @@ import * as XLSX from "xlsx";
 // Register all Handsontable modules
 registerAllModules();
 
+// Dynamically import HotTable using React.lazy
+const HotTable = React.lazy(() => import("@handsontable/react").then((mod) => ({ default: mod.HotTable })));
+
 const ExcelContainer = styled.div`
   height: 100%;
   width: 100%;
@@ -17,30 +17,6 @@ const ExcelContainer = styled.div`
   flex-direction: column;
   background-color: #f8f9fa;
   overflow: hidden;
-`;
-
-const ToolbarContainer = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  background-color: #1e6f3e;
-  color: white;
-  border-bottom: 1px solid #d1d1d1;
-`;
-
-const SheetSelector = styled.select`
-  padding: 6px 10px;
-  margin-right: 10px;
-  border: 1px solid #d1d1d1;
-  border-radius: 4px;
-  background-color: white;
-  font-size: 14px;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: #4285f4;
-  }
 `;
 
 const SheetTabs = styled.div`
@@ -60,19 +36,18 @@ const SheetTabs = styled.div`
 `;
 
 const SheetTab = styled.button`
-  padding: 8px 16px;
-  background-color: ${(props) => (props.active ? "white" : "#f1f1f1")};
+  padding: 10px 20px;
+  background-color: ${(props) => (props.active ? "#ffffff" : "#1e6f3e")};
+  color: ${(props) => (props.active ? "#000000" : "#ffffff")};
   border: none;
-  color:white;
-  background-color: #1e6f3e;
-  border-bottom: ${(props) => (props.active ? "none" : "1px solid #d1d1d1")};
+  border-right: 1px solid #d1d1d1;
   font-size: 14px;
   cursor: pointer;
   white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease;
 
   &:hover {
-    background-color: ${(props) => (props.active ? "white" : "#e9e9e9")};
-    color:black;
+    background-color: ${(props) => (props.active ? "#f0f0f0" : "#2e8b57")};
   }
 
   &:focus {
@@ -83,6 +58,7 @@ const SheetTab = styled.button`
 const TableContainer = styled.div`
   flex: 1;
   overflow: auto;
+  min-width: 1500px; /* Ensure wide content to trigger horizontal scrollbar in SplitScreen */
 
   .handsontable {
     font-family: "Calibri", sans-serif;
@@ -93,6 +69,9 @@ const TableContainer = styled.div`
     color: #000;
     font-weight: bold;
     text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
 
   .handsontable td {
@@ -210,7 +189,7 @@ const ExcelViewer = ({ blob }) => {
         throw new Error(`Sheet ${selectedSheet} contains no valid data`);
       }
 
-      const maxCols = Math.max(...jsonData.map(row => row.length));
+      const maxCols = Math.max(...jsonData.map((row) => row.length));
       console.log(`Processing sheet: ${selectedSheet}, range: ${worksheet["!ref"]}, rows: ${jsonData.length}, cols: ${maxCols}`);
 
       // Process merged cells
@@ -292,15 +271,7 @@ const ExcelViewer = ({ blob }) => {
   }, [data, error]);
 
   // Custom cell renderer to apply Excel-like styling
-  const cellRenderer = (
-    instance,
-    td,
-    row,
-    col,
-    prop,
-    value,
-    cellProperties
-  ) => {
+  const cellRenderer = (instance, td, row, col, prop, value, cellProperties) => {
     td.innerHTML = value !== null && value !== undefined ? value : "";
 
     const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
@@ -355,19 +326,6 @@ const ExcelViewer = ({ blob }) => {
 
   return (
     <ExcelContainer>
-      {/* <ToolbarContainer>
-        <SheetSelector
-          value={selectedSheet}
-          onChange={(e) => setSelectedSheet(e.target.value)}
-        >
-          {sheets.map((sheet) => (
-            <option key={sheet} value={sheet}>
-              {sheet}
-            </option>
-          ))}
-        </SheetSelector>
-      </ToolbarContainer> */}
-
       <SheetTabs>
         {sheets.map((sheet) => (
           <SheetTab
@@ -381,27 +339,29 @@ const ExcelViewer = ({ blob }) => {
       </SheetTabs>
 
       <TableContainer>
-        <HotTable
-          data={data}
-          colHeaders={data.length && data[0].length ? Array.from({ length: data[0].length }, (_, i) => String.fromCharCode(65 + i)) : true}
-          rowHeaders={true}
-          width="100%"
-          height="100%"
-          stretchH="all"
-          licenseKey="non-commercial-and-evaluation"
-          readOnly={true}
-          mergeCells={mergeCells}
-          manualColumnResize={true}
-          manualRowResize={true}
-          contextMenu={false}
-          comments={false}
-          fillHandle={false}
-          colWidths={columnWidths}
-          rowHeights={rowHeights}
-          cells={(row, col) => ({
-            renderer: cellRenderer,
-          })}
-        />
+        <Suspense fallback={<LoadingMessage>Loading table...</LoadingMessage>}>
+          <HotTable
+            data={data}
+            colHeaders={data.length && data[0].length ? Array.from({ length: data[0].length }, (_, i) => String.fromCharCode(65 + i)) : true}
+            rowHeaders={true}
+            width="100%"
+            height="100%"
+            stretchH="all"
+            licenseKey="non-commercial-and-evaluation"
+            readOnly={true}
+            mergeCells={mergeCells}
+            manualColumnResize={true}
+            manualRowResize={true}
+            contextMenu={false}
+            comments={false}
+            fillHandle={false}
+            colWidths={columnWidths}
+            rowHeights={rowHeights}
+            cells={(row, col) => ({
+              renderer: cellRenderer,
+            })}
+          />
+        </Suspense>
       </TableContainer>
     </ExcelContainer>
   );

@@ -1,7 +1,9 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import styled from "styled-components";
 import mammoth from "mammoth";
-import ExcelViewer from "./ExcelViewer";
+
+// Dynamically import ExcelViewer using React.lazy
+const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 
 const ContentWrapper = styled.div`
   height: 100%;
@@ -299,7 +301,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       <ContentWrapper>
         <iframe
           src={content.url}
-          style={{ width: "100%", height: "100%", border: "none" }}
+          style={{ width: "100%", height: "100%", border: "none", minWidth: "1500px" }}
           title="External Content"
           allowFullScreen
           referrerPolicy="no-referrer"
@@ -314,7 +316,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       <ContentWrapper>
         <iframe
           src={content.url}
-          style={{ width: "100%", height: "100%", border: "none" }}
+          style={{ width: "100%", height: "100%", border: "none", minWidth: "1500px" }}
           title="External Content"
           allowFullScreen
           referrerPolicy="no-referrer"
@@ -325,7 +327,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   }
 
   if (content?.type === "excel") {
-    return <ExcelViewer blob={content.blob} />;
+    return (
+      <Suspense fallback={<LoadingIndicator>Loading Excel content...</LoadingIndicator>}>
+        <ExcelViewer blob={content.blob} />
+      </Suspense>
+    );
   }
 
   if (htmlContent) {
@@ -334,7 +340,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         <iframe
           ref={iframeRef}
           srcDoc={htmlContent}
-          style={{ width: "100%", height: "100%", border: "none" }}
+          style={{ width: "100%", height: "100%", border: "none", minWidth: "1500px" }}
           title="Proxy Content"
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
         />
@@ -347,7 +353,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       <ContentWrapper>
         <iframe
           src={content.url}
-          style={{ width: "100%", height: "100%", border: "none" }}
+          style={{ width: "100%", height: "100%", border: "none", minWidth: "1500px" }}
           title="File Content"
           type="application/pdf"
         />

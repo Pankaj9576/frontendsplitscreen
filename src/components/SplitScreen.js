@@ -57,7 +57,7 @@ const Panel = styled.div`
 
   /* Firefox scrollbar styling */
   scrollbar-width: thin;
-  scrollbar-color:rgb(122, 127, 133) #e0e0e0;
+  scrollbar-color: #4a90e2 #e0e0e0;
 `;
 
 const ResizeHandle = styled.div`
