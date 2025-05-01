@@ -138,11 +138,15 @@ const InputWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar in IE/Edge */
+  &::-webkit-scrollbar {
+    display: none; /* Hide scrollbar in Chrome/Safari */
+  }
 
-  @media (max-width: 600px) {
-    flex-direction: column;
-    align-items: stretch;
+  @media (max-width: 768px) {
     gap: 8px;
   }
 `
@@ -151,7 +155,7 @@ const StyledInput = styled.input`
   padding: 8px 12px;
   border: 1px solid #dadce0;
   border-radius: 4px;
-  width: 300px;
+  width: 200px;
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
@@ -165,10 +169,6 @@ const StyledInput = styled.input`
 
   &::placeholder {
     color: #5f6368;
-  }
-
-  @media (max-width: 600px) {
-    width: 100%;
   }
 `
 
@@ -185,17 +185,7 @@ const FileInput = styled.input`
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  width: 200px;
-
-  &:focus {
-    border-color: #4285f4;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
-  }
-
-  @media (max-width: 600px) {
-    width: 100%;
-  }
+  width: 150px;
 `
 
 const UploadButton = styled.button`
@@ -239,10 +229,6 @@ const ScreenSelectButton = styled.select`
     border-color: #4285f4;
     outline: none;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
-  }
-
-  @media (max-width: 600px) {
-    width: 100%;
   }
 `
 
@@ -291,7 +277,7 @@ const SplitScreenModal = ({
   const [screenMode, setScreenMode] = useState("both")
   const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
   const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
-  const BACKEND_URL = "https://split-screen-backend.vercel.app"
+  const BACKEND_URL = "http://split-screen-backend.vercel.app"
 
   const googleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => {

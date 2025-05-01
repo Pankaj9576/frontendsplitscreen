@@ -17,7 +17,6 @@ const PatentIframe = styled.iframe`
   width: 100%;
   height: 100%;
   border: none;
-  min-width: 1500px;
   background: #fff;
   font-family: 'Roboto', Arial, sans-serif;
 `;
@@ -252,6 +251,13 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     const handleMessage = (event) => {
       if (event.data.type === "linkClick" && event.data.url) {
         onLinkClick(event.data.url);
+        // Trigger automatic search by updating the URL and fetching content
+        setContent(null);
+        setHtmlContent(null);
+        setError(null);
+        setLoading(true);
+        setDirectIframe(false);
+        fetchContent();
       }
     };
 
