@@ -17,8 +17,9 @@ const PatentIframe = styled.iframe`
   width: 100%;
   height: 100%;
   border: none;
-  min-width: 1500px; /* Ensure content is wide enough to scroll */
+  min-width: 1500px;
   background: #fff;
+  font-family: 'Roboto', Arial, sans-serif;
 `;
 
 const FallbackMessage = styled.div`
@@ -28,11 +29,10 @@ const FallbackMessage = styled.div`
 `;
 
 const DownloadLink = styled.a`
-  color: #1a73e8;
-  text-decoration: underline;
-  cursor: pointer;
+  color: #1a0dab;
+  text-decoration: none;
   &:hover {
-    color: #1557b0;
+    text-decoration: underline;
   }
 `;
 
@@ -43,7 +43,7 @@ const LoadingIndicator = styled.div`
   height: 100%;
   width: 100%;
   font-size: 16px;
-  color: #666;
+  color: #5f6368;
 `;
 
 const ErrorContainer = styled.div`
@@ -57,14 +57,14 @@ const ErrorContainer = styled.div`
 
 const RetryButton = styled.button`
   padding: 8px 16px;
-  background-color: #1a73e8;
+  background-color: #4285f4;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
   &:hover {
-    background-color: #1557b0;
+    background-color: #3267d6;
   }
 `;
 
@@ -75,11 +75,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const [loading, setLoading] = useState(true);
   const [directIframe, setDirectIframe] = useState(false);
   const iframeRef = useRef(null);
-
-  const extractPatentId = (patentUrl) => {
-    const patentMatch = patentUrl.match(/patent\/([A-Z0-9]+)/i);
-    return patentMatch ? patentMatch[1] : null;
-  };
 
   const isPatentUrl = (urlToCheck) => {
     return urlToCheck && urlToCheck.includes("patents.google.com/patent");
@@ -115,7 +110,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     try {
       const arrayBuffer = await blob.arrayBuffer();
       const result = await mammoth.convertToHtml({ arrayBuffer });
-      setHtmlContent(`<div style="padding: 20px; font-family: 'Calibri', sans-serif;">${result.value}</div>`);
+      setHtmlContent(`<div style="padding: 20px; font-family: 'Roboto', Arial, sans-serif;">${result.value}</div>`);
     } catch (err) {
       setError(`Failed to process Word document: ${err.message}`);
     }
@@ -274,9 +269,9 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         <ErrorContainer>
           <div
             style={{
-              color: "#ff4d4f",
+              color: "#d93025",
               padding: 12,
-              background: "#ffe6e6",
+              background: "#fce8e6",
               borderRadius: 8,
               textAlign: "center",
               fontSize: "16px",
@@ -295,7 +290,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
           <RetryButton onClick={fetchContent}>Retry Loading</RetryButton>
 
-          <RetryButton onClick={() => window.open(url, "_blank")} style={{ backgroundColor: "#4CAF50" }}>
+          <RetryButton onClick={() => window.open(url, "_blank")} style={{ backgroundColor: "#34a853" }}>
             Open in New Tab
           </RetryButton>
         </ErrorContainer>

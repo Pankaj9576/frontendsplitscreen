@@ -12,10 +12,10 @@ const ModalBackground = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   z-index: 1000;
   animation: fadeIn 0.3s ease-in-out;
 
@@ -26,18 +26,19 @@ const ModalBackground = styled.div`
 `
 
 const ModalContent = styled.div`
-  background: #ffffff;
-  padding: 10px;
-  border-radius: 5px;
-  width: 95%;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
   max-width: 1400px;
-  height: 100%;
+  height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-  border: 2px solid #4CAF50;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #dadce0;
   animation: slideIn 0.4s ease-out;
   overflow: hidden;
+  font-family: 'Roboto', Arial, sans-serif;
 
   @keyframes slideIn {
     from { transform: translateY(-50px); opacity: 0; }
@@ -45,14 +46,13 @@ const ModalContent = styled.div`
   }
 
   @media (max-width: 1024px) {
-    width: 98%;
-    max-width: 1200px;
-    padding: 8px;
+    width: 95%;
+    padding: 15px;
   }
 
   @media (max-width: 768px) {
     width: 98%;
-    padding: 5px;
+    padding: 10px;
   }
 `
 
@@ -60,53 +60,68 @@ const HeaderContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  padding: 5px 0;
-  border-bottom: 1px solid #e0e0e0;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
 `
 
 const CloseButton = styled.button`
-  background: #ff4d4f;
-  color: white;
+  background: transparent;
+  color: #5f6368;
   border: none;
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.3s ease, transform 0.2s ease;
+  border-radius: 50%;
+  transition: background 0.3s ease, color 0.3s ease;
 
   &:hover {
-    background: #e63946;
-    transform: scale(1.05);
+    background: #f1f3f4;
+    color: #202124;
   }
 
   &:active {
-    transform: scale(0.95);
+    background: #e8eaed;
   }
 `
 
 const LoginButton = styled.button`
-  padding: 8px 12px;
+  padding: 8px 16px;
   background-color: #4285f4;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.3s ease, transform 0.2s ease;
+  font-weight: 500;
+  font-family: 'Roboto', Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+
+  &:before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background: url('https://www.google.com/favicon.ico') no-repeat center;
+    background-size: contain;
+  }
 
   &:hover {
     background-color: #3267d6;
-    transform: scale(1.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   }
 
   &:active {
-    transform: scale(0.95);
+    background-color: #2a56c6;
   }
 `
 
@@ -115,40 +130,41 @@ const InputContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 5px;
-  padding: 5px 10px;
+  padding: 5px 0;
   flex-shrink: 0;
-  max-height: 80px;
-  overflow-y: auto;
 `
 
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
+  gap: 12px;
+  flex-wrap: wrap;
 
   @media (max-width: 600px) {
     flex-direction: column;
     align-items: stretch;
-    gap: 5px;
+    gap: 8px;
   }
 `
 
 const StyledInput = styled.input`
-  padding: 8px;
-  border: 2px solid #e0e0e0;
-  border-radius: 5px;
-  width: 25%;
+  padding: 8px 12px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  width: 300px;
   font-size: 14px;
-  background: #ffffff;
+  font-family: 'Roboto', Arial, sans-serif;
+  background: #f8f9fa;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 
   &:focus {
-    border-color: #1a73e8;
+    border-color: #4285f4;
     outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
   }
 
   &::placeholder {
-    color: #777;
+    color: #5f6368;
   }
 
   @media (max-width: 600px) {
@@ -156,17 +172,25 @@ const StyledInput = styled.input`
   }
 `
 
+const FileInputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`
+
 const FileInput = styled.input`
   padding: 8px;
-  border: 2px solid #e0e0e0;
-  border-radius: 5px;
-  width: 20%;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
   font-size: 14px;
-  background: #ffffff;
+  font-family: 'Roboto', Arial, sans-serif;
+  background: #f8f9fa;
+  width: 200px;
 
   &:focus {
-    border-color: #1a73e8;
+    border-color: #4285f4;
     outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
   }
 
   @media (max-width: 600px) {
@@ -176,21 +200,23 @@ const FileInput = styled.input`
 
 const UploadButton = styled.button`
   padding: 8px 12px;
-  background-color: #4CAF50;
+  background-color: #34a853;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.3s ease, transform 0.2s ease;
+  font-weight: 500;
+  font-family: 'Roboto', Arial, sans-serif;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    background-color: #388e3c;
-    transform: scale(1.05);
+    background-color: #2d8e44;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   }
 
   &:active {
-    transform: scale(0.95);
+    background-color: #277c3e;
   }
 
   &:disabled {
@@ -201,16 +227,18 @@ const UploadButton = styled.button`
 
 const ScreenSelectButton = styled.select`
   padding: 8px;
-  border: 2px solid #e0e0e0;
-  width: 120px;
-  border-radius: 5px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
   font-size: 14px;
-  background: #ffffff;
+  font-family: 'Roboto', Arial, sans-serif;
+  background: #f8f9fa;
   cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 
   &:focus {
-    border-color: #1a73e8;
+    border-color: #4285f4;
     outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
   }
 
   @media (max-width: 600px) {
@@ -219,21 +247,25 @@ const ScreenSelectButton = styled.select`
 `
 
 const ErrorMessage = styled.div`
-  color: #ff4d4f;
+  color: #d93025;
   margin: 5px 0;
   padding: 8px;
-  background: #ffe6e6;
-  border-radius: 5px;
+  background: #fce8e6;
+  border-radius: 4px;
   text-align: center;
+  font-size: 14px;
+  font-family: 'Roboto', Arial, sans-serif;
 `
 
 const SuccessMessage = styled.div`
-  color: #4CAF50;
+  color: #34a853;
   margin: 5px 0;
   padding: 8px;
   background: #e8f5e9;
-  border-radius: 5px;
+  border-radius: 4px;
   text-align: center;
+  font-size: 14px;
+  font-family: 'Roboto', Arial, sans-serif;
   animation: fadeInOut 3s ease-in-out;
 
   @keyframes fadeInOut {
@@ -257,8 +289,8 @@ const SplitScreenModal = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [screenMode, setScreenMode] = useState("both")
-  const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "") // Local state for leftSrc
-  const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "") // Local state for rightSrc
+  const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
+  const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
   const BACKEND_URL = "https://split-screen-backend.vercel.app"
 
   const googleLogin = useGoogleLogin({
@@ -348,12 +380,14 @@ const SplitScreenModal = ({
       return (
         <div
           style={{
-            color: "#666",
+            color: "#5f6368",
             textAlign: "center",
             height: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            fontSize: "16px",
+            fontFamily: "'Roboto', Arial, sans-serif",
           }}
         >
           Enter a URL or upload a file to view content
@@ -385,22 +419,26 @@ const SplitScreenModal = ({
               value={leftSrc || ""}
               onChange={(e) => handleLeftSrcChange(e.target.value)}
             />
-            <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-            <UploadButton onClick={() => handleUploadComplete("left", leftFile)}>↑</UploadButton>
+            <FileInputWrapper>
+              <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
+              <UploadButton onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+            </FileInputWrapper>
             <StyledInput
               type="text"
               placeholder="Enter right URL"
               value={rightSrc || ""}
               onChange={(e) => handleRightSrcChange(e.target.value)}
             />
-            <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-            <UploadButton onClick={() => handleUploadComplete("right", rightFile)}>↑</UploadButton>
+            <FileInputWrapper>
+              <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
+              <UploadButton onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+            </FileInputWrapper>
             <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
-              <option value="both">Both Screen</option>
+              <option value="both">Both Screens</option>
               <option value="left">Left Screen</option>
               <option value="right">Right Screen</option>
             </ScreenSelectButton>
-            {!isAuthenticated && <LoginButton onClick={() => googleLogin()}>Login with Google</LoginButton>}
+            {!isAuthenticated && <LoginButton onClick={() => googleLogin()}>Sign in with Google</LoginButton>}
             <CloseButton onClick={onClose}>×</CloseButton>
           </InputWrapper>
         </HeaderContainer>
@@ -408,7 +446,7 @@ const SplitScreenModal = ({
           <InputWrapper />
         </InputContainer>
         {error && <ErrorMessage>{error}</ErrorMessage>}
-        {showSuccess && <SuccessMessage>Login successful!</SuccessMessage>}
+        {showSuccess && <SuccessMessage>Sign-in successful!</SuccessMessage>}
         <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
           {renderContent(leftSrc, "left")}
           {renderContent(rightSrc, "right")}
