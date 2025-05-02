@@ -36,6 +36,7 @@
         "google-auth-library": "^9.11.0",
         "googleapis": "^140.0.1",
         "handsontable": "^15.3.0",
+        "http-proxy-middleware": "^3.0.5",
         "http2": "^3.3.7",
         "https-browserify": "^1.0.0",
         "mammoth": "^1.7.0",

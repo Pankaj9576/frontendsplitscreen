@@ -1,14 +1,12 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect } from "react";
 import { registerAllModules } from "handsontable/registry";
 import "handsontable/dist/handsontable.full.css";
 import styled from "styled-components";
 import * as XLSX from "xlsx";
+import { HotTable } from "@handsontable/react"; // Direct import instead of lazy-loading
 
 // Register all Handsontable modules
 registerAllModules();
-
-// Dynamically import HotTable using React.lazy
-const HotTable = React.lazy(() => import("@handsontable/react").then((mod) => ({ default: mod.HotTable })));
 
 const ExcelContainer = styled.div`
   height: 100%;
@@ -110,6 +108,37 @@ const ErrorMessage = styled.div`
   color: #d32f2f;
   text-align: center;
 `;
+
+const DownloadLink = styled.a`
+  color: #1a0dab;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+class ErrorBoundary extends React.Component {
+  state = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <ErrorMessage>
+          Failed to load table viewer: {this.state.error.message}
+          <br />
+          <DownloadLink href={this.props.blobUrl} download="spreadsheet.xlsx">
+            Download Excel File
+          </DownloadLink>
+        </ErrorMessage>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const ExcelViewer = ({ blob }) => {
   const [workbook, setWorkbook] = useState(null);
@@ -324,6 +353,8 @@ const ExcelViewer = ({ blob }) => {
     return <ErrorMessage>No data available in the selected sheet.</ErrorMessage>;
   }
 
+  const blobUrl = URL.createObjectURL(blob);
+
   return (
     <ExcelContainer>
       <SheetTabs>
@@ -339,7 +370,7 @@ const ExcelViewer = ({ blob }) => {
       </SheetTabs>
 
       <TableContainer>
-        <Suspense fallback={<LoadingMessage>Loading table...</LoadingMessage>}>
+        <ErrorBoundary blobUrl={blobUrl}>
           <HotTable
             data={data}
             colHeaders={data.length && data[0].length ? Array.from({ length: data[0].length }, (_, i) => String.fromCharCode(65 + i)) : true}
@@ -361,7 +392,7 @@ const ExcelViewer = ({ blob }) => {
               renderer: cellRenderer,
             })}
           />
-        </Suspense>
+        </ErrorBoundary>
       </TableContainer>
     </ExcelContainer>
   );

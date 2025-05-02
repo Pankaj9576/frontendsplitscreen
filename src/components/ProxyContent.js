@@ -54,7 +54,7 @@ const FallbackMessage = styled.div`
 `;
 
 const DownloadLink = styled.a`
-  color:rgb(81, 80, 98);
+  color: rgb(81, 80, 98);
   text-decoration: none;
   &:hover {
     text-decoration: underline;
@@ -82,14 +82,14 @@ const ErrorContainer = styled.div`
 
 const RetryButton = styled.button`
   padding: 8px 16px;
-  background-color:rgb(85, 88, 92);
+  background-color: rgb(85, 88, 92);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
   &:hover {
-    background-color:rgb(79, 85, 96);
+    background-color: rgb(79, 85, 96);
   }
 `;
 
@@ -103,6 +103,14 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
   const isPatentUrl = (urlToCheck) => {
     return urlToCheck && urlToCheck.includes("patents.google.com/patent");
+  };
+
+  const isDownloadLink = (urlToCheck) => {
+    // Check if the URL is a download link (e.g., ends with .pdf or contains "/patent/pdf/")
+    return (
+      urlToCheck &&
+      (urlToCheck.endsWith(".pdf") || urlToCheck.includes("/patent/pdf/"))
+    );
   };
 
   const fetchWithRetry = async (fetchUrl, retries = 3, delay = 1000) => {
@@ -189,6 +197,20 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       } else if (url.includes("docs.google.com") || url.includes("drive.google.com")) {
         setDirectIframe(true);
         setContent({ type: "iframe", url });
+      } else if (isDownloadLink(url)) {
+        // If it's a download link, set content to trigger a direct download
+        setContent({
+          type: "download",
+          url,
+          message: "Downloading file...",
+        });
+        // Trigger browser download
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName || "file";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
         const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
         await handleProxyContent(fetchUrl);
@@ -276,20 +298,31 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data.type === "linkClick" && event.data.url) {
-        onLinkClick(event.data.url);
-        // Trigger automatic search by updating the URL and fetching content
-        setContent(null);
-        setHtmlContent(null);
-        setError(null);
-        setLoading(true);
-        setDirectIframe(false);
-        fetchContent();
+        // Check if the clicked link is a download link
+        if (isDownloadLink(event.data.url)) {
+          // Trigger direct download instead of navigating
+          const link = document.createElement("a");
+          link.href = event.data.url;
+          link.download = fileName || "file";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          onLinkClick(event.data.url);
+          // Trigger automatic search by updating the URL and fetching content
+          setContent(null);
+          setHtmlContent(null);
+          setError(null);
+          setLoading(true);
+          setDirectIframe(false);
+          fetchContent();
+        }
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [onLinkClick]);
+  }, [onLinkClick, fileName]);
 
   if (loading) {
     return <LoadingIndicator>Loading content...</LoadingIndicator>;
