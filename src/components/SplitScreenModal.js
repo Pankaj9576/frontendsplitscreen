@@ -69,11 +69,13 @@ const HeaderContainer = styled.div`
 `
 
 const CloseButton = styled.button`
-  background: transparent;
-  color: #5f6368;
+  ${'' /* background: transparent; */}
+  margin-left: 30px;
+  color:rgb(162, 15, 15);
   border: none;
   width: 40px;
   height: 40px;
+  backgroundColor:rgba(214, 9, 9, 0.87);
   cursor: pointer;
   font-weight: 600;
   font-size: 24px;
@@ -84,12 +86,12 @@ const CloseButton = styled.button`
   transition: background 0.3s ease, color 0.3s ease;
 
   &:hover {
-    background: #f1f3f4;
-    color: #202124;
+    background:rgb(151, 17, 17);
+    color: white;
   }
 
   &:active {
-    background: #e8eaed;
+    background:rgb(138, 12, 12);
   }
 `
 

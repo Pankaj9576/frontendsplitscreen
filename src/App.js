@@ -8,7 +8,7 @@ function App() {
   const [rightUrl, setRightUrl] = useState('');
 
   const GOOGLE_SHEET_URL = 'https://www.wipo.int/export/sites/www/sme/en/documents/pdf/ip_panorama_3_learning_points.pdf';
-  const PATENT_URL = 'https://patents.google.com/patent/US7654321B2';
+  const PATENT_URL = 'https://patents.google.com/patent/GB2459793B';
 
   const openModal = (url = '') => {
     setLeftUrl(url);
