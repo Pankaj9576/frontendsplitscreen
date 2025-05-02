@@ -106,6 +106,17 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   };
 
   const isDownloadLink = (urlToCheck) => {
+    // Check if the URL is a download link but not a PDF (we want PDFs to open in the split-screen)
+    return (
+      urlToCheck &&
+      !urlToCheck.endsWith(".pdf") && // Exclude PDFs from being treated as downloads
+      !urlToCheck.includes("/patent/pdf/") && // Exclude patent PDFs
+      urlToCheck.includes("download")
+    );
+  };
+
+  const isPdfUrl = (urlToCheck) => {
+    // Check if the URL is a PDF link
     return (
       urlToCheck &&
       (urlToCheck.endsWith(".pdf") || urlToCheck.includes("/patent/pdf/"))
@@ -140,13 +151,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
   const handleWordFile = async (blob, fileName) => {
     try {
-      // Validate file size (e.g., max 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      const maxSize = 10 * 1024 * 1024;
       if (blob.size > maxSize) {
         throw new Error("File size exceeds 10MB limit. Please upload a smaller file.");
       }
 
-      // Validate file type
       const fileExt = fileName.split(".").pop().toLowerCase();
       if (!["doc", "docx"].includes(fileExt)) {
         throw new Error("Unsupported file type. Please upload a .doc or .docx file.");
@@ -154,12 +163,10 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
       const arrayBuffer = await blob.arrayBuffer();
       const result = await mammoth.convertToHtml({ arrayBuffer }).catch((err) => {
-        // Log the detailed error from mammoth
         console.error("Mammoth conversion error:", err);
         throw new Error(`Failed to convert Word document: ${err.message || "Unknown error"}`);
       });
 
-      // Check if conversion result is valid
       if (!result || !result.value) {
         throw new Error("Failed to convert Word document: Empty or invalid content.");
       }
@@ -172,7 +179,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       setError(
         err.message || "Failed to process Word document. Try downloading the file instead."
       );
-      // Provide a fallback download link
       setContent({
         type: "download",
         url: URL.createObjectURL(blob),
@@ -229,18 +235,9 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       } else if (url.includes("docs.google.com") || url.includes("drive.google.com")) {
         setDirectIframe(true);
         setContent({ type: "iframe", url });
-      } else if (isDownloadLink(url)) {
-        setContent({
-          type: "download",
-          url,
-          message: "Downloading file...",
-        });
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = fileName || "file";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      } else if (isPdfUrl(url)) {
+        // Directly render PDF in split-screen
+        setContent({ type: "pdf", url: `${url}#view=FitH` });
       } else {
         const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
         await handleProxyContent(fetchUrl);
@@ -329,6 +326,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     const handleMessage = (event) => {
       if (event.data.type === "linkClick" && event.data.url) {
         if (isDownloadLink(event.data.url)) {
+          // Handle non-PDF downloads
           const link = document.createElement("a");
           link.href = event.data.url;
           link.download = fileName || "file";
@@ -336,6 +334,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           link.click();
           document.body.removeChild(link);
         } else {
+          // Handle PDF links and other navigations
           onLinkClick(event.data.url);
           setContent(null);
           setHtmlContent(null);
