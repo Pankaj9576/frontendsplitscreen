@@ -15,7 +15,8 @@ const ModalBackground = styled.div`
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* Align to top instead of center */
+  padding-top: 10px; /* Minimal padding to avoid sticking to the very top */
   z-index: 1000;
   animation: fadeIn 0.3s ease-in-out;
 
@@ -27,11 +28,11 @@ const ModalBackground = styled.div`
 
 const ModalContent = styled.div`
   background: #fff;
-  padding: 20px;
+  padding: 0 20px; /* No top/bottom padding, only horizontal */
   border-radius: 8px;
   width: 90%;
   max-width: 1400px;
-  height: 90vh;
+  height: calc(100vh - 20px); /* Adjust height to account for padding-top of ModalBackground */
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -47,12 +48,12 @@ const ModalContent = styled.div`
 
   @media (max-width: 1024px) {
     width: 95%;
-    padding: 15px;
+    padding: 0 15px;
   }
 
   @media (max-width: 768px) {
     width: 98%;
-    padding: 10px;
+    padding: 0 10px;
   }
 `
 
@@ -64,6 +65,7 @@ const HeaderContainer = styled.div`
   padding: 10px 0;
   border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
+  margin-bottom: 8px;
 `
 
 const CloseButton = styled.button`
@@ -123,15 +125,6 @@ const LoginButton = styled.button`
   &:active {
     background-color: #2a56c6;
   }
-`
-
-const InputContainer = styled.div`
-  margin: 10px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 5px 0;
-  flex-shrink: 0;
 `
 
 const InputWrapper = styled.div`
@@ -241,6 +234,14 @@ const ErrorMessage = styled.div`
   text-align: center;
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
+  animation: fadeInOut 3s ease-in-out;
+
+  @keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+  }
 `
 
 const SuccessMessage = styled.div`
@@ -277,7 +278,7 @@ const SplitScreenModal = ({
   const [screenMode, setScreenMode] = useState("both")
   const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
   const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
-  const BACKEND_URL = "https://split-screen-backend.vercel.app" // Changed to HTTPS
+  const BACKEND_URL = "https://split-screen-backend.vercel.app"
 
   const googleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => {
@@ -428,9 +429,6 @@ const SplitScreenModal = ({
             <CloseButton onClick={onClose}>×</CloseButton>
           </InputWrapper>
         </HeaderContainer>
-        <InputContainer>
-          <InputWrapper />
-        </InputContainer>
         {error && <ErrorMessage>{error}</ErrorMessage>}
         {showSuccess && <SuccessMessage>Sign-in successful!</SuccessMessage>}
         <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>

@@ -15,10 +15,36 @@ const ContentWrapper = styled.div`
 
 const PatentIframe = styled.iframe`
   width: 100%;
+  max-width: 100%; /* Ensure iframe fits within the panel */
   height: 100%;
   border: none;
   background: #fff;
   font-family: 'Roboto', Arial, sans-serif;
+  box-sizing: border-box;
+`;
+
+const DocViewer = styled.div`
+  width: 100%;
+  max-width: 100%; /* Ensure content fits within the panel */
+  height: 100%;
+  overflow: auto;
+  font-family: 'Roboto', Arial, sans-serif;
+  padding: 10px;
+  box-sizing: border-box;
+
+  /* Ensure content fits within the container */
+  & > div {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Prevent oversized elements */
+  img, table, p, div {
+    max-width: 100%;
+    height: auto;
+    box-sizing: border-box;
+  }
 `;
 
 const FallbackMessage = styled.div`
@@ -28,7 +54,7 @@ const FallbackMessage = styled.div`
 `;
 
 const DownloadLink = styled.a`
-  color: #1a0dab;
+  color:rgb(81, 80, 98);
   text-decoration: none;
   &:hover {
     text-decoration: underline;
@@ -56,14 +82,14 @@ const ErrorContainer = styled.div`
 
 const RetryButton = styled.button`
   padding: 8px 16px;
-  background-color: #4285f4;
+  background-color:rgb(85, 88, 92);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
   &:hover {
-    background-color: #3267d6;
+    background-color:rgb(79, 85, 96);
   }
 `;
 
@@ -109,7 +135,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     try {
       const arrayBuffer = await blob.arrayBuffer();
       const result = await mammoth.convertToHtml({ arrayBuffer });
-      setHtmlContent(`<div style="padding: 20px; font-family: 'Roboto', Arial, sans-serif;">${result.value}</div>`);
+      setHtmlContent(`<div style="padding: 20px; font-family: 'Roboto', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">${result.value}</div>`);
     } catch (err) {
       setError(`Failed to process Word document: ${err.message}`);
     }
@@ -145,7 +171,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           } else if (["doc", "docx"].includes(fileExt)) {
             await handleWordFile(blob);
           } else if (fileExt === "pdf") {
-            setContent({ type: "pdf", url });
+            setContent({ type: "pdf", url: `${url}#view=FitH` }); // Fit to width
           } else {
             setContent({
               type: "download",
@@ -188,7 +214,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       const blobUrl = URL.createObjectURL(blob);
 
       if (contentType.includes("application/pdf")) {
-        setContent({ type: "pdf", url: blobUrl });
+        setContent({ type: "pdf", url: `${blobUrl}#view=FitH` }); // Fit to width
       } else if (
         contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
         contentType.includes("application/vnd.ms-excel")
@@ -329,12 +355,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   if (htmlContent) {
     return (
       <ContentWrapper>
-        <PatentIframe
-          ref={iframeRef}
-          srcDoc={htmlContent}
-          title="Proxy Content"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-        />
+        <DocViewer dangerouslySetInnerHTML={{ __html: htmlContent }} />
       </ContentWrapper>
     );
   }
@@ -347,13 +368,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           title="File Content"
           type="application/pdf"
         />
-        <FallbackMessage>
-          If the file does not display, you can{" "}
-          <DownloadLink href={content.url} download={fileName || "file"}>
-            download it here
-          </DownloadLink>
-          .
-        </FallbackMessage>
       </ContentWrapper>
     );
   }
@@ -366,7 +380,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           <DownloadLink href={content.url} download={fileName || "file"}>
             Download File
           </DownloadLink>
-          .
         </FallbackMessage>
       </ContentWrapper>
     );
