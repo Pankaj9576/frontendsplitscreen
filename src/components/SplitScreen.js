@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import styled from "styled-components";
 
 const SplitScreenContainer = styled.div`
@@ -47,38 +47,38 @@ const Panel = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #4a90e2;
+    background:rgb(87, 92, 99);
     border-radius: 7px;
     border: 2px solid #e0e0e0;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: #357abd;
+    background:rgb(70, 76, 83);
   }
 
   scrollbar-width: thin;
-  scrollbar-color: #4a90e2 #e0e0e0;
+  scrollbar-color:rgb(67, 70, 75) #e0e0e0;
 `;
 
 const ResizeHandle = styled.div`
-  width: 3px;
-  background: #e0e0e0;
+  width: 6px;
+  background: #5f6368;
   cursor: col-resize;
   position: absolute;
-  left: 50%;
   top: 0;
   bottom: 0;
-  transform: translateX(-50%);
-  z-index: 2;
-  transition: background 0.2s ease;
+  z-index: 1000; /* Increased z-index to ensure visibility */
+  transition: background 0.2s ease, left 0.3s ease;
 
   &:hover {
-    background: #4a90e2;
+    background:rgb(74, 77, 82);
   }
 
   &:active {
-    background: #357abd;
+    background:rgb(90, 94, 104);
   }
+
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 `;
 
 const CustomScrollbar = styled.div`
@@ -92,14 +92,13 @@ const CustomScrollbar = styled.div`
   overflow-x: auto;
   overflow-y: hidden;
   z-index: 1;
-  display: block; /* Always show the scrollbar container */
+  display: block;
 
-  /* Disabled state when scrolling is not needed */
   ${({ disabled }) =>
     disabled &&
     `
-    pointer-events: none; /* Disable interactions */
-    opacity: 0.5; /* Greyed out appearance */
+    pointer-events: none;
+    opacity: 0.5;
   `}
 
   &::-webkit-scrollbar {
@@ -112,17 +111,17 @@ const CustomScrollbar = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #4a90e2;
+    background:rgb(86, 91, 97);
     border-radius: 8px;
     border: 2px solid #e0e0e0;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background:rgb(81, 88, 95);
+    background: rgb(81, 88, 95);
   }
 
   scrollbar-width: thin;
-  scrollbar-color:rgb(91, 96, 103) #e0e0e0;
+  scrollbar-color: rgb(91, 96, 103) #e0e0e0;
 `;
 
 const ScrollbarContent = styled.div`
@@ -143,41 +142,77 @@ const SplitScreen = ({ children, screenMode }) => {
   const [rightScrollWidth, setRightScrollWidth] = useState(0);
   const [leftScrollable, setLeftScrollable] = useState(false);
   const [rightScrollable, setRightScrollable] = useState(false);
+  const lastUpdateRef = useRef(0);
+  const timeoutRef = useRef(null);
 
   const [left, right] = children;
 
-  // Handle resizing
+  // Debug logging for screenMode and visibility
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!isResizing || !containerRef.current) return;
+    console.log("SplitScreen - screenMode:", screenMode);
+    console.log("Handle visibility:", screenMode === "both" ? "visible" : "hidden");
+  }, [screenMode]);
+
+  const handleResize = useCallback((e) => {
+    if (!containerRef.current) return;
+
+    const now = performance.now();
+    if (now - lastUpdateRef.current < 16) return;
+
+    lastUpdateRef.current = now;
+
+    requestAnimationFrame(() => {
       const containerRect = containerRef.current.getBoundingClientRect();
       let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
       newWidth = Math.max(10, Math.min(90, newWidth));
       setLeftWidth(newWidth);
-    };
+    });
 
-    const handleMouseUp = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
       setIsResizing(false);
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    const handlePointerDown = (e) => {
+      setIsResizing(true);
+      if (handleRef.current) {
+        handleRef.current.setPointerCapture(e.pointerId);
+      }
     };
 
-    if (isResizing) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
+    const handlePointerMove = (e) => {
+      if (!isResizing) return;
+      handleResize(e);
+    };
+
+    const handlePointerUp = () => {
+      setIsResizing(false);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+
+    if (handleRef.current) {
+      handleRef.current.addEventListener("pointerdown", handlePointerDown);
+      window.addEventListener("pointermove", handlePointerMove);
+      window.addEventListener("pointerup", handlePointerUp);
     }
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      if (handleRef.current) {
+        handleRef.current.removeEventListener("pointerdown", handlePointerDown);
+      }
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [isResizing]);
+  }, [isResizing, handleResize]);
 
-  // Calculate scroll width for custom scrollbars and determine if scrollable
   useEffect(() => {
     const updateScrollWidth = () => {
       if (leftPanelRef.current) {
         const contentWidth = leftPanelRef.current.scrollWidth;
         const panelWidth = leftPanelRef.current.clientWidth;
-        // Set a minimum scroll width to ensure scrollbar is visible
         const minScrollWidth = panelWidth;
         setLeftScrollWidth(Math.max(contentWidth, minScrollWidth));
         setLeftScrollable(contentWidth > panelWidth);
@@ -202,7 +237,6 @@ const SplitScreen = ({ children, screenMode }) => {
     };
   }, [children, screenMode]);
 
-  // Sync custom scrollbar with panel scrolling
   useEffect(() => {
     const handleLeftPanelScroll = () => {
       if (leftPanelRef.current && leftScrollRef.current) {
@@ -241,7 +275,6 @@ const SplitScreen = ({ children, screenMode }) => {
     };
   }, []);
 
-  // Handle keyboard scrolling
   useEffect(() => {
     const handleKeyDown = (e) => {
       const activeElement = document.activeElement;
@@ -270,7 +303,6 @@ const SplitScreen = ({ children, screenMode }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [screenMode]);
 
-  // Handle mouse wheel scrolling (horizontal)
   useEffect(() => {
     const handleWheel = (e) => {
       const scrollAmount = e.deltaY * 0.5;
@@ -317,8 +349,10 @@ const SplitScreen = ({ children, screenMode }) => {
       </Panel>
       <ResizeHandle
         ref={handleRef}
-        onMouseDown={() => setIsResizing(true)}
-        style={{ visibility: handleVisibility }}
+        style={{
+          left: screenMode === "both" ? `${leftWidth}%` : "50%",
+          visibility: handleVisibility,
+        }}
       />
       <Panel ref={rightPanelRef} style={rightStyle}>
         {right}

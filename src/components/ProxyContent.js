@@ -106,7 +106,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   };
 
   const isDownloadLink = (urlToCheck) => {
-    // Check if the URL is a download link (e.g., ends with .pdf or contains "/patent/pdf/")
     return (
       urlToCheck &&
       (urlToCheck.endsWith(".pdf") || urlToCheck.includes("/patent/pdf/"))
@@ -139,13 +138,46 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     }
   };
 
-  const handleWordFile = async (blob) => {
+  const handleWordFile = async (blob, fileName) => {
     try {
+      // Validate file size (e.g., max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (blob.size > maxSize) {
+        throw new Error("File size exceeds 10MB limit. Please upload a smaller file.");
+      }
+
+      // Validate file type
+      const fileExt = fileName.split(".").pop().toLowerCase();
+      if (!["doc", "docx"].includes(fileExt)) {
+        throw new Error("Unsupported file type. Please upload a .doc or .docx file.");
+      }
+
       const arrayBuffer = await blob.arrayBuffer();
-      const result = await mammoth.convertToHtml({ arrayBuffer });
-      setHtmlContent(`<div style="padding: 20px; font-family: 'Roboto', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">${result.value}</div>`);
+      const result = await mammoth.convertToHtml({ arrayBuffer }).catch((err) => {
+        // Log the detailed error from mammoth
+        console.error("Mammoth conversion error:", err);
+        throw new Error(`Failed to convert Word document: ${err.message || "Unknown error"}`);
+      });
+
+      // Check if conversion result is valid
+      if (!result || !result.value) {
+        throw new Error("Failed to convert Word document: Empty or invalid content.");
+      }
+
+      setHtmlContent(
+        `<div style="padding: 20px; font-family: 'Roboto', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">${result.value}</div>`
+      );
     } catch (err) {
-      setError(`Failed to process Word document: ${err.message}`);
+      console.error("Error in handleWordFile:", err);
+      setError(
+        err.message || "Failed to process Word document. Try downloading the file instead."
+      );
+      // Provide a fallback download link
+      setContent({
+        type: "download",
+        url: URL.createObjectURL(blob),
+        message: "Unable to render Word document. Please download to view.",
+      });
     }
   };
 
@@ -177,9 +209,9 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           if (["xlsx", "xls"].includes(fileExt)) {
             setContent({ type: "excel", blob });
           } else if (["doc", "docx"].includes(fileExt)) {
-            await handleWordFile(blob);
+            await handleWordFile(blob, fileName);
           } else if (fileExt === "pdf") {
-            setContent({ type: "pdf", url: `${url}#view=FitH` }); // Fit to width
+            setContent({ type: "pdf", url: `${url}#view=FitH` });
           } else {
             setContent({
               type: "download",
@@ -198,13 +230,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         setDirectIframe(true);
         setContent({ type: "iframe", url });
       } else if (isDownloadLink(url)) {
-        // If it's a download link, set content to trigger a direct download
         setContent({
           type: "download",
           url,
           message: "Downloading file...",
         });
-        // Trigger browser download
         const link = document.createElement("a");
         link.href = url;
         link.download = fileName || "file";
@@ -236,7 +266,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       const blobUrl = URL.createObjectURL(blob);
 
       if (contentType.includes("application/pdf")) {
-        setContent({ type: "pdf", url: `${blobUrl}#view=FitH` }); // Fit to width
+        setContent({ type: "pdf", url: `${blobUrl}#view=FitH` });
       } else if (
         contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
         contentType.includes("application/vnd.ms-excel")
@@ -246,7 +276,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         contentType.includes("application/vnd.openxmlformats-officedocument.wordprocessingml.document") ||
         contentType.includes("application/msword")
       ) {
-        await handleWordFile(blob);
+        await handleWordFile(blob, "downloaded_document.docx");
       } else {
         setContent({
           type: "download",
@@ -298,9 +328,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data.type === "linkClick" && event.data.url) {
-        // Check if the clicked link is a download link
         if (isDownloadLink(event.data.url)) {
-          // Trigger direct download instead of navigating
           const link = document.createElement("a");
           link.href = event.data.url;
           link.download = fileName || "file";
@@ -309,7 +337,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           document.body.removeChild(link);
         } else {
           onLinkClick(event.data.url);
-          // Trigger automatic search by updating the URL and fetching content
           setContent(null);
           setHtmlContent(null);
           setError(null);
@@ -348,7 +375,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           </div>
 
           {content?.type === "download" && (
-            <DownloadLink href={content.url} download>
+            <DownloadLink href={content.url} download={fileName || "document"}>
               Download File
             </DownloadLink>
           )}
