@@ -12,8 +12,8 @@ const SplitScreenContainer = styled.div`
 
 const Panel = styled.div`
   height: 100%;
-  overflow-x: hidden; /* Hide native horizontal scrollbar */
-  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: hidden;
+  overflow-y: auto;
   border: 1px solid #e0e0e0;
   background: #f9f9f9;
   transition: width 0.3s ease;
@@ -30,12 +30,11 @@ const Panel = styled.div`
   }
 
   & > * {
-    width: 100%; /* Let content take the natural width of the panel */
-    max-width: 100%; /* Ensure content doesn't exceed panel width */
+    width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
   }
 
-  /* Customize vertical scrollbar */
   &::-webkit-scrollbar {
     width: 14px;
   }
@@ -47,17 +46,17 @@ const Panel = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background:rgb(87, 92, 99);
+    background: rgb(87, 92, 99);
     border-radius: 7px;
     border: 2px solid #e0e0e0;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background:rgb(70, 76, 83);
+    background: rgb(70, 76, 83);
   }
 
   scrollbar-width: thin;
-  scrollbar-color:rgb(67, 70, 75) #e0e0e0;
+  scrollbar-color: rgb(67, 70, 75) #e0e0e0;
 `;
 
 const ResizeHandle = styled.div`
@@ -67,15 +66,15 @@ const ResizeHandle = styled.div`
   position: absolute;
   top: 0;
   bottom: 0;
-  z-index: 1000; /* Increased z-index to ensure visibility */
+  z-index: 1000;
   transition: background 0.2s ease, left 0.3s ease;
 
   &:hover {
-    background:rgb(74, 77, 82);
+    background: rgb(74, 77, 82);
   }
 
   &:active {
-    background:rgb(90, 94, 104);
+    background: rgb(90, 94, 104);
   }
 
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
@@ -111,7 +110,7 @@ const CustomScrollbar = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background:rgb(86, 91, 97);
+    background: rgb(86, 91, 97);
     border-radius: 8px;
     border: 2px solid #e0e0e0;
   }
@@ -126,7 +125,7 @@ const CustomScrollbar = styled.div`
 
 const ScrollbarContent = styled.div`
   height: 16px;
-  width: ${(props) => props.scrollWidth}px;
+  width: ${({ $scrollWidth }) => $scrollWidth}px;
 `;
 
 const SplitScreen = ({ children, screenMode }) => {
@@ -147,7 +146,6 @@ const SplitScreen = ({ children, screenMode }) => {
 
   const [left, right] = children;
 
-  // Debug logging for screenMode and visibility
   useEffect(() => {
     console.log("SplitScreen - screenMode:", screenMode);
     console.log("Handle visibility:", screenMode === "both" ? "visible" : "hidden");
@@ -344,7 +342,7 @@ const SplitScreen = ({ children, screenMode }) => {
       <Panel ref={leftPanelRef} style={leftStyle}>
         {left}
         <CustomScrollbar ref={leftScrollRef} disabled={!leftScrollable}>
-          <ScrollbarContent scrollWidth={leftScrollWidth} />
+          <ScrollbarContent $scrollWidth={leftScrollWidth} />
         </CustomScrollbar>
       </Panel>
       <ResizeHandle
@@ -357,7 +355,7 @@ const SplitScreen = ({ children, screenMode }) => {
       <Panel ref={rightPanelRef} style={rightStyle}>
         {right}
         <CustomScrollbar ref={rightScrollRef} disabled={!rightScrollable}>
-          <ScrollbarContent scrollWidth={rightScrollWidth} />
+          <ScrollbarContent $scrollWidth={rightScrollWidth} />
         </CustomScrollbar>
       </Panel>
     </SplitScreenContainer>

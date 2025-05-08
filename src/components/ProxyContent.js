@@ -15,7 +15,7 @@ const ContentWrapper = styled.div`
 
 const PatentIframe = styled.iframe`
   width: 100%;
-  max-width: 100%; /* Ensure iframe fits within the panel */
+  max-width: 100%;
   height: 100%;
   border: none;
   background: #fff;
@@ -25,21 +25,19 @@ const PatentIframe = styled.iframe`
 
 const DocViewer = styled.div`
   width: 100%;
-  max-width: 100%; /* Ensure content fits within the panel */
+  max-width: 100%;
   height: 100%;
   overflow: auto;
   font-family: 'Roboto', Arial, sans-serif;
   padding: 10px;
   box-sizing: border-box;
 
-  /* Ensure content fits within the container */
   & > div {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
   }
 
-  /* Prevent oversized elements */
   img, table, p, div {
     max-width: 100%;
     height: auto;
@@ -106,17 +104,15 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   };
 
   const isDownloadLink = (urlToCheck) => {
-    // Check if the URL is a download link but not a PDF (we want PDFs to open in the split-screen)
     return (
       urlToCheck &&
-      !urlToCheck.endsWith(".pdf") && // Exclude PDFs from being treated as downloads
-      !urlToCheck.includes("/patent/pdf/") && // Exclude patent PDFs
+      !urlToCheck.endsWith(".pdf") &&
+      !urlToCheck.includes("/patent/pdf/") &&
       urlToCheck.includes("download")
     );
   };
 
   const isPdfUrl = (urlToCheck) => {
-    // Check if the URL is a PDF link
     return (
       urlToCheck &&
       (urlToCheck.endsWith(".pdf") || urlToCheck.includes("/patent/pdf/"))
@@ -236,7 +232,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         setDirectIframe(true);
         setContent({ type: "iframe", url });
       } else if (isPdfUrl(url)) {
-        // Directly render PDF in split-screen
         setContent({ type: "pdf", url: `${url}#view=FitH` });
       } else {
         const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
@@ -326,7 +321,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     const handleMessage = (event) => {
       if (event.data.type === "linkClick" && event.data.url) {
         if (isDownloadLink(event.data.url)) {
-          // Handle non-PDF downloads
           const link = document.createElement("a");
           link.href = event.data.url;
           link.download = fileName || "file";
@@ -334,7 +328,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           link.click();
           document.body.removeChild(link);
         } else {
-          // Handle PDF links and other navigations
           onLinkClick(event.data.url);
           setContent(null);
           setHtmlContent(null);
@@ -363,7 +356,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
               color: "#d93025",
               padding: 12,
               background: "#fce8e6",
-              borderRadius: 8,
+              borderRadius: "8px",
               textAlign: "center",
               fontSize: "16px",
               marginBottom: "10px",
