@@ -184,12 +184,12 @@ const FileInput = styled.input`
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  width: 120px; /* Reduced width */
-  flex: 0 0 auto; /* Prevent stretching */
+  width: 180px; /* Set width to 180px as requested */
+  flex: 0 0 auto;
 `
 
 const UploadButton = styled.button`
-  padding: 8px 12px;
+  padding: 10px 12px; /* Updated padding as requested */
   color: white;
   border: none;
   border-radius: 4px;
@@ -367,7 +367,7 @@ const SplitScreenModal = ({
             textAlign: "center",
             height: "100%",
             display: "flex",
-            alignItems: "center",
+            align-items: "center",
             justifyContent: "center",
             fontSize: "16px",
             fontFamily: "'Roboto', Arial, sans-serif",
