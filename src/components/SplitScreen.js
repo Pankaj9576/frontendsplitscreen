@@ -61,20 +61,20 @@ const Panel = styled.div`
 
 const ResizeHandle = styled.div`
   width: 6px;
-  background: #000; /* Changed to black */
+  background: #000;
   cursor: col-resize;
   position: absolute;
   top: 0;
   bottom: 0;
   z-index: 1000;
-  transition: background 0.2s ease, left 0.3s ease;
+  transition: background 0.2s ease, left 0.1s ease-out; /* Smoother left transition */
 
   &:hover {
-    background: #333; /* Darker shade on hover */
+    background: #333;
   }
 
   &:active {
-    background: #555; /* Even darker shade on active */
+    background: #555;
   }
 
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
@@ -155,21 +155,19 @@ const SplitScreen = ({ children, screenMode }) => {
     if (!containerRef.current) return;
 
     const now = performance.now();
-    if (now - lastUpdateRef.current < 16) return;
+    if (now - lastUpdateRef.current < 10) return; /* Reduced frame interval for smoother updates */
 
     lastUpdateRef.current = now;
 
-    requestAnimationFrame(() => {
-      const containerRect = containerRef.current.getBoundingClientRect();
-      let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      newWidth = Math.max(10, Math.min(90, newWidth));
-      setLeftWidth(newWidth);
-    });
+    const containerRect = containerRef.current.getBoundingClientRect();
+    let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+    newWidth = Math.max(10, Math.min(90, newWidth));
+    setLeftWidth(newWidth);
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       setIsResizing(false);
-    }, 100);
+    }, 50); /* Reduced timeout for quicker response */
   }, []);
 
   useEffect(() => {

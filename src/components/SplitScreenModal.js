@@ -53,22 +53,22 @@ const HeaderContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px;
+  padding: 10px 20px; /* Adjusted padding for better alignment */
   border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
   margin: 0;
   background: #fff;
   z-index: 1001;
-  width: 100%; /* Ensure full width */
+  width: 100%;
 `
 
 const CloseButton = styled.button`
-  margin-left: 30px;
-  color: rgb(162, 15, 15);
+  margin-left: 20px; /* Reduced margin to avoid pushing content too far */
+  color: white;
   border: none;
   width: 40px;
   height: 40px;
-  background-color: rgba(214, 9, 9, 0.87);
+  background-color: rgba(17, 14, 14, 0.87);
   cursor: pointer;
   font-weight: 600;
   font-size: 24px;
@@ -79,12 +79,12 @@ const CloseButton = styled.button`
   transition: background 0.3s ease, color 0.3s ease;
 
   &:hover {
-    background: rgb(151, 17, 17);
+    background: rgb(50, 38, 38);
     color: white;
   }
 
   &:active {
-    background: rgb(138, 12, 12);
+    background: rgb(55, 43, 43);
   }
 `
 
@@ -102,8 +102,8 @@ const LoginButton = styled.button`
   align-items: center;
   gap: 8px;
   transition: background 0.3s ease, box-shadow 0.3s ease;
-  flex: 1; /* Allow to stretch */
-  max-width: 200px; /* Prevent it from growing too large */
+  flex: 1;
+  max-width: 200px;
 
   &:before {
     content: '';
@@ -135,8 +135,8 @@ const InputWrapper = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
-  width: 100%; /* Take full width */
-  flex: 1; /* Stretch to fill available space */
+  width: 100%;
+  flex: 1;
 
   @media (max-width: 768px) {
     gap: 8px;
@@ -151,8 +151,8 @@ const StyledInput = styled.input`
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  flex: 1; /* Stretch to take available space */
-  min-width: 200px; /* Ensure minimum width for usability */
+  flex: 1;
+  min-width: 200px;
 
   &:focus {
     border-color: #4285f4;
@@ -169,7 +169,7 @@ const FileInputWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1; /* Stretch to take available space */
+  flex: 1;
 `
 
 const FileInput = styled.input`
@@ -179,13 +179,12 @@ const FileInput = styled.input`
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  flex: 1; /* Stretch to take available space */
-  min-width: 150px; /* Ensure minimum width for usability */
+  flex: 1;
+  min-width: 150px;
 `
 
 const UploadButton = styled.button`
   padding: 8px 12px;
-  background-color: #34a853;
   color: white;
   border: none;
   border-radius: 4px;
@@ -196,12 +195,12 @@ const UploadButton = styled.button`
   transition: background 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    background-color: #2d8e44;
+    filter: brightness(90%); /* Slightly darken on hover */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   }
 
   &:active {
-    background-color: #277c3e;
+    filter: brightness(80%); /* Darker on click */
   }
 
   &:disabled {
@@ -400,7 +399,7 @@ const SplitScreenModal = ({
             />
             <FileInputWrapper>
               <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-              <UploadButton onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+              <UploadButton style={{backgroundColor: 'rgb(199, 51, 155)'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
             </FileInputWrapper>
             <StyledInput
               type="text"
@@ -410,7 +409,7 @@ const SplitScreenModal = ({
             />
             <FileInputWrapper>
               <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-              <UploadButton onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+              <UploadButton style={{backgroundColor: 'rgb(165, 0, 255)'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
             </FileInputWrapper>
             <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
               <option value="both">Both Screens</option>
