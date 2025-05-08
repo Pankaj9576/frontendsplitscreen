@@ -82,7 +82,7 @@ const ResizeHandle = styled.div`
 
 const CustomScrollbar = styled.div`
   position: absolute;
-  bottom: 16px; /* Adjusted to make space for the black scrollbar below */
+  bottom: 0;
   left: 0;
   right: 0;
   height: 16px;
@@ -116,42 +116,6 @@ const CustomScrollbar = styled.div`
   scrollbar-color: rgb(91, 96, 103) #e0e0e0;
 `;
 
-const BlackHorizontalScrollbar = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 16px;
-  background: #000; /* Black background as requested */
-  border-top: 1px solid #333;
-  overflow-x: auto;
-  overflow-y: hidden;
-  z-index: 2; /* Higher than CustomScrollbar to ensure visibility */
-  display: block; /* Always visible */
-
-  &::-webkit-scrollbar {
-    height: 16px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #000; /* Black track */
-    border-radius: 8px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #555; /* Dark gray thumb for contrast */
-    border-radius: 8px;
-    border: 2px solid #000;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #777; /* Lighter gray on hover */
-  }
-
-  scrollbar-width: thin;
-  scrollbar-color: #555 #000;
-`;
-
 const ScrollbarContent = styled.div`
   height: 16px;
   width: ${({ $scrollWidth }) => $scrollWidth}px;
@@ -166,8 +130,6 @@ const SplitScreen = ({ children, screenMode }) => {
   const rightPanelRef = useRef(null);
   const leftScrollRef = useRef(null);
   const rightScrollRef = useRef(null);
-  const leftBlackScrollRef = useRef(null); // Ref for left black scrollbar
-  const rightBlackScrollRef = useRef(null); // Ref for right black scrollbar
   const [leftScrollWidth, setLeftScrollWidth] = useState(0);
   const [rightScrollWidth, setRightScrollWidth] = useState(0);
   const lastUpdateRef = useRef(0);
@@ -262,44 +224,26 @@ const SplitScreen = ({ children, screenMode }) => {
 
   useEffect(() => {
     const handleLeftPanelScroll = () => {
-      if (leftPanelRef.current && leftScrollRef.current && leftBlackScrollRef.current) {
+      if (leftPanelRef.current && leftScrollRef.current) {
         leftScrollRef.current.scrollLeft = leftPanelRef.current.scrollLeft;
-        leftBlackScrollRef.current.scrollLeft = leftPanelRef.current.scrollLeft; // Sync black scrollbar
       }
     };
 
     const handleRightPanelScroll = () => {
-      if (rightPanelRef.current && rightScrollRef.current && rightBlackScrollRef.current) {
+      if (rightPanelRef.current && rightScrollRef.current) {
         rightScrollRef.current.scrollLeft = rightPanelRef.current.scrollLeft;
-        rightBlackScrollRef.current.scrollLeft = rightPanelRef.current.scrollLeft; // Sync black scrollbar
       }
     };
 
     const handleLeftCustomScroll = () => {
-      if (leftPanelRef.current && leftScrollRef.current && leftBlackScrollRef.current) {
+      if (leftPanelRef.current && leftScrollRef.current) {
         leftPanelRef.current.scrollLeft = leftScrollRef.current.scrollLeft;
-        leftBlackScrollRef.current.scrollLeft = leftScrollRef.current.scrollLeft; // Sync black scrollbar
       }
     };
 
     const handleRightCustomScroll = () => {
-      if (rightPanelRef.current && rightScrollRef.current && rightBlackScrollRef.current) {
+      if (rightPanelRef.current && rightScrollRef.current) {
         rightPanelRef.current.scrollLeft = rightScrollRef.current.scrollLeft;
-        rightBlackScrollRef.current.scrollLeft = rightScrollRef.current.scrollLeft; // Sync black scrollbar
-      }
-    };
-
-    const handleLeftBlackScroll = () => {
-      if (leftPanelRef.current && leftScrollRef.current && leftBlackScrollRef.current) {
-        leftPanelRef.current.scrollLeft = leftBlackScrollRef.current.scrollLeft;
-        leftScrollRef.current.scrollLeft = leftBlackScrollRef.current.scrollLeft; // Sync custom scrollbar
-      }
-    };
-
-    const handleRightBlackScroll = () => {
-      if (rightPanelRef.current && rightScrollRef.current && rightBlackScrollRef.current) {
-        rightPanelRef.current.scrollLeft = rightBlackScrollRef.current.scrollLeft;
-        rightScrollRef.current.scrollLeft = rightBlackScrollRef.current.scrollLeft; // Sync custom scrollbar
       }
     };
 
@@ -307,16 +251,12 @@ const SplitScreen = ({ children, screenMode }) => {
     if (rightPanelRef.current) rightPanelRef.current.addEventListener("scroll", handleRightPanelScroll);
     if (leftScrollRef.current) leftScrollRef.current.addEventListener("scroll", handleLeftCustomScroll);
     if (rightScrollRef.current) rightScrollRef.current.addEventListener("scroll", handleRightCustomScroll);
-    if (leftBlackScrollRef.current) leftBlackScrollRef.current.addEventListener("scroll", handleLeftBlackScroll);
-    if (rightBlackScrollRef.current) rightBlackScrollRef.current.addEventListener("scroll", handleRightBlackScroll);
 
     return () => {
       if (leftPanelRef.current) leftPanelRef.current.removeEventListener("scroll", handleLeftPanelScroll);
       if (rightPanelRef.current) rightPanelRef.current.removeEventListener("scroll", handleRightPanelScroll);
       if (leftScrollRef.current) leftScrollRef.current.removeEventListener("scroll", handleLeftCustomScroll);
       if (rightScrollRef.current) rightScrollRef.current.removeEventListener("scroll", handleRightCustomScroll);
-      if (leftBlackScrollRef.current) leftBlackScrollRef.current.removeEventListener("scroll", handleLeftBlackScroll);
-      if (rightBlackScrollRef.current) rightBlackScrollRef.current.removeEventListener("scroll", handleRightBlackScroll);
     };
   }, []);
 
@@ -391,9 +331,6 @@ const SplitScreen = ({ children, screenMode }) => {
         <CustomScrollbar ref={leftScrollRef}>
           <ScrollbarContent $scrollWidth={leftScrollWidth} />
         </CustomScrollbar>
-        <BlackHorizontalScrollbar ref={leftBlackScrollRef}>
-          <ScrollbarContent $scrollWidth={leftScrollWidth} />
-        </BlackHorizontalScrollbar>
       </Panel>
       <ResizeHandle
         ref={handleRef}
@@ -407,9 +344,6 @@ const SplitScreen = ({ children, screenMode }) => {
         <CustomScrollbar ref={rightScrollRef}>
           <ScrollbarContent $scrollWidth={rightScrollWidth} />
         </CustomScrollbar>
-        <BlackHorizontalScrollbar ref={rightBlackScrollRef}>
-          <ScrollbarContent $scrollWidth={rightScrollWidth} />
-        </BlackHorizontalScrollbar>
       </Panel>
     </SplitScreenContainer>
   );
