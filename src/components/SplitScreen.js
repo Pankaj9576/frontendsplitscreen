@@ -70,11 +70,11 @@ const ResizeHandle = styled.div`
   transition: background 0.2s ease, left 0.1s ease-out; /* Smoother left transition */
 
   &:hover {
-    background: #333;
+    background: rgb(119, 255, 112);
   }
 
   &:active {
-    background: #555;
+    background:rgb(119, 255, 112);
   }
 
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
