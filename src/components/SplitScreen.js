@@ -61,7 +61,7 @@ const Panel = styled.div`
 
 const ResizeHandle = styled.div`
   width: 6px;
-  background: #000;
+  background: #00FF97;
   cursor: col-resize;
   position: absolute;
   top: 0;
@@ -70,11 +70,11 @@ const ResizeHandle = styled.div`
   transition: background 0.2s ease, left 0.1s ease-out; /* Smoother left transition */
 
   &:hover {
-    background: rgb(119, 255, 112);
+    background: #00FF97;
   }
 
   &:active {
-    background:rgb(119, 255, 112);
+    background:#00FF97;
   }
 
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
