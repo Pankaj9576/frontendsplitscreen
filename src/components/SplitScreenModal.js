@@ -282,15 +282,15 @@ const SplitScreenModal = ({
   const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
   const BACKEND_URL = "https://split-screen-backend.vercel.app" // Changed to HTTPS
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
-      console.log("Google login success:", tokenResponse)
-      setIsAuthenticated(true)
-      setShowSuccess(true)
-    },
-    onError: (error) => console.error("Google login error:", error),
-    flow: "implicit",
-  })
+  // const googleLogin = useGoogleLogin({
+  //   onSuccess: (tokenResponse) => {
+  //     console.log("Google login success:", tokenResponse)
+  //     setIsAuthenticated(true)
+  //     setShowSuccess(true)
+  //   },
+  //   onError: (error) => console.error("Google login error:", error),
+  //   flow: "implicit",
+  // })
 
   useEffect(() => {
     if (!setLeftSrc) {
@@ -427,7 +427,7 @@ const SplitScreenModal = ({
               <option value="left">Left Screen</option>
               <option value="right">Right Screen</option>
             </ScreenSelectButton>
-            {!isAuthenticated && <LoginButton onClick={() => googleLogin()}>Sign in with Google</LoginButton>}
+            {/* {!isAuthenticated && <LoginButton onClick={() => googleLogin()}>Sign in with Google</LoginButton>} */}
             <CloseButton onClick={onClose}>×</CloseButton>
           </InputWrapper>
         </HeaderContainer>
