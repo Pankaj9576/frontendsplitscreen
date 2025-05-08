@@ -367,7 +367,7 @@ const SplitScreenModal = ({
             textAlign: "center",
             height: "100%",
             display: "flex",
-            align-items: "center",
+            alignItems: "center",
             justifyContent: "center",
             fontSize: "16px",
             fontFamily: "'Roboto', Arial, sans-serif",
