@@ -61,20 +61,20 @@ const Panel = styled.div`
 
 const ResizeHandle = styled.div`
   width: 6px;
-  background: #00FF97;
+  background: #000;
   cursor: col-resize;
   position: absolute;
   top: 0;
   bottom: 0;
   z-index: 1000;
-  transition: background 0.2s ease, left 0.1s ease-out; /* Smoother left transition */
+  transition: background 0.2s ease, left 0.1s ease-out;
 
   &:hover {
-    background: #00FF97;
+    background: #333;
   }
 
   &:active {
-    background:#00FF97;
+    background: #555;
   }
 
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
@@ -91,14 +91,7 @@ const CustomScrollbar = styled.div`
   overflow-x: auto;
   overflow-y: hidden;
   z-index: 1;
-  display: block;
-
-  ${({ disabled }) =>
-    disabled &&
-    `
-    pointer-events: none;
-    opacity: 0.5;
-  `}
+  display: block; /* Always visible */
 
   &::-webkit-scrollbar {
     height: 16px;
@@ -139,8 +132,6 @@ const SplitScreen = ({ children, screenMode }) => {
   const rightScrollRef = useRef(null);
   const [leftScrollWidth, setLeftScrollWidth] = useState(0);
   const [rightScrollWidth, setRightScrollWidth] = useState(0);
-  const [leftScrollable, setLeftScrollable] = useState(false);
-  const [rightScrollable, setRightScrollable] = useState(false);
   const lastUpdateRef = useRef(0);
   const timeoutRef = useRef(null);
 
@@ -155,7 +146,7 @@ const SplitScreen = ({ children, screenMode }) => {
     if (!containerRef.current) return;
 
     const now = performance.now();
-    if (now - lastUpdateRef.current < 10) return; /* Reduced frame interval for smoother updates */
+    if (now - lastUpdateRef.current < 10) return;
 
     lastUpdateRef.current = now;
 
@@ -167,7 +158,7 @@ const SplitScreen = ({ children, screenMode }) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       setIsResizing(false);
-    }, 50); /* Reduced timeout for quicker response */
+    }, 50);
   }, []);
 
   useEffect(() => {
@@ -211,14 +202,12 @@ const SplitScreen = ({ children, screenMode }) => {
         const panelWidth = leftPanelRef.current.clientWidth;
         const minScrollWidth = panelWidth;
         setLeftScrollWidth(Math.max(contentWidth, minScrollWidth));
-        setLeftScrollable(contentWidth > panelWidth);
       }
       if (rightPanelRef.current) {
         const contentWidth = rightPanelRef.current.scrollWidth;
         const panelWidth = rightPanelRef.current.clientWidth;
         const minScrollWidth = panelWidth;
         setRightScrollWidth(Math.max(contentWidth, minScrollWidth));
-        setRightScrollable(contentWidth > panelWidth);
       }
     };
 
@@ -339,7 +328,7 @@ const SplitScreen = ({ children, screenMode }) => {
     <SplitScreenContainer ref={containerRef}>
       <Panel ref={leftPanelRef} style={leftStyle}>
         {left}
-        <CustomScrollbar ref={leftScrollRef} disabled={!leftScrollable}>
+        <CustomScrollbar ref={leftScrollRef}>
           <ScrollbarContent $scrollWidth={leftScrollWidth} />
         </CustomScrollbar>
       </Panel>
@@ -352,7 +341,7 @@ const SplitScreen = ({ children, screenMode }) => {
       />
       <Panel ref={rightPanelRef} style={rightStyle}>
         {right}
-        <CustomScrollbar ref={rightScrollRef} disabled={!rightScrollable}>
+        <CustomScrollbar ref={rightScrollRef}>
           <ScrollbarContent $scrollWidth={rightScrollWidth} />
         </CustomScrollbar>
       </Panel>

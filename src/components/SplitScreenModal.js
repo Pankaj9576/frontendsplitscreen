@@ -60,14 +60,14 @@ const HeaderContainer = styled.div`
   background: #fff;
   z-index: 1001;
   width: 100%;
-  position: relative; /* For absolute positioning of CloseButton */
+  position: relative;
 `
 
 const CloseButton = styled.button`
-  position: absolute; /* Fix to the right */
-  right: 20px; /* Distance from the right edge */
-  top: 50%; /* Vertically center */
-  transform: translateY(-50%); /* Adjust for vertical centering */
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
   color: rgb(162, 15, 15);
   border: none;
   width: 40px;
@@ -81,6 +81,7 @@ const CloseButton = styled.button`
   justify-content: center;
   border-radius: 50%;
   transition: background 0.3s ease, color 0.3s ease;
+  z-index: 1002; /* Ensure it stays above other elements */
 
   &:hover {
     background: rgb(151, 17, 17);
@@ -139,7 +140,7 @@ const InputWrapper = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
-  width: calc(100% - 80px); /* Adjust width to account for CloseButton */
+  width: calc(100% - 80px);
   flex: 1;
 
   @media (max-width: 768px) {
