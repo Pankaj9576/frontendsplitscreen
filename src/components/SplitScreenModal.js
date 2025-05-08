@@ -10,15 +10,16 @@ const ModalBackground = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw; /* Full viewport width */
+  height: 100vh; /* Full viewport height */
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Align to top instead of center */
-  padding-top: 10px; /* Minimal padding to avoid sticking to the very top */
+  align-items: center; /* Center vertically */
   z-index: 1000;
   animation: fadeIn 0.3s ease-in-out;
+  margin: 0; /* Remove any default margins */
+  padding: 0; /* Remove any padding to ensure full coverage */
 
   @keyframes fadeIn {
     from { opacity: 0; }
@@ -28,32 +29,22 @@ const ModalBackground = styled.div`
 
 const ModalContent = styled.div`
   background: #fff;
-  padding: 0 20px; /* No top/bottom padding, only horizontal */
-  border-radius: 8px;
-  width: 90%;
-  max-width: 1400px;
-  height: calc(100vh - 20px); /* Adjust height to account for padding-top of ModalBackground */
+  border-radius: 0; /* Remove border-radius to make it edge-to-edge */
+  width: 100vw; /* Full viewport width */
+  height: 100vh; /* Full viewport height */
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid #dadce0;
-  animation: slideIn 0.4s ease-out;
+  box-shadow: none; /* Remove shadow since it’s full-screen */
+  border: none; /* Remove border */
   overflow: hidden;
   font-family: 'Roboto', Arial, sans-serif;
+  animation: slideIn 0.4s ease-out;
+  margin: 0; /* Ensure no margins */
+  padding: 0; /* Ensure no padding */
 
   @keyframes slideIn {
     from { transform: translateY(-50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
-  }
-
-  @media (max-width: 1024px) {
-    width: 95%;
-    padding: 0 15px;
-  }
-
-  @media (max-width: 768px) {
-    width: 98%;
-    padding: 0 10px;
   }
 `
 
@@ -62,20 +53,21 @@ const HeaderContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px 0;
+  padding: 10px;
   border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
-  margin-bottom: 8px;
+  margin: 0; /* Zero margin to stick to the top */
+  background: #fff; /* Ensure background matches modal */
+  z-index: 1001; /* Ensure it stays above other content */
 `
 
 const CloseButton = styled.button`
-  ${'' /* background: transparent; */}
   margin-left: 30px;
-  color:rgb(162, 15, 15);
+  color: rgb(162, 15, 15);
   border: none;
   width: 40px;
   height: 40px;
-  backgroundColor:rgba(214, 9, 9, 0.87);
+  background-color: rgba(214, 9, 9, 0.87);
   cursor: pointer;
   font-weight: 600;
   font-size: 24px;
@@ -86,12 +78,12 @@ const CloseButton = styled.button`
   transition: background 0.3s ease, color 0.3s ease;
 
   &:hover {
-    background:rgb(151, 17, 17);
+    background: rgb(151, 17, 17);
     color: white;
   }
 
   &:active {
-    background:rgb(138, 12, 12);
+    background: rgb(138, 12, 12);
   }
 `
 
@@ -280,17 +272,7 @@ const SplitScreenModal = ({
   const [screenMode, setScreenMode] = useState("both")
   const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
   const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
-  const BACKEND_URL = "https://split-screen-backend.vercel.app" // Changed to HTTPS
-
-  // const googleLogin = useGoogleLogin({
-  //   onSuccess: (tokenResponse) => {
-  //     console.log("Google login success:", tokenResponse)
-  //     setIsAuthenticated(true)
-  //     setShowSuccess(true)
-  //   },
-  //   onError: (error) => console.error("Google login error:", error),
-  //   flow: "implicit",
-  // })
+  const BACKEND_URL = "https://split-screen-backend.vercel.app"
 
   useEffect(() => {
     if (!setLeftSrc) {
@@ -427,7 +409,6 @@ const SplitScreenModal = ({
               <option value="left">Left Screen</option>
               <option value="right">Right Screen</option>
             </ScreenSelectButton>
-            {/* {!isAuthenticated && <LoginButton onClick={() => googleLogin()}>Sign in with Google</LoginButton>} */}
             <CloseButton onClick={onClose}>×</CloseButton>
           </InputWrapper>
         </HeaderContainer>
@@ -442,4 +423,4 @@ const SplitScreenModal = ({
   )
 }
 
-export default SplitScreenModal//hello hello
+export default SplitScreenModal
