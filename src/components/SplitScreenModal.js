@@ -53,26 +53,22 @@ const HeaderContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px;
+  padding: 10px 20px; /* Adjusted padding for better alignment */
   border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
   margin: 0;
   background: #fff;
   z-index: 1001;
   width: 100%;
-  position: relative; /* For absolute positioning of CloseButton */
 `
 
 const CloseButton = styled.button`
-  position: absolute; /* Fix to the right */
-  right: 20px; /* Distance from the right edge */
-  top: 50%; /* Vertically center */
-  transform: translateY(-50%); /* Adjust for vertical centering */
-  color: rgb(162, 15, 15);
+  margin-left: 20px; /* Reduced margin to avoid pushing content too far */
+  color: white;
   border: none;
   width: 40px;
   height: 40px;
-  background-color: rgba(214, 9, 9, 0.87);
+  background-color: rgba(17, 14, 14, 0.87);
   cursor: pointer;
   font-weight: 600;
   font-size: 24px;
@@ -83,12 +79,12 @@ const CloseButton = styled.button`
   transition: background 0.3s ease, color 0.3s ease;
 
   &:hover {
-    background: rgb(151, 17, 17);
+    background: rgb(50, 38, 38);
     color: white;
   }
 
   &:active {
-    background: rgb(138, 12, 12);
+    background: rgb(55, 43, 43);
   }
 `
 
@@ -139,7 +135,7 @@ const InputWrapper = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
-  width: calc(100% - 80px); /* Adjust width to account for CloseButton */
+  width: 100%;
   flex: 1;
 
   @media (max-width: 768px) {
@@ -199,12 +195,12 @@ const UploadButton = styled.button`
   transition: background 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    filter: brightness(90%);
+    filter: brightness(90%); /* Slightly darken on hover */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   }
 
   &:active {
-    filter: brightness(80%);
+    filter: brightness(80%); /* Darker on click */
   }
 
   &:disabled {
@@ -420,8 +416,8 @@ const SplitScreenModal = ({
               <option value="left">Left Screen</option>
               <option value="right">Right Screen</option>
             </ScreenSelectButton>
+            <CloseButton onClick={onClose}>×</CloseButton>
           </InputWrapper>
-          <CloseButton onClick={onClose}>×</CloseButton>
         </HeaderContainer>
         {error && <ErrorMessage>{error}</ErrorMessage>}
         {showSuccess && <SuccessMessage>Sign-in successful!</SuccessMessage>}
