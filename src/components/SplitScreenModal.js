@@ -60,14 +60,14 @@ const HeaderContainer = styled.div`
   background: #fff;
   z-index: 1001;
   width: 100%;
-  position: relative;
+  position: relative; /* For absolute positioning of CloseButton */
 `
 
 const CloseButton = styled.button`
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: absolute; /* Fix to the right */
+  right: 20px; /* Distance from the right edge */
+  top: 50%; /* Vertically center */
+  transform: translateY(-50%); /* Adjust for vertical centering */
   color: rgb(162, 15, 15);
   border: none;
   width: 40px;
@@ -81,7 +81,6 @@ const CloseButton = styled.button`
   justify-content: center;
   border-radius: 50%;
   transition: background 0.3s ease, color 0.3s ease;
-  z-index: 1002;
 
   &:hover {
     background: rgb(151, 17, 17);
@@ -140,7 +139,7 @@ const InputWrapper = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
-  width: calc(100% - 80px);
+  width: calc(100% - 80px); /* Adjust width to account for CloseButton */
   flex: 1;
 
   @media (max-width: 768px) {
@@ -184,12 +183,12 @@ const FileInput = styled.input`
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  width: 180px; /* Set width to 180px as requested */
-  flex: 0 0 auto;
+  flex: 1;
+  min-width: 150px;
 `
 
 const UploadButton = styled.button`
-  padding: 10px 12px; /* Updated padding as requested */
+  padding: 8px 12px;
   color: white;
   border: none;
   border-radius: 4px;
