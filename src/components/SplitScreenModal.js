@@ -81,7 +81,7 @@ const CloseButton = styled.button`
   justify-content: center;
   border-radius: 50%;
   transition: background 0.3s ease, color 0.3s ease;
-  z-index: 1002; /* Ensure it stays above other elements */
+  z-index: 1002;
 
   &:hover {
     background: rgb(151, 17, 17);
@@ -184,13 +184,12 @@ const FileInput = styled.input`
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  flex: 1;
-  width: 100px;
+  width: 120px; /* Reduced width */
+  flex: 0 0 auto; /* Prevent stretching */
 `
 
 const UploadButton = styled.button`
   padding: 8px 12px;
-  width: 50px;
   color: white;
   border: none;
   border-radius: 4px;
@@ -368,7 +367,7 @@ const SplitScreenModal = ({
             textAlign: "center",
             height: "100%",
             display: "flex",
-            alignItems: "center",
+            align-items: "center",
             justifyContent: "center",
             fontSize: "16px",
             fontFamily: "'Roboto', Arial, sans-serif",
