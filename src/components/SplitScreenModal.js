@@ -63,7 +63,7 @@ const HeaderContainer = styled.div`
 `
 
 const CloseButton = styled.button`
-  margin-left: 20px; /* Reduced margin to avoid pushing content too far */
+  margin-right: 30px;/* Reduced margin to avoid pushing content too far */
   color: white;
   border: none;
   width: 40px;
@@ -144,7 +144,7 @@ const InputWrapper = styled.div`
 `
 
 const StyledInput = styled.input`
-  padding: 8px 12px;
+  padding: 11px 12px;
   border: 1px solid #dadce0;
   border-radius: 4px;
   font-size: 14px;
@@ -184,7 +184,7 @@ const FileInput = styled.input`
 `
 
 const UploadButton = styled.button`
-  padding: 8px 12px;
+  padding: 11px 12px;
   color: white;
   border: none;
   border-radius: 4px;
