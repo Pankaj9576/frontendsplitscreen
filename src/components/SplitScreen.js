@@ -61,7 +61,7 @@ const Panel = styled.div`
 
 const ResizeHandle = styled.div`
   width: 6px;
-  background: #5f6368;
+  background: #000; /* Changed to black */
   cursor: col-resize;
   position: absolute;
   top: 0;
@@ -70,11 +70,11 @@ const ResizeHandle = styled.div`
   transition: background 0.2s ease, left 0.3s ease;
 
   &:hover {
-    background: rgb(74, 77, 82);
+    background: #333; /* Darker shade on hover */
   }
 
   &:active {
-    background: rgb(90, 94, 104);
+    background: #555; /* Even darker shade on active */
   }
 
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);

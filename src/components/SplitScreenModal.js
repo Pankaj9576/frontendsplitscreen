@@ -10,16 +10,16 @@ const ModalBackground = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw; /* Full viewport width */
-  height: 100vh; /* Full viewport height */
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center; /* Center vertically */
+  align-items: center;
   z-index: 1000;
   animation: fadeIn 0.3s ease-in-out;
-  margin: 0; /* Remove any default margins */
-  padding: 0; /* Remove any padding to ensure full coverage */
+  margin: 0;
+  padding: 0;
 
   @keyframes fadeIn {
     from { opacity: 0; }
@@ -29,18 +29,18 @@ const ModalBackground = styled.div`
 
 const ModalContent = styled.div`
   background: #fff;
-  border-radius: 0; /* Remove border-radius to make it edge-to-edge */
-  width: 100vw; /* Full viewport width */
-  height: 100vh; /* Full viewport height */
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  box-shadow: none; /* Remove shadow since it’s full-screen */
-  border: none; /* Remove border */
+  box-shadow: none;
+  border: none;
   overflow: hidden;
   font-family: 'Roboto', Arial, sans-serif;
   animation: slideIn 0.4s ease-out;
-  margin: 0; /* Ensure no margins */
-  padding: 0; /* Ensure no padding */
+  margin: 0;
+  padding: 0;
 
   @keyframes slideIn {
     from { transform: translateY(-50px); opacity: 0; }
@@ -56,9 +56,10 @@ const HeaderContainer = styled.div`
   padding: 10px;
   border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
-  margin: 0; /* Zero margin to stick to the top */
-  background: #fff; /* Ensure background matches modal */
-  z-index: 1001; /* Ensure it stays above other content */
+  margin: 0;
+  background: #fff;
+  z-index: 1001;
+  width: 100%; /* Ensure full width */
 `
 
 const CloseButton = styled.button`
@@ -101,6 +102,8 @@ const LoginButton = styled.button`
   align-items: center;
   gap: 8px;
   transition: background 0.3s ease, box-shadow 0.3s ease;
+  flex: 1; /* Allow to stretch */
+  max-width: 200px; /* Prevent it from growing too large */
 
   &:before {
     content: '';
@@ -127,11 +130,13 @@ const InputWrapper = styled.div`
   gap: 12px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  scrollbar-width: none; /* Hide scrollbar in Firefox */
-  -ms-overflow-style: none; /* Hide scrollbar in IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   &::-webkit-scrollbar {
-    display: none; /* Hide scrollbar in Chrome/Safari */
+    display: none;
   }
+  width: 100%; /* Take full width */
+  flex: 1; /* Stretch to fill available space */
 
   @media (max-width: 768px) {
     gap: 8px;
@@ -142,11 +147,12 @@ const StyledInput = styled.input`
   padding: 8px 12px;
   border: 1px solid #dadce0;
   border-radius: 4px;
-  width: 200px;
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  flex: 1; /* Stretch to take available space */
+  min-width: 200px; /* Ensure minimum width for usability */
 
   &:focus {
     border-color: #4285f4;
@@ -163,6 +169,7 @@ const FileInputWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1; /* Stretch to take available space */
 `
 
 const FileInput = styled.input`
@@ -172,7 +179,8 @@ const FileInput = styled.input`
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  width: 150px;
+  flex: 1; /* Stretch to take available space */
+  min-width: 150px; /* Ensure minimum width for usability */
 `
 
 const UploadButton = styled.button`
