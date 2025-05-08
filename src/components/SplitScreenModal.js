@@ -12,7 +12,7 @@ const ModalBackground = styled.div`
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -20,6 +20,7 @@ const ModalBackground = styled.div`
   animation: fadeIn 0.3s ease-in-out;
   margin: 0;
   padding: 0;
+  backdrop-filter: blur(2px);
 
   @keyframes fadeIn {
     from { opacity: 0; }
@@ -28,23 +29,30 @@ const ModalBackground = styled.div`
 `
 
 const ModalContent = styled.div`
-  background: #fff;
-  border-radius: 0;
+  background: #ffffff;
+  border-radius: 8px;
   width: 100vw;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  box-shadow: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border: none;
   overflow: hidden;
-  font-family: 'Roboto', Arial, sans-serif;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
   animation: slideIn 0.4s ease-out;
   margin: 0;
   padding: 0;
 
   @keyframes slideIn {
-    from { transform: translateY(-50px); opacity: 0; }
+    from { transform: translateY(-20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+  }
+
+  @media (min-width: 768px) {
+    width: 95vw;
+    max-width: 1200px;
+    height: 90vh;
+    border-radius: 12px;
   }
 `
 
@@ -53,61 +61,61 @@ const HeaderContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px;
-  border-bottom: 1px solid #dadce0;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
   flex-shrink: 0;
-  margin: 0;
-  background: #fff;
+  background: #ffffff;
   z-index: 1001;
   width: 100%;
   position: relative;
+  box-sizing: border-box;
 `
 
 const CloseButton = styled.button`
   position: absolute;
-  right: 20px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgb(162, 15, 15);
+  color: #ffffff;
   border: none;
-  width: 40px;
-  height: 40px;
-  background-color: rgba(214, 9, 9, 0.87);
+  width: 36px;
+  height: 36px;
+  background-color: #d32f2f;
   cursor: pointer;
   font-weight: 600;
-  font-size: 24px;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: background 0.3s ease, color 0.3s ease;
-  z-index: 1002; /* Ensure it stays above other elements */
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  z-index: 1002;
 
   &:hover {
-    background: rgb(151, 17, 17);
-    color: white;
+    background-color: #b71c1c;
+    transform: translateY(-50%) scale(1.05);
   }
 
   &:active {
-    background: rgb(138, 12, 12);
+    background-color: #9a0007;
+    transform: translateY(-50%) scale(0.95);
   }
 `
 
 const LoginButton = styled.button`
   padding: 8px 16px;
-  background-color: #4285f4;
-  color: white;
+  background-color: #1a73e8;
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  font-family: 'Roboto', Arial, sans-serif;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-  flex: 1;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   max-width: 200px;
 
   &:before {
@@ -120,19 +128,21 @@ const LoginButton = styled.button`
   }
 
   &:hover {
-    background-color: #3267d6;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    background-color: #1557b0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
   }
 
   &:active {
-    background-color: #2a56c6;
+    background-color: #104080;
+    transform: translateY(0);
   }
 `
 
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
@@ -140,76 +150,78 @@ const InputWrapper = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
-  width: calc(100% - 80px);
+  width: calc(100% - 64px);
   flex: 1;
 
   @media (max-width: 768px) {
-    gap: 8px;
+    gap: 6px;
   }
 `
 
 const StyledInput = styled.input`
   padding: 8px 12px;
   border: 1px solid #dadce0;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  background: #f8f9fa;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  background: #f9fafb;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   flex: 1;
-  min-width: 200px;
+  min-width: 180px;
 
   &:focus {
-    border-color: #4285f4;
+    border-color: #1a73e8;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
   }
 
   &::placeholder {
-    color: #5f6368;
+    color: #6b7280;
   }
 `
 
 const FileInputWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
 `
 
 const FileInput = styled.input`
   padding: 8px;
   border: 1px solid #dadce0;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  background: #f8f9fa;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  background: #f9fafb;
   flex: 1;
-  min-width: 150px;
+  min-width: 140px;
 `
 
 const UploadButton = styled.button`
   padding: 8px 12px;
-  color: white;
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  font-family: 'Roboto', Arial, sans-serif;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 
   &:hover {
-    filter: brightness(90%);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    filter: brightness(95%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
   }
 
   &:active {
-    filter: brightness(80%);
+    filter: brightness(85%);
+    transform: translateY(0);
   }
 
   &:disabled {
-    background-color: #cccccc;
+    background-color: #d1d5db;
     cursor: not-allowed;
   }
 `
@@ -217,29 +229,29 @@ const UploadButton = styled.button`
 const ScreenSelectButton = styled.select`
   padding: 8px;
   border: 1px solid #dadce0;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  background: #f8f9fa;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  background: #f9fafb;
   cursor: pointer;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:focus {
-    border-color: #4285f4;
+    border-color: #1a73e8;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
   }
 `
 
 const ErrorMessage = styled.div`
-  color: #d93025;
-  margin: 5px 0;
+  color: #d32f2f;
+  margin: 8px 16px;
   padding: 8px;
-  background: #fce8e6;
-  border-radius: 4px;
+  background: #fee2e2;
+  border-radius: 6px;
   text-align: center;
   font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
   animation: fadeInOut 3s ease-in-out;
 
   @keyframes fadeInOut {
@@ -251,14 +263,14 @@ const ErrorMessage = styled.div`
 `
 
 const SuccessMessage = styled.div`
-  color: #34a853;
-  margin: 5px 0;
+  color: #2e7d32;
+  margin: 8px 16px;
   padding: 8px;
   background: #e8f5e9;
-  border-radius: 4px;
+  border-radius: 6px;
   text-align: center;
   font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
   animation: fadeInOut 3s ease-in-out;
 
   @keyframes fadeInOut {
@@ -363,14 +375,14 @@ const SplitScreenModal = ({
       return (
         <div
           style={{
-            color: "#5f6368",
+            color: "#6b7280",
             textAlign: "center",
             height: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: "16px",
-            fontFamily: "'Roboto', Arial, sans-serif",
+            fontFamily: "'Inter', 'Roboto', Arial, sans-serif",
           }}
         >
           Enter a URL or upload a file to view content
@@ -404,7 +416,7 @@ const SplitScreenModal = ({
             />
             <FileInputWrapper>
               <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-              <UploadButton style={{backgroundColor: 'rgb(199, 51, 155)'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+              <UploadButton style={{backgroundColor: '#c2185b'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
             </FileInputWrapper>
             <StyledInput
               type="text"
@@ -414,7 +426,7 @@ const SplitScreenModal = ({
             />
             <FileInputWrapper>
               <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-              <UploadButton style={{backgroundColor: 'rgb(165, 0, 255)'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+              <UploadButton style={{backgroundColor: '#7b1fa2'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
             </FileInputWrapper>
             <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
               <option value="both">Both Screens</option>
