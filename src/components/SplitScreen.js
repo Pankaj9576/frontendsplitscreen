@@ -107,6 +107,7 @@ const CustomScrollbar = styled.div`
     background: rgb(86, 91, 97);
     border-radius: 8px;
     border: 2px solid #e0e0e0;
+    min-width: 50px; /* Ensure thumb is always visible */
   }
 
   &::-webkit-scrollbar-thumb:hover {
@@ -201,13 +202,13 @@ const SplitScreen = ({ children, screenMode }) => {
       if (leftPanelRef.current) {
         const contentWidth = leftPanelRef.current.scrollWidth;
         const panelWidth = leftPanelRef.current.clientWidth;
-        const minScrollWidth = Math.max(panelWidth, contentWidth); // Match panel width if no overflow
+        const minScrollWidth = Math.max(panelWidth, contentWidth, panelWidth + 50); // Ensure scrollbar thumb is always visible
         setLeftScrollWidth(minScrollWidth);
       }
       if (rightPanelRef.current) {
         const contentWidth = rightPanelRef.current.scrollWidth;
         const panelWidth = rightPanelRef.current.clientWidth;
-        const minScrollWidth = Math.max(panelWidth, contentWidth); // Match panel width if no overflow
+        const minScrollWidth = Math.max(panelWidth, contentWidth, panelWidth + 50); // Ensure scrollbar thumb is always visible
         setRightScrollWidth(minScrollWidth);
       }
     };

@@ -176,42 +176,11 @@ const UploadButton = styled.button`
   }
 `
 
-const ScreenButtonContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-`
-
-const ScreenButton = styled.button`
-  padding: 8px 12px;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
+const ScreenSelectButton = styled.select`
+  padding: 8px;
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
-  background: #f8f9fa;
   cursor: pointer;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-
-  &:hover {
-    background: #e8eaed;
-  }
-
-  &:focus {
-    border-color: #4285f4;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
-  }
-
-  &.active {
-    background: #4285f4;
-    color: white;
-    border-color: #4285f4;
-
-    &:hover {
-      background: #3267d6;
-    }
-  }
 `
 
 const ErrorMessage = styled.div`
@@ -362,26 +331,11 @@ const SplitScreenModal = ({
               </FileInputWrapper>
             </SideContainer>
 
-            <ScreenButtonContainer>
-              <ScreenButton
-                className={screenMode === "left" ? "active" : ""}
-                onClick={() => setScreenMode("left")}
-              >
-                Left Screen
-              </ScreenButton>
-              <ScreenButton
-                className={screenMode === "both" ? "active" : ""}
-                onClick={() => setScreenMode("both")}
-              >
-                Both Screens
-              </ScreenButton>
-              <ScreenButton
-                className={screenMode === "right" ? "active" : ""}
-                onClick={() => setScreenMode("right")}
-              >
-                Right Screen
-              </ScreenButton>
-            </ScreenButtonContainer>
+            <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
+              <option value="both">Both Screens</option>
+              <option value="left">Left Screen</option>
+              <option value="right">Right Screen</option>
+            </ScreenSelectButton>
 
             <SideContainer>
               <StyledInput
