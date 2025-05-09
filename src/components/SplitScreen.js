@@ -11,7 +11,7 @@ const SplitScreenContainer = styled.div`
 `;
 
 const Panel = styled.div`
-  height: 100%;
+  height: calc(100% - 16px); /* Adjusted height to account for scrollbar */
   overflow-x: auto; /* Allow horizontal overflow for scrollbar */
   overflow-y: auto; /* Keep vertical scrolling */
   border: 1px solid #e0e0e0;
@@ -20,7 +20,6 @@ const Panel = styled.div`
   position: relative;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 16px; /* Reserve space for the scrollbar */
 
   &:first-child {
     border-right: none;
@@ -107,7 +106,7 @@ const CustomScrollbar = styled.div`
     background: rgb(86, 91, 97);
     border-radius: 8px;
     border: 2px solid #e0e0e0;
-    min-width: 50px; /* Ensure thumb is always visible */
+    min-width: 100px; /* Increased min-width to ensure visibility */
   }
 
   &::-webkit-scrollbar-thumb:hover {
@@ -200,15 +199,15 @@ const SplitScreen = ({ children, screenMode }) => {
   useEffect(() => {
     const updateScrollWidth = () => {
       if (leftPanelRef.current) {
-        const contentWidth = leftPanelRef.current.scrollWidth;
         const panelWidth = leftPanelRef.current.clientWidth;
-        const minScrollWidth = Math.max(panelWidth, contentWidth, panelWidth + 50); // Ensure scrollbar thumb is always visible
+        const contentWidth = leftPanelRef.current.scrollWidth;
+        const minScrollWidth = Math.max(panelWidth + 200, contentWidth); // Ensure scrollbar is always wider
         setLeftScrollWidth(minScrollWidth);
       }
       if (rightPanelRef.current) {
-        const contentWidth = rightPanelRef.current.scrollWidth;
         const panelWidth = rightPanelRef.current.clientWidth;
-        const minScrollWidth = Math.max(panelWidth, contentWidth, panelWidth + 50); // Ensure scrollbar thumb is always visible
+        const contentWidth = rightPanelRef.current.scrollWidth;
+        const minScrollWidth = Math.max(panelWidth + 200, contentWidth); // Ensure scrollbar is always wider
         setRightScrollWidth(minScrollWidth);
       }
     };
