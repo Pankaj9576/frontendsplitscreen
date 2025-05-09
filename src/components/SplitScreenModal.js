@@ -181,7 +181,6 @@ const ScreenSelectButton = styled.select`
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   cursor: pointer;
-  marginLeft: 30px;
 `
 
 const ErrorMessage = styled.div`
