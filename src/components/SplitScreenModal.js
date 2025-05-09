@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import styled from "styled-components"
 import SplitScreen from "./SplitScreen"
-import { useGoogleLogin } from "@react-oauth/google"
 import ProxyContent from "./ProxyContent"
 
 const ModalBackground = styled.div`
@@ -53,7 +52,7 @@ const HeaderContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px; /* Adjusted padding for better alignment */
+  padding: 10px 20px;
   border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
   margin: 0;
@@ -63,7 +62,7 @@ const HeaderContainer = styled.div`
 `
 
 const CloseButton = styled.button`
-  margin-right: 30px;/* Reduced margin to avoid pushing content too far */
+  margin-right: 30px;
   color: white;
   border: none;
   width: 40px;
@@ -85,42 +84,6 @@ const CloseButton = styled.button`
 
   &:active {
     background: rgb(55, 43, 43);
-  }
-`
-
-const LoginButton = styled.button`
-  padding: 8px 16px;
-  background-color: #4285f4;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  font-family: 'Roboto', Arial, sans-serif;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-  flex: 1;
-  max-width: 200px;
-
-  &:before {
-    content: '';
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    background: url('https://www.google.com/favicon.ico') no-repeat center;
-    background-size: contain;
-  }
-
-  &:hover {
-    background-color: #3267d6;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-  }
-
-  &:active {
-    background-color: #2a56c6;
   }
 `
 
@@ -195,12 +158,12 @@ const UploadButton = styled.button`
   transition: background 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    filter: brightness(90%); /* Slightly darken on hover */
+    filter: brightness(90%);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   }
 
   &:active {
-    filter: brightness(80%); /* Darker on click */
+    filter: brightness(80%);
   }
 
   &:disabled {
@@ -245,25 +208,6 @@ const ErrorMessage = styled.div`
   }
 `
 
-const SuccessMessage = styled.div`
-  color: #34a853;
-  margin: 5px 0;
-  padding: 8px;
-  background: #e8f5e9;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  animation: fadeInOut 3s ease-in-out;
-
-  @keyframes fadeInOut {
-    0% { opacity: 0; }
-    20% { opacity: 1; }
-    80% { opacity: 1; }
-    100% { opacity: 0; }
-  }
-`
-
 const SplitScreenModal = ({
   leftSrc: initialLeftSrc = "",
   rightSrc: initialRightSrc = null,
@@ -274,8 +218,6 @@ const SplitScreenModal = ({
   const [error, setError] = useState(null)
   const [leftFile, setLeftFile] = useState(null)
   const [rightFile, setRightFile] = useState(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
   const [screenMode, setScreenMode] = useState("both")
   const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
   const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
@@ -298,15 +240,6 @@ const SplitScreenModal = ({
       setLocalRightSrc(initialRightSrc)
     }
   }, [rightSrc, initialRightSrc, setRightSrc])
-
-  useEffect(() => {
-    if (showSuccess) {
-      const timer = setTimeout(() => {
-        setShowSuccess(false)
-      }, 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [showSuccess])
 
   const handleUploadComplete = async (side, file) => {
     if (!file) {
@@ -420,7 +353,6 @@ const SplitScreenModal = ({
           </InputWrapper>
         </HeaderContainer>
         {error && <ErrorMessage>{error}</ErrorMessage>}
-        {showSuccess && <SuccessMessage>Sign-in successful!</SuccessMessage>}
         <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
           {renderContent(leftSrc, "left")}
           {renderContent(rightSrc, "right")}
