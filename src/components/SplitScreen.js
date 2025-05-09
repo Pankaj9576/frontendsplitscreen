@@ -11,9 +11,9 @@ const SplitScreenContainer = styled.div`
 `;
 
 const Panel = styled.div`
-  height: calc(100% - 16px); /* Adjusted height to account for scrollbar */
-  overflow-x: auto; /* Allow horizontal overflow for scrollbar */
-  overflow-y: auto; /* Keep vertical scrolling */
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
   border: 1px solid #e0e0e0;
   background: #f9f9f9;
   transition: width 0.3s ease;
@@ -85,28 +85,28 @@ const CustomScrollbar = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  height: 16px;
+  height: 12px;
   background: #e0e0e0;
   border-top: 1px solid #d1d1d1;
-  overflow-x: scroll; /* Always show the scrollbar track */
+  overflow-x: auto;
   overflow-y: hidden;
-  z-index: 1000; /* Ensure visibility */
-  display: block; /* Always visible */
+  z-index: 1000;
+  display: block;
 
   &::-webkit-scrollbar {
-    height: 16px;
+    height: 12px;
   }
 
   &::-webkit-scrollbar-track {
     background: #e0e0e0;
-    border-radius: 8px;
+    border-radius: 6px;
   }
 
   &::-webkit-scrollbar-thumb {
     background: rgb(86, 91, 97);
-    border-radius: 8px;
+    border-radius: 6px;
     border: 2px solid #e0e0e0;
-    min-width: 100px; /* Increased min-width to ensure visibility */
+    min-width: 100px;
   }
 
   &::-webkit-scrollbar-thumb:hover {
@@ -118,7 +118,7 @@ const CustomScrollbar = styled.div`
 `;
 
 const ScrollbarContent = styled.div`
-  height: 16px;
+  height: 12px;
   width: ${({ $scrollWidth }) => $scrollWidth}px;
 `;
 
@@ -175,7 +175,7 @@ const SplitScreen = ({ children, screenMode }) => {
       handleResize(e);
     };
 
-    const handlePointerUp = () => {
+    const handlePointerUp = (e) => {
       setIsResizing(false);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
@@ -199,59 +199,71 @@ const SplitScreen = ({ children, screenMode }) => {
   useEffect(() => {
     const updateScrollWidth = () => {
       if (leftPanelRef.current) {
-        const panelWidth = leftPanelRef.current.clientWidth;
         const contentWidth = leftPanelRef.current.scrollWidth;
-        const minScrollWidth = Math.max(panelWidth + 200, contentWidth); // Ensure scrollbar is always wider
+        const panelWidth = leftPanelRef.current.clientWidth;
+        const minScrollWidth = Math.max(contentWidth, panelWidth * 1.5);
         setLeftScrollWidth(minScrollWidth);
+        leftPanelRef.current.scrollLeft = leftPanelRef.current.scrollLeft; // Force re-sync
       }
       if (rightPanelRef.current) {
-        const panelWidth = rightPanelRef.current.clientWidth;
         const contentWidth = rightPanelRef.current.scrollWidth;
-        const minScrollWidth = Math.max(panelWidth + 200, contentWidth); // Ensure scrollbar is always wider
+        const panelWidth = rightPanelRef.current.clientWidth;
+        const minScrollWidth = Math.max(contentWidth, panelWidth * 1.5);
         setRightScrollWidth(minScrollWidth);
+        rightPanelRef.current.scrollLeft = rightPanelRef.current.scrollLeft; // Force re-sync
       }
     };
 
     updateScrollWidth();
 
-    const resizeObserver = new ResizeObserver(updateScrollWidth);
+    const resizeObserver = new ResizeObserver(() => {
+      updateScrollWidth();
+    });
     if (leftPanelRef.current) resizeObserver.observe(leftPanelRef.current);
     if (rightPanelRef.current) resizeObserver.observe(rightPanelRef.current);
 
+    const mutationObserver = new MutationObserver(() => {
+      updateScrollWidth();
+    });
+    if (leftPanelRef.current) mutationObserver.observe(leftPanelRef.current, { childList: true, subtree: true });
+    if (rightPanelRef.current) mutationObserver.observe(rightPanelRef.current, { childList: true, subtree: true });
+
     return () => {
       resizeObserver.disconnect();
+      mutationObserver.disconnect();
     };
   }, [children, screenMode]);
 
   useEffect(() => {
-    const handleLeftPanelScroll = () => {
-      if (leftPanelRef.current && leftScrollRef.current) {
-        leftScrollRef.current.scrollLeft = leftPanelRef.current.scrollLeft;
-      }
+    let isScrolling = false;
+
+    const syncScroll = (panel, scrollBar) => {
+      if (isScrolling || !panel.current || !scrollBar.current) return;
+      isScrolling = true;
+      scrollBar.current.scrollLeft = panel.current.scrollLeft;
+      requestAnimationFrame(() => {
+        isScrolling = false;
+      });
     };
 
-    const handleRightPanelScroll = () => {
-      if (rightPanelRef.current && rightScrollRef.current) {
-        rightScrollRef.current.scrollLeft = rightPanelRef.current.scrollLeft;
-      }
+    const syncCustomScroll = (panel, scrollBar) => {
+      if (isScrolling || !panel.current || !scrollBar.current) return;
+      isScrolling = true;
+      panel.current.scrollLeft = scrollBar.current.scrollLeft;
+      requestAnimationFrame(() => {
+        isScrolling = false;
+      });
     };
 
-    const handleLeftCustomScroll = () => {
-      if (leftPanelRef.current && leftScrollRef.current) {
-        leftPanelRef.current.scrollLeft = leftScrollRef.current.scrollLeft;
-      }
-    };
+    const handleLeftPanelScroll = () => syncScroll(leftPanelRef, leftScrollRef);
+    const handleRightPanelScroll = () => syncScroll(rightPanelRef, rightScrollRef);
+    const handleLeftCustomScroll = () => syncCustomScroll(leftPanelRef, leftScrollRef);
+    const handleRightCustomScroll = () => syncCustomScroll(rightPanelRef, rightScrollRef);
 
-    const handleRightCustomScroll = () => {
-      if (rightPanelRef.current && rightScrollRef.current) {
-        rightPanelRef.current.scrollLeft = rightScrollRef.current.scrollLeft;
-      }
-    };
-
-    if (leftPanelRef.current) leftPanelRef.current.addEventListener("scroll", handleLeftPanelScroll);
-    if (rightPanelRef.current) rightPanelRef.current.addEventListener("scroll", handleRightPanelScroll);
-    if (leftScrollRef.current) leftScrollRef.current.addEventListener("scroll", handleLeftCustomScroll);
-    if (rightScrollRef.current) rightScrollRef.current.addEventListener("scroll", handleRightCustomScroll);
+    if (leftPanelRef.current) leftPanelRef.current.addEventListener("scroll", handleLeftPanelScroll, { passive: true });
+    if (rightPanelRef.current) rightPanelRef.current.addEventListener("scroll", handleRightPanelScroll, { passive: true });
+    if (leftScrollRef.current) leftScrollRef.current.addEventListener("scroll", handleLeftCustomScroll, { passive: true });
+    if (rightScrollRef.current) rightScrollRef.current.addEventListener("scroll", handleRightCustomScroll, { passive: true });
 
     return () => {
       if (leftPanelRef.current) leftPanelRef.current.removeEventListener("scroll", handleLeftPanelScroll);
@@ -291,12 +303,12 @@ const SplitScreen = ({ children, screenMode }) => {
 
   useEffect(() => {
     const handleWheel = (e) => {
-      const scrollAmount = e.deltaY * 0.5;
-      if (leftPanelRef.current && screenMode !== "right" && e.target.closest(`[ref="${leftPanelRef.current}"]`)) {
+      const scrollAmount = e.deltaY;
+      if (leftPanelRef.current && screenMode !== "right" && (e.target === leftPanelRef.current || leftPanelRef.current.contains(e.target))) {
         leftPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
         e.preventDefault();
       }
-      if (rightPanelRef.current && screenMode !== "left" && e.target.closest(`[ref="${rightPanelRef.current}"]`)) {
+      if (rightPanelRef.current && screenMode !== "left" && (e.target === rightPanelRef.current || rightPanelRef.current.contains(e.target))) {
         rightPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
         e.preventDefault();
       }

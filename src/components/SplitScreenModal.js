@@ -37,12 +37,12 @@ const ModalContent = styled.div`
   border: none;
   overflow: hidden;
   font-family: 'Roboto', Arial, sans-serif;
-  animation: slideIn 0.4s ease-out;
+  animation: slideIn 0.3s ease-out;
   margin: 0;
   padding: 0;
 
   @keyframes slideIn {
-    from { transform: translateY(-50px); opacity: 0; }
+    from { transform: translateY(-30px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
 `
@@ -51,8 +51,8 @@ const HeaderContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 6px;
+  padding: 4px 8px;
   border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
   margin: 0;
@@ -62,15 +62,15 @@ const HeaderContainer = styled.div`
 `
 
 const CloseButton = styled.button`
-  margin-right: 20px;
+  margin-right: 10px;
   color: white;
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   background-color: rgba(17, 14, 14, 0.87);
   cursor: pointer;
   font-weight: 600;
-  font-size: 20px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,33 +91,33 @@ const InputWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: nowrap;
   width: 100%;
   flex: 1;
 
   @media (max-width: 768px) {
-    gap: 6px;
+    gap: 4px;
   }
 `
 
 const SideContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: nowrap;
   flex: 1;
 
   @media (max-width: 768px) {
-    gap: 6px;
+    gap: 4px;
   }
 `
 
 const StyledInput = styled.input`
-  padding: 8px 10px;
+  padding: 6px 8px;
   border: 1px solid #dadce0;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 13px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -138,26 +138,26 @@ const StyledInput = styled.input`
 const FileInputWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 `
 
 const FileInput = styled.input`
-  padding: 6px;
+  padding: 4px;
   border: 1px solid #dadce0;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 13px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  min-width: 120px;
+  min-width: 100px;
 `
 
 const UploadButton = styled.button`
-  padding: 8px 10px;
+  padding: 6px 8px;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   font-family: 'Roboto', Arial, sans-serif;
   transition: background 0.3s ease, box-shadow 0.3s ease;
@@ -178,8 +178,8 @@ const UploadButton = styled.button`
 `
 
 const ScreenSelectButton = styled.select`
-  padding: 8px;
-  font-size: 14px;
+  padding: 6px;
+  font-size: 13px;
   font-family: 'Roboto', Arial, sans-serif;
   cursor: pointer;
   border-radius: 4px;
@@ -188,12 +188,12 @@ const ScreenSelectButton = styled.select`
 
 const ErrorMessage = styled.div`
   color: #d93025;
-  margin: 5px 0;
-  padding: 8px;
+  margin: 2px 0;
+  padding: 4px;
   background: #fce8e6;
   border-radius: 4px;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
   font-family: 'Roboto', Arial, sans-serif;
   animation: fadeInOut 3s ease-in-out;
 
@@ -294,7 +294,7 @@ const SplitScreenModal = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "16px",
+            fontSize: "14px",
             fontFamily: "'Roboto', Arial, sans-serif",
           }}
         >
