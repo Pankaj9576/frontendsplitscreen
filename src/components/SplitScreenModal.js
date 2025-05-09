@@ -51,8 +51,8 @@ const HeaderContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
+  gap: 8px;
+  padding: 8px 16px;
   border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
   margin: 0;
@@ -62,15 +62,15 @@ const HeaderContainer = styled.div`
 `
 
 const CloseButton = styled.button`
-  margin-right: 30px;
+  margin-right: 20px;
   color: white;
   border: none;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background-color: rgba(17, 14, 14, 0.87);
   cursor: pointer;
   font-weight: 600;
-  font-size: 24px;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,29 +91,30 @@ const InputWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: nowrap;
   width: 100%;
   flex: 1;
 
   @media (max-width: 768px) {
-    gap: 8px;
+    gap: 6px;
   }
 `
 
 const SideContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: nowrap;
+  flex: 1;
 
   @media (max-width: 768px) {
-    gap: 8px;
+    gap: 6px;
   }
 `
 
 const StyledInput = styled.input`
-  padding: 11px 12px;
+  padding: 8px 10px;
   border: 1px solid #dadce0;
   border-radius: 4px;
   font-size: 14px;
@@ -121,7 +122,7 @@ const StyledInput = styled.input`
   background: #f8f9fa;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   flex: 1;
-  min-width: 200px;
+  min-width: 0;
 
   &:focus {
     border-color: #4285f4;
@@ -137,21 +138,21 @@ const StyledInput = styled.input`
 const FileInputWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 `
 
 const FileInput = styled.input`
-  padding: 8px;
+  padding: 6px;
   border: 1px solid #dadce0;
   border-radius: 4px;
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  min-width: 150px;
+  min-width: 120px;
 `
 
 const UploadButton = styled.button`
-  padding: 11px 12px;
+  padding: 8px 10px;
   color: white;
   border: none;
   border-radius: 4px;
@@ -181,6 +182,8 @@ const ScreenSelectButton = styled.select`
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #dadce0;
 `
 
 const ErrorMessage = styled.div`
