@@ -250,6 +250,12 @@ const LoginSignupWrapper = styled.div`
     text-align: center;
     margin-top: 10px;
   }
+
+  .success-message {
+    color: green;
+    text-align: center;
+    margin-top: 10px;
+  }
 `;
 
 const LoginSignup = ({ onLogin }) => {
@@ -258,10 +264,12 @@ const LoginSignup = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSlide = () => {
     setIsLogin(!isLogin);
     setError('');
+    setSuccess('');
     setEmail('');
     setPassword('');
     setConfirmPassword('');
@@ -269,6 +277,9 @@ const LoginSignup = ({ onLogin }) => {
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -294,19 +305,23 @@ const LoginSignup = ({ onLogin }) => {
       users.push(newUser);
       localStorage.setItem('users', JSON.stringify(users));
 
-      // Redirect to login form instead of directly logging in
+      // Redirect to login form
       setIsLogin(true);
-      setError('Signup successful! Please login.');
+      setSuccess('Signup successful! Please login.');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setError('Failed to connect to the server');
+      setError('Failed to connect to the server. Please check your network or try again later.');
+      console.error('Signup error:', err);
     }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+
     const users = JSON.parse(localStorage.getItem('users')) || [];
     const user = users.find(user => user.email === email && user.password === password);
 
@@ -331,9 +346,11 @@ const LoginSignup = ({ onLogin }) => {
 
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('token', data.token); // Store JWT token
+      setSuccess('Login successful!');
       onLogin(user);
     } catch (err) {
-      setError('Failed to connect to the server');
+      setError('Failed to connect to the server. Please check your network or try again later.');
+      console.error('Login error:', err);
     }
   };
 
@@ -361,12 +378,16 @@ const LoginSignup = ({ onLogin }) => {
 
         localStorage.setItem('currentUser', JSON.stringify(user));
         localStorage.setItem('token', data.token);
+        setSuccess('Google login successful!');
         onLogin(user);
       } catch (err) {
-        setError('Google login failed');
+        setError('Google login failed. Please try again.');
+        console.error('Google login error:', err);
       }
     },
-    onError: () => setError('Google login failed'),
+    onError: () => {
+      setError('Google login failed. Please try again.');
+    },
   });
 
   return (
@@ -470,6 +491,7 @@ const LoginSignup = ({ onLogin }) => {
             </button>
           </div>
           {error && <div className="error-message">{error}</div>}
+          {success && <div className="success-message">{success}</div>}
         </div>
       </LoginSignupWrapper>
     </>
