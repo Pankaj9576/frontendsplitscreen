@@ -286,18 +286,19 @@ const LoginSignup = ({ onLogin }) => {
     }
 
     try {
-      // Call backend to signup
       const response = await fetch('https://split-screen-backend.vercel.app/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // Add credentials for CORS with cookies
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        setError(data.error || 'Signup failed');
-        return;
+        const data = await response.json();
+        throw new Error(data.error || 'Signup failed');
       }
+
+      const data = await response.json();
 
       // Store user in localStorage (for fallback if backend fails)
       const users = JSON.parse(localStorage.getItem('users')) || [];
@@ -312,7 +313,7 @@ const LoginSignup = ({ onLogin }) => {
       setPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setError('Failed to connect to the server. Please check your network or try again later.');
+      setError(err.message || 'Failed to connect to the server. Please check your network or try again later.');
       console.error('Signup error:', err);
     }
   };
@@ -331,25 +332,25 @@ const LoginSignup = ({ onLogin }) => {
     }
 
     try {
-      // Verify with backend
       const response = await fetch('https://split-screen-backend.vercel.app/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // Add credentials for CORS with cookies
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        setError(data.error || 'Login failed');
-        return;
+        const data = await response.json();
+        throw new Error(data.error || 'Login failed');
       }
 
+      const data = await response.json();
       localStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('token', data.token); // Store JWT token
       setSuccess('Login successful!');
       onLogin(user);
     } catch (err) {
-      setError('Failed to connect to the server. Please check your network or try again later.');
+      setError(err.message || 'Failed to connect to the server. Please check your network or try again later.');
       console.error('Login error:', err);
     }
   };
@@ -363,25 +364,25 @@ const LoginSignup = ({ onLogin }) => {
         const userInfo = await res.json();
         const user = { email: userInfo.email, googleId: userInfo.sub };
 
-        // Verify with backend
         const response = await fetch('https://split-screen-backend.vercel.app/api/google-login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(user),
+          credentials: 'include', // Add credentials for CORS with cookies
         });
 
-        const data = await response.json();
         if (!response.ok) {
-          setError(data.error || 'Google login failed');
-          return;
+          const data = await response.json();
+          throw new Error(data.error || 'Google login failed');
         }
 
+        const data = await response.json();
         localStorage.setItem('currentUser', JSON.stringify(user));
         localStorage.setItem('token', data.token);
         setSuccess('Google login successful!');
         onLogin(user);
       } catch (err) {
-        setError('Google login failed. Please try again.');
+        setError(err.message || 'Google login failed. Please try again.');
         console.error('Google login error:', err);
       }
     },

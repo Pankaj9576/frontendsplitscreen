@@ -22,19 +22,28 @@ function App() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include', // Add credentials for CORS with cookies
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('Token verification failed');
+          }
+          return res.json();
+        })
         .then(data => {
           if (data.valid) {
             setIsAuthenticated(true);
           } else {
             localStorage.removeItem('token');
             localStorage.removeItem('currentUser');
+            setIsAuthenticated(false);
           }
         })
-        .catch(() => {
+        .catch(err => {
+          console.error('Token verification error:', err);
           localStorage.removeItem('token');
           localStorage.removeItem('currentUser');
+          setIsAuthenticated(false);
         });
     }
   }, []);
