@@ -12,7 +12,7 @@ const SplitScreenContainer = styled.div`
 
 const Panel = styled.div`
   height: 100%;
-  overflow-x: visible; /* Allow horizontal overflow for scrollbar */
+  overflow-x: auto; /* Allow horizontal overflow for scrollbar */
   overflow-y: auto; /* Keep vertical scrolling */
   border: 1px solid #e0e0e0;
   background: #f9f9f9;
