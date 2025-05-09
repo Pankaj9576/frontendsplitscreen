@@ -267,25 +267,42 @@ const LoginSignup = ({ onLogin }) => {
     setConfirmPassword('');
   };
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    // Store user in localStorage (for simplicity; in production, use backend)
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    if (users.some(user => user.email === email)) {
-      setError('User already exists');
-      return;
-    }
+    try {
+      // Call backend to signup
+      const response = await fetch('https://split-screen-backend.vercel.app/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const newUser = { email, password };
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    localStorage.setItem('currentUser', JSON.stringify(newUser));
-    onLogin(newUser);
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || 'Signup failed');
+        return;
+      }
+
+      // Store user in localStorage (for fallback if backend fails)
+      const users = JSON.parse(localStorage.getItem('users')) || [];
+      const newUser = { email, password };
+      users.push(newUser);
+      localStorage.setItem('users', JSON.stringify(users));
+
+      // Redirect to login form instead of directly logging in
+      setIsLogin(true);
+      setError('Signup successful! Please login.');
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setError('Failed to connect to the server');
+    }
   };
 
   const handleLogin = async (e) => {
