@@ -55,14 +55,14 @@ const HeaderContainer = styled.div`
   padding: 10px 20px;
   border-bottom: 1px solid #dadce0;
   flex-shrink: 0;
-  margin: 0;
   background: #fff;
   z-index: 1001;
   width: 100%;
+  box-sizing: border-box;
 `
 
 const CloseButton = styled.button`
-  margin-right: 30px;
+  margin-right: 20px;
   color: white;
   border: none;
   width: 40px;
@@ -94,9 +94,11 @@ const InputWrapper = styled.div`
   flex-wrap: nowrap;
   width: 100%;
   flex: 1;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
     gap: 8px;
+    flex-wrap: wrap;
   }
 `
 
@@ -105,21 +107,26 @@ const SideContainer = styled.div`
   align-items: center;
   gap: 12px;
   flex-wrap: nowrap;
+  flex: 1;
+  min-width: 250px;
 
   @media (max-width: 768px) {
     gap: 8px;
+    flex: 1 1 100%;
+    min-width: 0;
   }
 `
 
 const DropdownContainer = styled.div`
-  flex: 1;
+  flex: 0 1 auto;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 0 10px;
 `
 
 const StyledInput = styled.input`
-  padding: 8px 10px; /* Reduced padding to decrease height */
+  padding: 8px 10px;
   border: 1px solid #dadce0;
   border-radius: 4px;
   font-size: 14px;
@@ -127,7 +134,11 @@ const StyledInput = styled.input`
   background: #f8f9fa;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   flex: 1;
-  min-width: 200px;
+  min-width: 150px;
+
+  @media (max-width: 768px) {
+    min-width: 100px;
+  }
 
   &:focus {
     border-color: #4285f4;
@@ -147,17 +158,21 @@ const FileInputWrapper = styled.div`
 `
 
 const FileInput = styled.input`
-  padding: 6px; /* Reduced padding to decrease height */
+  padding: 6px;
   border: 1px solid #dadce0;
   border-radius: 4px;
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  min-width: 150px;
+  min-width: 120px;
+
+  @media (max-width: 768px) {
+    min-width: 100px;
+  }
 `
 
 const UploadButton = styled.button`
-  padding: 8px 10px; /* Reduced padding to decrease height */
+  padding: 8px 10px;
   color: white;
   border: none;
   border-radius: 4px;
@@ -183,10 +198,13 @@ const UploadButton = styled.button`
 `
 
 const ScreenSelectButton = styled.select`
-  padding: 6px; /* Reduced padding to decrease height */
+  padding: 6px;
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   cursor: pointer;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  background: #f8f9fa;
 `
 
 const ErrorMessage = styled.div`
@@ -206,6 +224,16 @@ const ErrorMessage = styled.div`
     90% { opacity: 1; }
     100% { opacity: 0; }
   }
+`
+
+const SplitScreenWrapper = styled.div`
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
 `
 
 const SplitScreenModal = ({
@@ -294,11 +322,13 @@ const SplitScreenModal = ({
             color: "#5f6368",
             textAlign: "center",
             height: "100%",
+            width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: "16px",
             fontFamily: "'Roboto', Arial, sans-serif",
+            overflowX: "auto",
           }}
         >
           Enter a URL or upload a file to view content
@@ -309,13 +339,15 @@ const SplitScreenModal = ({
     const isBlobUrl = src.startsWith("blob:")
     const file = isBlobUrl ? (side === "left" ? leftFile : rightFile) : null
     return (
-      <ProxyContent
-        url={src}
-        backendUrl={BACKEND_URL}
-        onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
-        isFileUpload={isBlobUrl}
-        fileName={file ? file.name : null}
-      />
+      <div style={{ width: "100%", height: "100%", overflowX: "auto" }}>
+        <ProxyContent
+          url={src}
+          backendUrl={BACKEND_URL}
+          onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
+          isFileUpload={isBlobUrl}
+          fileName={file ? file.name : null}
+        />
+      </div>
     )
   }
 
@@ -333,7 +365,7 @@ const SplitScreenModal = ({
               />
               <FileInputWrapper>
                 <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: 'rgb(199, 51, 155)'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+                <UploadButton style={{ backgroundColor: 'rgb(199, 51, 155)' }} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
               </FileInputWrapper>
             </SideContainer>
 
@@ -354,7 +386,7 @@ const SplitScreenModal = ({
               />
               <FileInputWrapper>
                 <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: 'rgb(165, 0, 255)'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+                <UploadButton style={{ backgroundColor: 'rgb(165, 0, 255)' }} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
               </FileInputWrapper>
             </SideContainer>
 
@@ -362,10 +394,12 @@ const SplitScreenModal = ({
           </InputWrapper>
         </HeaderContainer>
         {error && <ErrorMessage>{error}</ErrorMessage>}
-        <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
-          {renderContent(leftSrc, "left")}
-          {renderContent(rightSrc, "right")}
-        </SplitScreen>
+        <SplitScreenWrapper>
+          <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
+            {renderContent(leftSrc, "left")}
+            {renderContent(rightSrc, "right")}
+          </SplitScreen>
+        </SplitScreenWrapper>
       </ModalContent>
     </ModalBackground>
   )
