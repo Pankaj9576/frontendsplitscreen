@@ -89,7 +89,7 @@ const CustomScrollbar = styled.div`
   height: 16px;
   background: #e0e0e0;
   border-top: 1px solid #d1d1d1;
-  overflow-x: auto;
+  overflow-x: scroll; /* Always show the scrollbar track */
   overflow-y: hidden;
   z-index: 1000; /* Ensure visibility */
   display: block; /* Always visible */
@@ -201,14 +201,14 @@ const SplitScreen = ({ children, screenMode }) => {
       if (leftPanelRef.current) {
         const contentWidth = leftPanelRef.current.scrollWidth;
         const panelWidth = leftPanelRef.current.clientWidth;
-        const minScrollWidth = panelWidth + 100; // Add extra width to ensure scrollbar is always active
-        setLeftScrollWidth(Math.max(contentWidth, minScrollWidth));
+        const minScrollWidth = Math.max(panelWidth, contentWidth); // Match panel width if no overflow
+        setLeftScrollWidth(minScrollWidth);
       }
       if (rightPanelRef.current) {
         const contentWidth = rightPanelRef.current.scrollWidth;
         const panelWidth = rightPanelRef.current.clientWidth;
-        const minScrollWidth = panelWidth + 100; // Add extra width to ensure scrollbar is always active
-        setRightScrollWidth(Math.max(contentWidth, minScrollWidth));
+        const minScrollWidth = Math.max(panelWidth, contentWidth); // Match panel width if no overflow
+        setRightScrollWidth(minScrollWidth);
       }
     };
 
