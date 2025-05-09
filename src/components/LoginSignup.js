@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
-import { useGoogleLogin } from '@react-oauth/google';
+// import { useGoogleLogin } from '@react-oauth/google';
 
 // Global styles for HTML, body, and font import
 const GlobalStyle = createGlobalStyle`
@@ -280,42 +280,49 @@ const LoginSignup = ({ onLogin }) => {
     setError('');
     setSuccess('');
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+    // if (password !== confirmPassword) {
+    //   setError('Passwords do not match');
+    //   return;
+    // }
 
-    try {
-      const response = await fetch('https://split-screen-backend.vercel.app/api/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include', // Add credentials for CORS with cookies
-      });
+    // try {
+    //   const response = await fetch('https://split-screen-backend.vercel.app/api/signup', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ email, password }),
+    //     credentials: 'include',
+    //   });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Signup failed');
-      }
+    //   if (!response.ok) {
+    //     const data = await response.json();
+    //     throw new Error(data.error || 'Signup failed');
+    //   }
 
-      const data = await response.json();
+    //   const data = await response.json();
 
-      // Store user in localStorage (for fallback if backend fails)
-      const users = JSON.parse(localStorage.getItem('users')) || [];
-      const newUser = { email, password };
-      users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
+    //   // Store user in localStorage (for fallback if backend fails)
+    //   const users = JSON.parse(localStorage.getItem('users')) || [];
+    //   const newUser = { email, password };
+    //   users.push(newUser);
+    //   localStorage.setItem('users', JSON.stringify(users));
 
-      // Redirect to login form
-      setIsLogin(true);
-      setSuccess('Signup successful! Please login.');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-    } catch (err) {
-      setError(err.message || 'Failed to connect to the server. Please check your network or try again later.');
-      console.error('Signup error:', err);
-    }
+    //   // Redirect to login form
+    //   setIsLogin(true);
+    //   setSuccess('Signup successful! Please login.');
+    //   setEmail('');
+    //   setPassword('');
+    //   setConfirmPassword('');
+    // } catch (err) {
+    //   setError(err.message || 'Failed to connect to the server. Please check your network or try again later.');
+    //   console.error('Signup error:', err);
+    // }
+
+    // Bypassing signup authentication - directly redirect to login
+    setIsLogin(true);
+    setSuccess('Signup successful! Please login.');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
   };
 
   const handleLogin = async (e) => {
@@ -323,73 +330,79 @@ const LoginSignup = ({ onLogin }) => {
     setError('');
     setSuccess('');
 
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const user = users.find(user => user.email === email && user.password === password);
+    // const users = JSON.parse(localStorage.getItem('users')) || [];
+    // const user = users.find(user => user.email === email && user.password === password);
 
-    if (!user) {
-      setError('Invalid email or password');
-      return;
-    }
+    // if (!user) {
+    //   setError('Invalid email or password');
+    //   return;
+    // }
 
-    try {
-      const response = await fetch('https://split-screen-backend.vercel.app/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include', // Add credentials for CORS with cookies
-      });
+    // try {
+    //   const response = await fetch('https://split-screen-backend.vercel.app/api/login', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ email, password }),
+    //     credentials: 'include',
+    //   });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Login failed');
-      }
+    //   if (!response.ok) {
+    //     const data = await response.json();
+    //     throw new Error(data.error || 'Login failed');
+    //   }
 
-      const data = await response.json();
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      localStorage.setItem('token', data.token); // Store JWT token
-      setSuccess('Login successful!');
-      onLogin(user);
-    } catch (err) {
-      setError(err.message || 'Failed to connect to the server. Please check your network or try again later.');
-      console.error('Login error:', err);
-    }
+    //   const data = await response.json();
+    //   localStorage.setItem('currentUser', JSON.stringify(user));
+    //   localStorage.setItem('token', data.token); // Store JWT token
+    //   setSuccess('Login successful!');
+    //   onLogin(user);
+    // } catch (err) {
+    //   setError(err.message || 'Failed to connect to the server. Please check your network or try again later.');
+    //   console.error('Login error:', err);
+    // }
+
+    // Bypassing login authentication - directly allow login
+    const user = { email, password };
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    setSuccess('Login successful!');
+    onLogin(user);
   };
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        });
-        const userInfo = await res.json();
-        const user = { email: userInfo.email, googleId: userInfo.sub };
+  // const googleLogin = useGoogleLogin({
+  //   onSuccess: async (tokenResponse) => {
+  //     try {
+  //       const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+  //         headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+  //       });
+  //       const userInfo = await res.json();
+  //       const user = { email: userInfo.email, googleId: userInfo.sub };
 
-        const response = await fetch('https://split-screen-backend.vercel.app/api/google-login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(user),
-          credentials: 'include', // Add credentials for CORS with cookies
-        });
+  //       const response = await fetch('https://split-screen-backend.vercel.app/api/google-login', {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify(user),
+  //         credentials: 'include',
+  //       });
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Google login failed');
-        }
+  //       if (!response.ok) {
+  //         const data = await response.json();
+  //         throw new Error(data.error || 'Google login failed');
+  //       }
 
-        const data = await response.json();
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        localStorage.setItem('token', data.token);
-        setSuccess('Google login successful!');
-        onLogin(user);
-      } catch (err) {
-        setError(err.message || 'Google login failed. Please try again.');
-        console.error('Google login error:', err);
-      }
-    },
-    onError: () => {
-      setError('Google login failed. Please try again.');
-    },
-  });
+  //       const data = await response.json();
+  //       localStorage.setItem('currentUser', JSON.stringify(user));
+  //       localStorage.setItem('token', data.token);
+  //       setSuccess('Google login successful!');
+  //       onLogin(user);
+  //     } catch (err) {
+  //       setError(err.message || 'Google login failed. Please try again.');
+  //       console.error('Google login error:', err);
+  //     }
+  //   },
+  //   onError: () => {
+  //     setError('Google login failed. Please try again.');
+  //   },
+  // });
 
   return (
     <>
@@ -485,12 +498,12 @@ const LoginSignup = ({ onLogin }) => {
               )}
             </div>
           </div>
-          <div className="google-login-btn">
+          {/* <div className="google-login-btn">
             <button onClick={() => googleLogin()}>
               <img src="https://www.google.com/favicon.ico" alt="Google" />
               Login with Google
             </button>
-          </div>
+          </div> */}
           {error && <div className="error-message">{error}</div>}
           {success && <div className="success-message">{success}</div>}
         </div>

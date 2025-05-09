@@ -7,46 +7,46 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leftUrl, setLeftUrl] = useState('');
   const [rightUrl, setRightUrl] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Bypassing authentication
 
   const GOOGLE_SHEET_URL = 'https://www.wipo.int/export/sites/www/sme/en/documents/pdf/ip_panorama_3_learning_points.pdf';
   const PATENT_URL = 'https://patents.google.com/patent/GB2459793B';
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      // Verify token with backend
-      fetch('https://split-screen-backend.vercel.app/api/verify-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        credentials: 'include', // Add credentials for CORS with cookies
-      })
-        .then(res => {
-          if (!res.ok) {
-            throw new Error('Token verification failed');
-          }
-          return res.json();
-        })
-        .then(data => {
-          if (data.valid) {
-            setIsAuthenticated(true);
-          } else {
-            localStorage.removeItem('token');
-            localStorage.removeItem('currentUser');
-            setIsAuthenticated(false);
-          }
-        })
-        .catch(err => {
-          console.error('Token verification error:', err);
-          localStorage.removeItem('token');
-          localStorage.removeItem('currentUser');
-          setIsAuthenticated(false);
-        });
-    }
-  }, []);
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token');
+  //   if (token) {
+  //     // Verify token with backend
+  //     fetch('https://split-screen-backend.vercel.app/api/verify-token', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${token}`,
+  //       },
+  //       credentials: 'include',
+  //     })
+  //       .then(res => {
+  //         if (!res.ok) {
+  //           throw new Error('Token verification failed');
+  //         }
+  //         return res.json();
+  //       })
+  //       .then(data => {
+  //         if (data.valid) {
+  //           setIsAuthenticated(true);
+  //         } else {
+  //           localStorage.removeItem('token');
+  //           localStorage.removeItem('currentUser');
+  //           setIsAuthenticated(false);
+  //         }
+  //       })
+  //       .catch(err => {
+  //         console.error('Token verification error:', err);
+  //         localStorage.removeItem('token');
+  //         localStorage.removeItem('currentUser');
+  //         setIsAuthenticated(false);
+  //       });
+  //   }
+  // }, []);
 
   const openModal = (url = '') => {
     setLeftUrl(url);
@@ -64,11 +64,11 @@ function App() {
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
-  };
+  // const handleLogout = () => {
+  //   localStorage.removeItem('currentUser');
+  //   localStorage.removeItem('token');
+  //   setIsAuthenticated(false);
+  // };
 
   const buttonStyle = {
     padding: '10px 20px',
@@ -86,11 +86,11 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <h1 className="app-title">Split Screen Viewer</h1>
-        {isAuthenticated && (
+        {/* {isAuthenticated && (
           <button style={buttonStyle} onClick={handleLogout}>
             Logout
           </button>
-        )}
+        )} */}
       </header>
 
       <main className="app-content">
