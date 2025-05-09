@@ -91,9 +91,8 @@ const CustomScrollbar = styled.div`
   border-top: 1px solid #d1d1d1;
   overflow-x: auto;
   overflow-y: hidden;
-  z-index: 1000; /* Increased z-index to ensure visibility */
+  z-index: 1000; /* Ensure visibility */
   display: block; /* Always visible */
-  visibility: ${props => (props.$isVisible ? 'visible' : 'hidden')}; /* Control visibility based on screen mode */
 
   &::-webkit-scrollbar {
     height: 16px;
@@ -202,13 +201,13 @@ const SplitScreen = ({ children, screenMode }) => {
       if (leftPanelRef.current) {
         const contentWidth = leftPanelRef.current.scrollWidth;
         const panelWidth = leftPanelRef.current.clientWidth;
-        const minScrollWidth = panelWidth;
+        const minScrollWidth = panelWidth + 100; // Add extra width to ensure scrollbar is always active
         setLeftScrollWidth(Math.max(contentWidth, minScrollWidth));
       }
       if (rightPanelRef.current) {
         const contentWidth = rightPanelRef.current.scrollWidth;
         const panelWidth = rightPanelRef.current.clientWidth;
-        const minScrollWidth = panelWidth;
+        const minScrollWidth = panelWidth + 100; // Add extra width to ensure scrollbar is always active
         setRightScrollWidth(Math.max(contentWidth, minScrollWidth));
       }
     };
@@ -330,7 +329,7 @@ const SplitScreen = ({ children, screenMode }) => {
     <SplitScreenContainer ref={containerRef}>
       <Panel ref={leftPanelRef} style={leftStyle}>
         {left}
-        <CustomScrollbar ref={leftScrollRef} $isVisible={screenMode !== "right"}>
+        <CustomScrollbar ref={leftScrollRef}>
           <ScrollbarContent $scrollWidth={leftScrollWidth} />
         </CustomScrollbar>
       </Panel>
@@ -343,7 +342,7 @@ const SplitScreen = ({ children, screenMode }) => {
       />
       <Panel ref={rightPanelRef} style={rightStyle}>
         {right}
-        <CustomScrollbar ref={rightScrollRef} $isVisible={screenMode !== "left"}>
+        <CustomScrollbar ref={rightScrollRef}>
           <ScrollbarContent $scrollWidth={rightScrollWidth} />
         </CustomScrollbar>
       </Panel>
