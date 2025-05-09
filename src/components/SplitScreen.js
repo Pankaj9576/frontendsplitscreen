@@ -12,14 +12,15 @@ const SplitScreenContainer = styled.div`
 
 const Panel = styled.div`
   height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: visible; /* Allow horizontal overflow for scrollbar */
+  overflow-y: auto; /* Keep vertical scrolling */
   border: 1px solid #e0e0e0;
   background: #f9f9f9;
   transition: width 0.3s ease;
   position: relative;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: 16px; /* Reserve space for the scrollbar */
 
   &:first-child {
     border-right: none;
@@ -90,7 +91,7 @@ const CustomScrollbar = styled.div`
   border-top: 1px solid #d1d1d1;
   overflow-x: auto;
   overflow-y: hidden;
-  z-index: 1;
+  z-index: 1000; /* Increased z-index to ensure visibility */
   display: block; /* Always visible */
   visibility: ${props => (props.$isVisible ? 'visible' : 'hidden')}; /* Control visibility based on screen mode */
 
