@@ -113,6 +113,7 @@ const SideContainer = styled.div`
   @media (max-width: 768px) {
     gap: 8px;
     flex: 1 1 100%;
+    min-width: 0;
   }
 `
 
@@ -121,7 +122,7 @@ const DropdownContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 10px;
 `
 
 const StyledInput = styled.input`
@@ -134,6 +135,10 @@ const StyledInput = styled.input`
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   flex: 1;
   min-width: 150px;
+
+  @media (max-width: 768px) {
+    min-width: 100px;
+  }
 
   &:focus {
     border-color: #4285f4;
@@ -160,6 +165,10 @@ const FileInput = styled.input`
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
   min-width: 120px;
+
+  @media (max-width: 768px) {
+    min-width: 100px;
+  }
 `
 
 const UploadButton = styled.button`
@@ -224,6 +233,7 @@ const SplitScreenWrapper = styled.div`
   display: flex;
   width: 100%;
   height: 100%;
+  position: relative;
 `
 
 const SplitScreenModal = ({
@@ -312,11 +322,13 @@ const SplitScreenModal = ({
             color: "#5f6368",
             textAlign: "center",
             height: "100%",
+            width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: "16px",
             fontFamily: "'Roboto', Arial, sans-serif",
+            overflowX: "auto",
           }}
         >
           Enter a URL or upload a file to view content
@@ -327,13 +339,15 @@ const SplitScreenModal = ({
     const isBlobUrl = src.startsWith("blob:")
     const file = isBlobUrl ? (side === "left" ? leftFile : rightFile) : null
     return (
-      <ProxyContent
-        url={src}
-        backendUrl={BACKEND_URL}
-        onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
-        isFileUpload={isBlobUrl}
-        fileName={file ? file.name : null}
-      />
+      <div style={{ width: "100%", height: "100%", overflowX: "auto" }}>
+        <ProxyContent
+          url={src}
+          backendUrl={BACKEND_URL}
+          onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
+          isFileUpload={isBlobUrl}
+          fileName={file ? file.name : null}
+        />
+      </div>
     )
   }
 

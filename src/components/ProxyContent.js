@@ -11,7 +11,6 @@ const ContentWrapper = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 `;
 
 const PatentIframe = styled.iframe`
@@ -22,7 +21,6 @@ const PatentIframe = styled.iframe`
   background: #fff;
   font-family: 'Roboto', Arial, sans-serif;
   box-sizing: border-box;
-  overflow-x: auto;
 `;
 
 const DocViewer = styled.div`
@@ -188,7 +186,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const fetchContent = async () => {
     if (!url) {
       setError("No URL or link provided");
-      setLoading(false);
       return;
     }
 
@@ -228,18 +225,9 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           throw new Error(`Failed to process file: ${err.message}`);
         }
       } else if (isPatentUrl(url)) {
-        // Try proxy first
-        try {
-          const proxyUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
-          await fetchWithRetry(proxyUrl); // Test if proxy works
-          setDirectIframe(true);
-          setContent({ type: "iframe", url: proxyUrl });
-        } catch (proxyErr) {
-          console.warn("Proxy failed, falling back to direct URL:", proxyErr);
-          // Fallback to direct URL if proxy fails
-          setDirectIframe(true);
-          setContent({ type: "iframe", url });
-        }
+        const proxyUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
+        setDirectIframe(true);
+        setContent({ type: "iframe", url: proxyUrl });
       } else if (url.includes("docs.google.com") || url.includes("drive.google.com")) {
         setDirectIframe(true);
         setContent({ type: "iframe", url });
@@ -251,7 +239,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       }
     } catch (err) {
       console.error("Fetch error:", err);
-      setError(`Failed to load content: ${err.message}. Try opening in a new tab or check if the backend server is running.`);
+      setError(`Failed to load content: ${err.message}. Try opening in a new tab.`);
     } finally {
       setLoading(false);
     }
@@ -402,7 +390,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           title="External Content"
           allowFullScreen
           referrerPolicy="no-referrer"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-downloads"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
         />
       </ContentWrapper>
     );

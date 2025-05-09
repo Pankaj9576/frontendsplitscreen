@@ -1,445 +1,375 @@
-import React, { useEffect, useState, useRef, Suspense } from "react";
-import styled from "styled-components";
-import mammoth from "mammoth";
+"use client"
 
-const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
+import { useState, useEffect } from "react"
+import styled from "styled-components"
+import SplitScreen from "./SplitScreen"
+import ProxyContent from "./ProxyContent"
 
-const ContentWrapper = styled.div`
-  height: 100%;
-  width: 100%;
-  overflow: auto;
-  position: relative;
+const ModalBackground = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-`;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+  margin: 0;
+  padding: 0;
 
-const PatentIframe = styled.iframe`
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  border: none;
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+`
+
+const ModalContent = styled.div`
   background: #fff;
-  font-family: 'Roboto', Arial, sans-serif;
-  box-sizing: border-box;
-  overflow-x: auto;
-`;
-
-const DocViewer = styled.div`
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  overflow: auto;
-  font-family: 'Roboto', Arial, sans-serif;
-  padding: 10px;
-  box-sizing: border-box;
-
-  & > div {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  img, table, p, div {
-    max-width: 100%;
-    height: auto;
-    box-sizing: border-box;
-  }
-`;
-
-const FallbackMessage = styled.div`
-  text-align: center;
-  padding: 20px;
-  color: #666;
-`;
-
-const DownloadLink = styled.a`
-  color: rgb(81, 80, 98);
-  text-decoration: none;
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-const LoadingIndicator = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-  font-size: 16px;
-  color: #5f6368;
-`;
-
-const ErrorContainer = styled.div`
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  box-shadow: none;
+  border: none;
+  overflow: hidden;
+  font-family: 'Roboto', Arial, sans-serif;
+  animation: slideIn 0.4s ease-out;
+  margin: 0;
+  padding: 0;
+
+  @keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+`
+
+const HeaderContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #dadce0;
+  flex-shrink: 0;
+  margin: 0;
+  background: #fff;
+  z-index: 1001;
+  width: 100%;
+`
+
+const CloseButton = styled.button`
+  margin-right: 30px;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(17, 14, 14, 0.87);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 24px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  gap: 10px;
-`;
+  border-radius: 50%;
+  transition: background 0.3s ease, color 0.3s ease;
 
-const RetryButton = styled.button`
-  padding: 8px 16px;
-  background-color: rgb(85, 88, 92);
+  &:hover {
+    background: rgb(50, 38, 38);
+    color: white;
+  }
+
+  &:active {
+    background: rgb(55, 43, 43);
+  }
+`
+
+const InputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  width: 100%;
+  flex: 1;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
+`
+
+const SideContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
+`
+
+const DropdownContainer = styled.div`
+  flex: 1;
+  display: flex;
+  justify-content: flex-end; /* Shift dropdown more to the right */
+  align-items: center;
+  padding-right: 100px; /* Add padding to push it further right */
+`
+
+const StyledInput = styled.input`
+  padding: 8px 10px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Roboto', Arial, sans-serif;
+  background: #f8f9fa;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  flex: 1;
+  min-width: 200px;
+
+  &:focus {
+    border-color: #4285f4;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  }
+
+  &::placeholder {
+    color: #5f6368;
+  }
+`
+
+const FileInputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`
+
+const FileInput = styled.input`
+  padding: 6px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Roboto', Arial, sans-serif;
+  background: #f8f9fa;
+  min-width: 150px;
+`
+
+const UploadButton = styled.button`
+  padding: 8px 10px;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
+  font-family: 'Roboto', Arial, sans-serif;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+
   &:hover {
-    background-color: rgb(79, 85, 96);
+    filter: brightness(90%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   }
-`;
 
-const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) => {
-  const [content, setContent] = useState(null);
-  const [error, setError] = useState(null);
-  const [htmlContent, setHtmlContent] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [directIframe, setDirectIframe] = useState(false);
-  const iframeRef = useRef(null);
+  &:active {
+    filter: brightness(80%);
+  }
 
-  const isPatentUrl = (urlToCheck) => {
-    return urlToCheck && urlToCheck.includes("patents.google.com/patent");
-  };
+  &:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+`
 
-  const isDownloadLink = (urlToCheck) => {
-    return (
-      urlToCheck &&
-      !urlToCheck.endsWith(".pdf") &&
-      !urlToCheck.includes("/patent/pdf/") &&
-      urlToCheck.includes("download")
-    );
-  };
+const ScreenSelectButton = styled.select`
+  padding: 6px;
+  font-size: 14px;
+  font-family: 'Roboto', Arial, sans-serif;
+  cursor: pointer;
+`
 
-  const isPdfUrl = (urlToCheck) => {
-    return (
-      urlToCheck &&
-      (urlToCheck.endsWith(".pdf") || urlToCheck.includes("/patent/pdf/"))
-    );
-  };
+const ErrorMessage = styled.div`
+  color: #d93025;
+  margin: 5px 0;
+  padding: 8px;
+  background: #fce8e6;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 14px;
+  font-family: 'Roboto', Arial, sans-serif;
+  animation: fadeInOut 3s ease-in-out;
 
-  const fetchWithRetry = async (fetchUrl, retries = 3, delay = 1000) => {
-    for (let i = 0; i < retries; i++) {
-      try {
-        const response = await fetch(fetchUrl, {
-          headers: {
-            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.5",
-            Referer: "https://patents.google.com/",
-          },
-        });
+  @keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+`
 
-        if (response.ok) {
-          return response;
-        }
+const SplitScreenModal = ({
+  leftSrc: initialLeftSrc = "",
+  rightSrc: initialRightSrc = null,
+  setLeftSrc,
+  setRightSrc,
+  onClose,
+}) => {
+  const [error, setError] = useState(null)
+  const [leftFile, setLeftFile] = useState(null)
+  const [rightFile, setRightFile] = useState(null)
+  const [screenMode, setScreenMode] = useState("both")
+  const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
+  const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
+  const BACKEND_URL = "https://split-screen-backend.vercel.app"
 
-        throw new Error(`Fetch failed: ${response.statusText}`);
-      } catch (err) {
-        if (i === retries - 1) throw err;
-        console.log(`Retrying fetch (${i + 1}/${retries})...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
+  useEffect(() => {
+    if (!setLeftSrc) {
+      console.error("setLeftSrc is not provided")
+    } else if (!leftSrc && initialLeftSrc) {
+      setLeftSrc(initialLeftSrc)
+      setLocalLeftSrc(initialLeftSrc)
     }
-  };
+  }, [leftSrc, initialLeftSrc, setLeftSrc])
 
-  const handleWordFile = async (blob, fileName) => {
-    try {
-      const maxSize = 10 * 1024 * 1024;
-      if (blob.size > maxSize) {
-        throw new Error("File size exceeds 10MB limit. Please upload a smaller file.");
-      }
-
-      const fileExt = fileName.split(".").pop().toLowerCase();
-      if (!["doc", "docx"].includes(fileExt)) {
-        throw new Error("Unsupported file type. Please upload a .doc or .docx file.");
-      }
-
-      const arrayBuffer = await blob.arrayBuffer();
-      const result = await mammoth.convertToHtml({ arrayBuffer }).catch((err) => {
-        console.error("Mammoth conversion error:", err);
-        throw new Error(`Failed to convert Word document: ${err.message || "Unknown error"}`);
-      });
-
-      if (!result || !result.value) {
-        throw new Error("Failed to convert Word document: Empty or invalid content.");
-      }
-
-      setHtmlContent(
-        `<div style="padding: 20px; font-family: 'Roboto', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">${result.value}</div>`
-      );
-    } catch (err) {
-      console.error("Error in handleWordFile:", err);
-      setError(
-        err.message || "Failed to process Word document. Try downloading the file instead."
-      );
-      setContent({
-        type: "download",
-        url: URL.createObjectURL(blob),
-        message: "Unable to render Word document. Please download to view.",
-      });
+  useEffect(() => {
+    if (!setRightSrc) {
+      console.error("setRightSrc is not provided")
+    } else if (!rightSrc && initialRightSrc) {
+      setRightSrc(initialRightSrc)
+      setLocalRightSrc(initialRightSrc)
     }
-  };
+  }, [rightSrc, initialRightSrc, setRightSrc])
 
-  const fetchContent = async () => {
-    if (!url) {
-      setError("No URL or link provided");
-      return;
+  const handleUploadComplete = async (side, file) => {
+    if (!file) {
+      setError("No file selected")
+      return
     }
-
-    console.log("Fetching content for URL:", url);
-    setContent(null);
-    setHtmlContent(null);
-    setError(null);
-    setLoading(true);
-    setDirectIframe(false);
 
     try {
-      let response;
-      let blob;
-
-      if (isFileUpload && fileName) {
-        try {
-          response = await fetch(url, { mode: "cors" });
-          if (!response.ok) throw new Error(`Blob fetch failed: ${response.status} - ${response.statusText}`);
-          blob = await response.blob();
-
-          const fileExt = fileName.split(".").pop().toLowerCase();
-
-          if (["xlsx", "xls"].includes(fileExt)) {
-            setContent({ type: "excel", blob });
-          } else if (["doc", "docx"].includes(fileExt)) {
-            await handleWordFile(blob, fileName);
-          } else if (fileExt === "pdf") {
-            setContent({ type: "pdf", url: `${url}#view=FitH` });
-          } else {
-            setContent({
-              type: "download",
-              url,
-              message: "This file type is not directly renderable. Please download to view.",
-            });
-          }
-        } catch (err) {
-          throw new Error(`Failed to process file: ${err.message}`);
-        }
-      } else if (isPatentUrl(url)) {
-        const proxyUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
-        setDirectIframe(true);
-        setContent({ type: "iframe", url: proxyUrl });
-      } else if (url.includes("docs.google.com") || url.includes("drive.google.com")) {
-        setDirectIframe(true);
-        setContent({ type: "iframe", url });
-      } else if (isPdfUrl(url)) {
-        setContent({ type: "pdf", url: `${url}#view=FitH` });
+      const blobUrl = URL.createObjectURL(file)
+      console.log(`File uploaded for ${side} side, Blob URL: ${blobUrl} - Handling client-side, File: ${file.name}`)
+      if (side === "left") {
+        setLocalLeftSrc(blobUrl)
+        if (setLeftSrc) setLeftSrc(blobUrl)
+        setLeftFile(file)
       } else {
-        const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
-        await handleProxyContent(fetchUrl);
+        setLocalRightSrc(blobUrl)
+        if (setRightSrc) setRightSrc(blobUrl)
+        setRightFile(file)
       }
     } catch (err) {
-      console.error("Fetch error:", err);
-      setError(`Failed to load content: ${err.message}. Try opening in a new tab.`);
-    } finally {
-      setLoading(false);
+      console.error("Upload error:", err)
+      setError(`Failed to process file: ${err.message}`)
     }
-  };
+  }
 
-  const handleProxyContent = async (fetchUrl) => {
-    const response = await fetchWithRetry(fetchUrl);
-    const contentType = response.headers.get("content-type") || "";
-
-    if (contentType.includes("text/html")) {
-      const html = await response.clone().text();
-      const processedHtml = processHtml(html, url);
-      setHtmlContent(processedHtml);
+  const handleLinkClick = (side, newUrl) => {
+    console.log(`Link clicked: ${newUrl} on ${side} side`)
+    if (side === "left") {
+      setLocalLeftSrc(newUrl)
+      if (setLeftSrc) setLeftSrc(newUrl)
     } else {
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      if (contentType.includes("application/pdf")) {
-        setContent({ type: "pdf", url: `${blobUrl}#view=FitH` });
-      } else if (
-        contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
-        contentType.includes("application/vnd.ms-excel")
-      ) {
-        setContent({ type: "excel", blob });
-      } else if (
-        contentType.includes("application/vnd.openxmlformats-officedocument.wordprocessingml.document") ||
-        contentType.includes("application/msword")
-      ) {
-        await handleWordFile(blob, "downloaded_document.docx");
-      } else {
-        setContent({
-          type: "download",
-          url: blobUrl,
-          message: "This file type is not directly renderable. Please download to view.",
-        });
-      }
+      setLocalRightSrc(newUrl)
+      if (setRightSrc) setRightSrc(newUrl)
     }
-  };
+  }
 
-  const processHtml = (html, baseUrl) => {
-    let processedHtml = html;
+  const handleLeftSrcChange = (value) => {
+    setLocalLeftSrc(value)
+    if (setLeftSrc) setLeftSrc(value)
+  }
 
-    let domain = "";
-    try {
-      const urlObj = new URL(baseUrl);
-      domain = `${urlObj.protocol}//${urlObj.hostname}`;
-    } catch (e) {
-      console.error("Invalid URL:", baseUrl);
-    }
+  const handleRightSrcChange = (value) => {
+    setLocalRightSrc(value)
+    if (setRightSrc) setRightSrc(value)
+  }
 
-    if (domain) {
-      processedHtml = processedHtml.replace(/(href|src)="\/([^"]*)"/g, `$1="${domain}/$2"`);
-
-      processedHtml =
-        processedHtml +
-        `
-        <script>
-          document.addEventListener('click', function(e) {
-            if (e.target.tagName === 'A' && e.target.href) {
-              e.preventDefault();
-              window.parent.postMessage({
-                type: 'linkClick',
-                url: e.target.href
-              }, '*');
-            }
-          });
-        </script>
-      `;
+  const renderContent = (src, side) => {
+    if (!src) {
+      return (
+        <div
+          style={{
+            color: "#5f6368",
+            textAlign: "center",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "16px",
+            fontFamily: "'Roboto', Arial, sans-serif",
+          }}
+        >
+          Enter a URL or upload a file to view content
+        </div>
+      )
     }
 
-    return processedHtml;
-  };
-
-  useEffect(() => {
-    fetchContent();
-  }, [url, backendUrl, isFileUpload, fileName]);
-
-  useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.data.type === "linkClick" && event.data.url) {
-        if (isDownloadLink(event.data.url)) {
-          const link = document.createElement("a");
-          link.href = event.data.url;
-          link.download = fileName || "file";
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } else {
-          onLinkClick(event.data.url);
-          setContent(null);
-          setHtmlContent(null);
-          setError(null);
-          setLoading(true);
-          setDirectIframe(false);
-          fetchContent();
-        }
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [onLinkClick, fileName]);
-
-  if (loading) {
-    return <LoadingIndicator>Loading content...</LoadingIndicator>;
-  }
-
-  if (error) {
+    const isBlobUrl = src.startsWith("blob:")
+    const file = isBlobUrl ? (side === "left" ? leftFile : rightFile) : null
     return (
-      <ContentWrapper>
-        <ErrorContainer>
-          <div
-            style={{
-              color: "#d93025",
-              padding: 12,
-              background: "#fce8e6",
-              borderRadius: "8px",
-              textAlign: "center",
-              fontSize: "16px",
-              marginBottom: "10px",
-              width: "100%",
-            }}
-          >
-            {error}
-          </div>
-
-          {content?.type === "download" && (
-            <DownloadLink href={content.url} download={fileName || "document"}>
-              Download File
-            </DownloadLink>
-          )}
-
-          <RetryButton onClick={fetchContent}>Retry Loading</RetryButton>
-
-          <RetryButton onClick={() => window.open(url, "_blank")} style={{ backgroundColor: "#34a853" }}>
-            Open in New Tab
-          </RetryButton>
-        </ErrorContainer>
-      </ContentWrapper>
-    );
+      <ProxyContent
+        url={src}
+        backendUrl={BACKEND_URL}
+        onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
+        isFileUpload={isBlobUrl}
+        fileName={file ? file.name : null}
+      />
+    )
   }
 
-  if (directIframe || content?.type === "iframe") {
-    return (
-      <ContentWrapper>
-        <PatentIframe
-          src={content.url}
-          title="External Content"
-          allowFullScreen
-          referrerPolicy="no-referrer"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-        />
-      </ContentWrapper>
-    );
-  }
+  return (
+    <ModalBackground onClick={onClose}>
+      <ModalContent onClick={(e) => e.stopPropagation()}>
+        <HeaderContainer>
+          <InputWrapper>
+            <SideContainer>
+              <StyledInput
+                type="text"
+                placeholder="Enter left URL"
+                value={leftSrc || ""}
+                onChange={(e) => handleLeftSrcChange(e.target.value)}
+              />
+              <FileInputWrapper>
+                <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
+                <UploadButton style={{backgroundColor: 'rgb(199, 51, 155)'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+              </FileInputWrapper>
+            </SideContainer>
 
-  if (content?.type === "excel") {
-    return (
-      <Suspense fallback={<LoadingIndicator>Loading Excel content...</LoadingIndicator>}>
-        <ExcelViewer blob={content.blob} />
-      </Suspense>
-    );
-  }
+            <DropdownContainer>
+              <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
+                <option value="both">Both Screens</option>
+                <option value="left">Left Screen</option>
+                <option value="right">Right Screen</option>
+              </ScreenSelectButton>
+            </DropdownContainer>
 
-  if (htmlContent) {
-    return (
-      <ContentWrapper>
-        <DocViewer dangerouslySetInnerHTML={{ __html: htmlContent }} />
-      </ContentWrapper>
-    );
-  }
+            <SideContainer>
+              <StyledInput
+                type="text"
+                placeholder="Enter right URL"
+                value={rightSrc || ""}
+                onChange={(e) => handleRightSrcChange(e.target.value)}
+              />
+              <FileInputWrapper>
+                <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
+                <UploadButton style={{backgroundColor: 'rgb(165, 0, 255)'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+              </FileInputWrapper>
+            </SideContainer>
 
-  if (content?.type === "pdf") {
-    return (
-      <ContentWrapper>
-        <PatentIframe
-          src={content.url}
-          title="File Content"
-          type="application/pdf"
-        />
-      </ContentWrapper>
-    );
-  }
+            <CloseButton onClick={onClose}>×</CloseButton>
+          </InputWrapper>
+        </HeaderContainer>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
+          {renderContent(leftSrc, "left")}
+          {renderContent(rightSrc, "right")}
+        </SplitScreen>
+      </ModalContent>
+    </ModalBackground>
+  )
+}
 
-  if (content?.type === "download") {
-    return (
-      <ContentWrapper>
-        <FallbackMessage>
-          {content.message || "This file type is not directly renderable. Please download to view."}{" "}
-          <DownloadLink href={content.url} download={fileName || "file"}>
-            Download File
-          </DownloadLink>
-        </FallbackMessage>
-      </ContentWrapper>
-    );
-  }
-
-  return <ContentWrapper>Unsupported content type</ContentWrapper>;
-};
-
-export default ProxyContent;
+export default SplitScreenModal
