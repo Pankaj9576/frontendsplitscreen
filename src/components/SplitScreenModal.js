@@ -89,6 +89,7 @@ const CloseButton = styled.button`
 
 const InputWrapper = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
   flex-wrap: nowrap;
@@ -111,15 +112,8 @@ const SideContainer = styled.div`
   }
 `
 
-const DropdownContainer = styled.div`
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`
-
 const StyledInput = styled.input`
-  padding: 8px 10px; /* Reduced padding to decrease height */
+  padding: 11px 12px;
   border: 1px solid #dadce0;
   border-radius: 4px;
   font-size: 14px;
@@ -147,7 +141,7 @@ const FileInputWrapper = styled.div`
 `
 
 const FileInput = styled.input`
-  padding: 6px; /* Reduced padding to decrease height */
+  padding: 8px;
   border: 1px solid #dadce0;
   border-radius: 4px;
   font-size: 14px;
@@ -157,7 +151,7 @@ const FileInput = styled.input`
 `
 
 const UploadButton = styled.button`
-  padding: 8px 10px; /* Reduced padding to decrease height */
+  padding: 11px 12px;
   color: white;
   border: none;
   border-radius: 4px;
@@ -183,10 +177,11 @@ const UploadButton = styled.button`
 `
 
 const ScreenSelectButton = styled.select`
-  padding: 6px; /* Reduced padding to decrease height */
+  padding: 8px;
   font-size: 14px;
   font-family: 'Roboto', Arial, sans-serif;
   cursor: pointer;
+  marginLeft: 30px;
 `
 
 const ErrorMessage = styled.div`
@@ -337,13 +332,11 @@ const SplitScreenModal = ({
               </FileInputWrapper>
             </SideContainer>
 
-            <DropdownContainer>
-              <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
-                <option value="both">Both Screens</option>
-                <option value="left">Left Screen</option>
-                <option value="right">Right Screen</option>
-              </ScreenSelectButton>
-            </DropdownContainer>
+            <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
+              <option value="both">Both Screens</option>
+              <option value="left">Left Screen</option>
+              <option value="right">Right Screen</option>
+            </ScreenSelectButton>
 
             <SideContainer>
               <StyledInput
