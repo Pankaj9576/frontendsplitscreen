@@ -1,375 +1,353 @@
-"use client"
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import styled from "styled-components";
 
-import { useState, useEffect } from "react"
-import styled from "styled-components"
-import SplitScreen from "./SplitScreen"
-import ProxyContent from "./ProxyContent"
-
-const ModalBackground = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+const SplitScreenContainer = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease-in-out;
-  margin: 0;
-  padding: 0;
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-`
-
-const ModalContent = styled.div`
-  background: #fff;
-  border-radius: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: none;
-  border: none;
+  flex: 1;
+  height: 100%;
   overflow: hidden;
-  font-family: 'Roboto', Arial, sans-serif;
-  animation: slideIn 0.4s ease-out;
-  margin: 0;
-  padding: 0;
+  flex-grow: 1;
+  position: relative;
+`;
 
-  @keyframes slideIn {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+const Panel = styled.div`
+  height: calc(100% - 16px); /* Adjusted height to account for scrollbar */
+  overflow-x: auto; /* Allow horizontal overflow for scrollbar */
+  overflow-y: auto; /* Keep vertical scrolling */
+  border: 1px solid #e0e0e0;
+  background: #f9f9f9;
+  transition: width 0.3s ease;
+  position: relative;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+
+  &:first-child {
+    border-right: none;
   }
-`
 
-const HeaderContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
-  border-bottom: 1px solid #dadce0;
-  flex-shrink: 0;
-  margin: 0;
-  background: #fff;
-  z-index: 1001;
-  width: 100%;
-`
+  &:last-child {
+    border-left: none;
+  }
 
-const CloseButton = styled.button`
-  margin-right: 30px;
-  color: white;
-  border: none;
-  width: 40px;
-  height: 40px;
-  background-color: rgba(17, 14, 14, 0.87);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background 0.3s ease, color 0.3s ease;
+  & > * {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  &::-webkit-scrollbar {
+    width: 14px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #e0e0e0;
+    border-radius: 7px;
+    margin: 5px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgb(87, 92, 99);
+    border-radius: 7px;
+    border: 2px solid #e0e0e0;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgb(70, 76, 83);
+  }
+
+  scrollbar-width: thin;
+  scrollbar-color: rgb(67, 70, 75) #e0e0e0;
+`;
+
+const ResizeHandle = styled.div`
+  width: 6px;
+  background: rgb(67, 12, 27);
+  cursor: col-resize;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  transition: background 0.2s ease, left 0.1s ease-out;
 
   &:hover {
-    background: rgb(50, 38, 38);
-    color: white;
+    background: rgb(67, 12, 27);
   }
 
   &:active {
-    background: rgb(55, 43, 43);
-  }
-`
-
-const InputWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: nowrap;
-  width: 100%;
-  flex: 1;
-
-  @media (max-width: 768px) {
-    gap: 8px;
-  }
-`
-
-const SideContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: nowrap;
-
-  @media (max-width: 768px) {
-    gap: 8px;
-  }
-`
-
-const DropdownContainer = styled.div`
-  flex: 1;
-  display: flex;
-  justify-content: flex-end; /* Shift dropdown more to the right */
-  align-items: center;
-  padding-right: 100px; /* Add padding to push it further right */
-`
-
-const StyledInput = styled.input`
-  padding: 8px 10px;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  background: #f8f9fa;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  flex: 1;
-  min-width: 200px;
-
-  &:focus {
-    border-color: #4285f4;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    background: rgb(67, 12, 27);
   }
 
-  &::placeholder {
-    color: #5f6368;
-  }
-`
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+`;
 
-const FileInputWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`
+const CustomScrollbar = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background: #e0e0e0;
+  border-top: 1px solid #d1d1d1;
+  overflow-x: scroll; /* Always show the scrollbar track */
+  overflow-y: hidden;
+  z-index: 1000; /* Ensure visibility */
+  display: block; /* Always visible */
 
-const FileInput = styled.input`
-  padding: 6px;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  background: #f8f9fa;
-  min-width: 150px;
-`
-
-const UploadButton = styled.button`
-  padding: 8px 10px;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  font-family: 'Roboto', Arial, sans-serif;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-
-  &:hover {
-    filter: brightness(90%);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  &::-webkit-scrollbar {
+    height: 16px;
   }
 
-  &:active {
-    filter: brightness(80%);
+  &::-webkit-scrollbar-track {
+    background: #e0e0e0;
+    border-radius: 8px;
   }
 
-  &:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
+  &::-webkit-scrollbar-thumb {
+    background: rgb(86, 91, 97);
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+    min-width: 100px; /* Increased min-width to ensure visibility */
   }
-`
 
-const ScreenSelectButton = styled.select`
-  padding: 6px;
-  font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  cursor: pointer;
-`
-
-const ErrorMessage = styled.div`
-  color: #d93025;
-  margin: 5px 0;
-  padding: 8px;
-  background: #fce8e6;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  animation: fadeInOut 3s ease-in-out;
-
-  @keyframes fadeInOut {
-    0% { opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { opacity: 0; }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgb(81, 88, 95);
   }
-`
 
-const SplitScreenModal = ({
-  leftSrc: initialLeftSrc = "",
-  rightSrc: initialRightSrc = null,
-  setLeftSrc,
-  setRightSrc,
-  onClose,
-}) => {
-  const [error, setError] = useState(null)
-  const [leftFile, setLeftFile] = useState(null)
-  const [rightFile, setRightFile] = useState(null)
-  const [screenMode, setScreenMode] = useState("both")
-  const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
-  const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
-  const BACKEND_URL = "https://split-screen-backend.vercel.app"
+  scrollbar-width: thin;
+  scrollbar-color: rgb(91, 96, 103) #e0e0e0;
+`;
+
+const ScrollbarContent = styled.div`
+  height: 16px;
+  width: ${({ $scrollWidth }) => $scrollWidth}px;
+`;
+
+const SplitScreen = ({ children, screenMode }) => {
+  const [leftWidth, setLeftWidth] = useState(50);
+  const [isResizing, setIsResizing] = useState(false);
+  const containerRef = useRef(null);
+  const handleRef = useRef(null);
+  const leftPanelRef = useRef(null);
+  const rightPanelRef = useRef(null);
+  const leftScrollRef = useRef(null);
+  const rightScrollRef = useRef(null);
+  const [leftScrollWidth, setLeftScrollWidth] = useState(0);
+  const [rightScrollWidth, setRightScrollWidth] = useState(0);
+  const lastUpdateRef = useRef(0);
+  const timeoutRef = useRef(null);
+
+  const [left, right] = children;
 
   useEffect(() => {
-    if (!setLeftSrc) {
-      console.error("setLeftSrc is not provided")
-    } else if (!leftSrc && initialLeftSrc) {
-      setLeftSrc(initialLeftSrc)
-      setLocalLeftSrc(initialLeftSrc)
-    }
-  }, [leftSrc, initialLeftSrc, setLeftSrc])
+    console.log("SplitScreen - screenMode:", screenMode);
+    console.log("Handle visibility:", screenMode === "both" ? "visible" : "hidden");
+  }, [screenMode]);
+
+  const handleResize = useCallback((e) => {
+    if (!containerRef.current) return;
+
+    const now = performance.now();
+    if (now - lastUpdateRef.current < 10) return;
+
+    lastUpdateRef.current = now;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+    newWidth = Math.max(10, Math.min(90, newWidth));
+    setLeftWidth(newWidth);
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setIsResizing(false);
+    }, 50);
+  }, []);
 
   useEffect(() => {
-    if (!setRightSrc) {
-      console.error("setRightSrc is not provided")
-    } else if (!rightSrc && initialRightSrc) {
-      setRightSrc(initialRightSrc)
-      setLocalRightSrc(initialRightSrc)
-    }
-  }, [rightSrc, initialRightSrc, setRightSrc])
-
-  const handleUploadComplete = async (side, file) => {
-    if (!file) {
-      setError("No file selected")
-      return
-    }
-
-    try {
-      const blobUrl = URL.createObjectURL(file)
-      console.log(`File uploaded for ${side} side, Blob URL: ${blobUrl} - Handling client-side, File: ${file.name}`)
-      if (side === "left") {
-        setLocalLeftSrc(blobUrl)
-        if (setLeftSrc) setLeftSrc(blobUrl)
-        setLeftFile(file)
-      } else {
-        setLocalRightSrc(blobUrl)
-        if (setRightSrc) setRightSrc(blobUrl)
-        setRightFile(file)
+    const handlePointerDown = (e) => {
+      setIsResizing(true);
+      if (handleRef.current) {
+        handleRef.current.setPointerCapture(e.pointerId);
       }
-    } catch (err) {
-      console.error("Upload error:", err)
-      setError(`Failed to process file: ${err.message}`)
-    }
-  }
+    };
 
-  const handleLinkClick = (side, newUrl) => {
-    console.log(`Link clicked: ${newUrl} on ${side} side`)
-    if (side === "left") {
-      setLocalLeftSrc(newUrl)
-      if (setLeftSrc) setLeftSrc(newUrl)
-    } else {
-      setLocalRightSrc(newUrl)
-      if (setRightSrc) setRightSrc(newUrl)
-    }
-  }
+    const handlePointerMove = (e) => {
+      if (!isResizing) return;
+      handleResize(e);
+    };
 
-  const handleLeftSrcChange = (value) => {
-    setLocalLeftSrc(value)
-    if (setLeftSrc) setLeftSrc(value)
-  }
+    const handlePointerUp = () => {
+      setIsResizing(false);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
 
-  const handleRightSrcChange = (value) => {
-    setLocalRightSrc(value)
-    if (setRightSrc) setRightSrc(value)
-  }
-
-  const renderContent = (src, side) => {
-    if (!src) {
-      return (
-        <div
-          style={{
-            color: "#5f6368",
-            textAlign: "center",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "16px",
-            fontFamily: "'Roboto', Arial, sans-serif",
-          }}
-        >
-          Enter a URL or upload a file to view content
-        </div>
-      )
+    if (handleRef.current) {
+      handleRef.current.addEventListener("pointerdown", handlePointerDown);
+      window.addEventListener("pointermove", handlePointerMove);
+      window.addEventListener("pointerup", handlePointerUp);
     }
 
-    const isBlobUrl = src.startsWith("blob:")
-    const file = isBlobUrl ? (side === "left" ? leftFile : rightFile) : null
-    return (
-      <ProxyContent
-        url={src}
-        backendUrl={BACKEND_URL}
-        onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
-        isFileUpload={isBlobUrl}
-        fileName={file ? file.name : null}
-      />
-    )
-  }
+    return () => {
+      if (handleRef.current) {
+        handleRef.current.removeEventListener("pointerdown", handlePointerDown);
+      }
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [isResizing, handleResize]);
+
+  useEffect(() => {
+    const updateScrollWidth = () => {
+      if (leftPanelRef.current) {
+        const panelWidth = leftPanelRef.current.clientWidth;
+        const contentWidth = leftPanelRef.current.scrollWidth;
+        const minScrollWidth = Math.max(panelWidth + 200, contentWidth); // Ensure scrollbar is always wider
+        setLeftScrollWidth(minScrollWidth);
+      }
+      if (rightPanelRef.current) {
+        const panelWidth = rightPanelRef.current.clientWidth;
+        const contentWidth = rightPanelRef.current.scrollWidth;
+        const minScrollWidth = Math.max(panelWidth + 200, contentWidth); // Ensure scrollbar is always wider
+        setRightScrollWidth(minScrollWidth);
+      }
+    };
+
+    updateScrollWidth();
+
+    const resizeObserver = new ResizeObserver(updateScrollWidth);
+    if (leftPanelRef.current) resizeObserver.observe(leftPanelRef.current);
+    if (rightPanelRef.current) resizeObserver.observe(rightPanelRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [children, screenMode]);
+
+  useEffect(() => {
+    const handleLeftPanelScroll = () => {
+      if (leftPanelRef.current && leftScrollRef.current) {
+        leftScrollRef.current.scrollLeft = leftPanelRef.current.scrollLeft;
+      }
+    };
+
+    const handleRightPanelScroll = () => {
+      if (rightPanelRef.current && rightScrollRef.current) {
+        rightScrollRef.current.scrollLeft = rightPanelRef.current.scrollLeft;
+      }
+    };
+
+    const handleLeftCustomScroll = () => {
+      if (leftPanelRef.current && leftScrollRef.current) {
+        leftPanelRef.current.scrollLeft = leftScrollRef.current.scrollLeft;
+      }
+    };
+
+    const handleRightCustomScroll = () => {
+      if (rightPanelRef.current && rightScrollRef.current) {
+        rightPanelRef.current.scrollLeft = rightScrollRef.current.scrollLeft;
+      }
+    };
+
+    if (leftPanelRef.current) leftPanelRef.current.addEventListener("scroll", handleLeftPanelScroll);
+    if (rightPanelRef.current) rightPanelRef.current.addEventListener("scroll", handleRightPanelScroll);
+    if (leftScrollRef.current) leftScrollRef.current.addEventListener("scroll", handleLeftCustomScroll);
+    if (rightScrollRef.current) rightScrollRef.current.addEventListener("scroll", handleRightCustomScroll);
+
+    return () => {
+      if (leftPanelRef.current) leftPanelRef.current.removeEventListener("scroll", handleLeftPanelScroll);
+      if (rightPanelRef.current) rightPanelRef.current.removeEventListener("scroll", handleRightPanelScroll);
+      if (leftScrollRef.current) leftScrollRef.current.removeEventListener("scroll", handleLeftCustomScroll);
+      if (rightScrollRef.current) rightScrollRef.current.removeEventListener("scroll", handleRightCustomScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA";
+      if (isInputFocused) return;
+
+      const scrollAmount = 50;
+      if (e.key === "ArrowLeft") {
+        if (leftPanelRef.current && screenMode !== "right") {
+          leftPanelRef.current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        }
+        if (rightPanelRef.current && screenMode !== "left") {
+          rightPanelRef.current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        }
+      } else if (e.key === "ArrowRight") {
+        if (leftPanelRef.current && screenMode !== "right") {
+          leftPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        }
+        if (rightPanelRef.current && screenMode !== "left") {
+          rightPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [screenMode]);
+
+  useEffect(() => {
+    const handleWheel = (e) => {
+      const scrollAmount = e.deltaY * 0.5;
+      if (leftPanelRef.current && screenMode !== "right" && e.target.closest(`[ref="${leftPanelRef.current}"]`)) {
+        leftPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        e.preventDefault();
+      }
+      if (rightPanelRef.current && screenMode !== "left" && e.target.closest(`[ref="${rightPanelRef.current}"]`)) {
+        rightPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        e.preventDefault();
+      }
+    };
+
+    if (leftPanelRef.current) leftPanelRef.current.addEventListener("wheel", handleWheel, { passive: false });
+    if (rightPanelRef.current) rightPanelRef.current.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      if (leftPanelRef.current) leftPanelRef.current.removeEventListener("wheel", handleWheel);
+      if (rightPanelRef.current) rightPanelRef.current.removeEventListener("wheel", handleWheel);
+    };
+  }, [screenMode]);
+
+  const leftStyle = {
+    width: screenMode === "left" ? "100%" : screenMode === "right" ? "0%" : `${leftWidth}%`,
+    display: screenMode === "right" ? "none" : "block",
+    position: "relative",
+  };
+
+  const rightStyle = {
+    width: screenMode === "right" ? "100%" : screenMode === "left" ? "0%" : `${100 - leftWidth}%`,
+    display: screenMode === "left" ? "none" : "block",
+    position: "relative",
+  };
+
+  const handleVisibility = screenMode === "both" ? "visible" : "hidden";
 
   return (
-    <ModalBackground onClick={onClose}>
-      <ModalContent onClick={(e) => e.stopPropagation()}>
-        <HeaderContainer>
-          <InputWrapper>
-            <SideContainer>
-              <StyledInput
-                type="text"
-                placeholder="Enter left URL"
-                value={leftSrc || ""}
-                onChange={(e) => handleLeftSrcChange(e.target.value)}
-              />
-              <FileInputWrapper>
-                <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: 'rgb(199, 51, 155)'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
-              </FileInputWrapper>
-            </SideContainer>
+    <SplitScreenContainer ref={containerRef}>
+      <Panel ref={leftPanelRef} style={leftStyle}>
+        {left}
+        <CustomScrollbar ref={leftScrollRef}>
+          <ScrollbarContent $scrollWidth={leftScrollWidth} />
+        </CustomScrollbar>
+      </Panel>
+      <ResizeHandle
+        ref={handleRef}
+        style={{
+          left: screenMode === "both" ? `${leftWidth}%` : "50%",
+          visibility: handleVisibility,
+        }}
+      />
+      <Panel ref={rightPanelRef} style={rightStyle}>
+        {right}
+        <CustomScrollbar ref={rightScrollRef}>
+          <ScrollbarContent $scrollWidth={rightScrollWidth} />
+        </CustomScrollbar>
+      </Panel>
+    </SplitScreenContainer>
+  );
+};
 
-            <DropdownContainer>
-              <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
-                <option value="both">Both Screens</option>
-                <option value="left">Left Screen</option>
-                <option value="right">Right Screen</option>
-              </ScreenSelectButton>
-            </DropdownContainer>
-
-            <SideContainer>
-              <StyledInput
-                type="text"
-                placeholder="Enter right URL"
-                value={rightSrc || ""}
-                onChange={(e) => handleRightSrcChange(e.target.value)}
-              />
-              <FileInputWrapper>
-                <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: 'rgb(165, 0, 255)'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
-              </FileInputWrapper>
-            </SideContainer>
-
-            <CloseButton onClick={onClose}>×</CloseButton>
-          </InputWrapper>
-        </HeaderContainer>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
-          {renderContent(leftSrc, "left")}
-          {renderContent(rightSrc, "right")}
-        </SplitScreen>
-      </ModalContent>
-    </ModalBackground>
-  )
-}
-
-export default SplitScreenModal
+export default SplitScreen;
