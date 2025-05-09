@@ -92,6 +92,7 @@ const CustomScrollbar = styled.div`
   overflow-y: hidden;
   z-index: 1;
   display: block; /* Always visible */
+  visibility: ${props => (props.$isVisible ? 'visible' : 'hidden')}; /* Control visibility based on screen mode */
 
   &::-webkit-scrollbar {
     height: 16px;
@@ -328,7 +329,7 @@ const SplitScreen = ({ children, screenMode }) => {
     <SplitScreenContainer ref={containerRef}>
       <Panel ref={leftPanelRef} style={leftStyle}>
         {left}
-        <CustomScrollbar ref={leftScrollRef}>
+        <CustomScrollbar ref={leftScrollRef} $isVisible={screenMode !== "right"}>
           <ScrollbarContent $scrollWidth={leftScrollWidth} />
         </CustomScrollbar>
       </Panel>
@@ -341,7 +342,7 @@ const SplitScreen = ({ children, screenMode }) => {
       />
       <Panel ref={rightPanelRef} style={rightStyle}>
         {right}
-        <CustomScrollbar ref={rightScrollRef}>
+        <CustomScrollbar ref={rightScrollRef} $isVisible={screenMode !== "left"}>
           <ScrollbarContent $scrollWidth={rightScrollWidth} />
         </CustomScrollbar>
       </Panel>
