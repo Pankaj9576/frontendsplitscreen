@@ -1,365 +1,234 @@
-"use client"
+import React, { useState, useEffect, useRef } from 'react';
+import styled from 'styled-components';
 
-import { useState, useEffect } from "react"
-import styled from "styled-components"
-import SplitScreen from "./SplitScreen"
-import ProxyContent from "./ProxyContent"
-
-const ModalBackground = styled.div`
+const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  animation: fadeIn 0.3s ease-in-out;
-  margin: 0;
-  padding: 0;
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-`
+`;
 
 const ModalContent = styled.div`
-  background: #fff;
-  border-radius: 0;
-  width: 100vw;
-  height: 100vh;
+  background: white;
+  width: 90%;
+  height: 90%;
+  border-radius: 10px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  box-shadow: none;
-  border: none;
-  overflow: hidden;
-  font-family: 'Roboto', Arial, sans-serif;
-  animation: slideIn 0.4s ease-out;
-  margin: 0;
-  padding: 0;
-
-  @keyframes slideIn {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-`
-
-const HeaderContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
-  border-bottom: 1px solid #dadce0;
-  flex-shrink: 0;
-  margin: 0;
-  background: #fff;
-  z-index: 1001;
-  width: 100%;
-`
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+`;
 
 const CloseButton = styled.button`
-  margin-right: 30px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff4d4d;
   color: white;
   border: none;
-  width: 40px;
-  height: 40px;
-  background-color: rgba(17, 14, 14, 0.87);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 50%;
-  transition: background 0.3s ease, color 0.3s ease;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s ease;
 
   &:hover {
-    background: rgb(50, 38, 38);
-    color: white;
+    background: #ff3333;
   }
+`;
 
-  &:active {
-    background: rgb(55, 43, 43);
-  }
-`
+const SplitScreenContainer = styled.div`
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  margin-top: 60px;
+`;
+
+const Screen = styled.iframe`
+  flex: 1;
+  border: none;
+  border-radius: 5px;
+  margin: 0 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+`;
+
+const InputContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
 
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  width: 100%;
+  gap: 10px;
+`;
+
+const UrlInput = styled.input`
   flex: 1;
-
-  @media (max-width: 768px) {
-    gap: 8px;
-  }
-`
-
-const StyledInput = styled.input`
-  padding: 11px 12px;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
   font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  background: #f8f9fa;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  flex: 1;
-  min-width: 200px;
+  outline: none;
 
   &:focus {
-    border-color: #4285f4;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
   }
+`;
 
-  &::placeholder {
-    color: #5f6368;
-  }
-`
-
-const FileInputWrapper = styled.div`
+const ButtonContainer = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-`
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+`;
 
-const FileInput = styled.input`
-  padding: 8px;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  background: #f8f9fa;
-  flex: 1;
-  min-width: 150px;
-`
-
-const UploadButton = styled.button`
-  padding: 11px 12px;
-  color: white;
+const ActionButton = styled.button`
+  padding: 8px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  font-family: 'Roboto', Arial, sans-serif;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.3s ease;
 
   &:hover {
-    filter: brightness(90%);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    background-color: #0056b3;
   }
 
-  &:active {
-    filter: brightness(80%);
+  &.both-screen {
+    background-color: #28a745;
+
+    &:hover {
+      background-color: #218838;
+    }
   }
+`;
 
-  &:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-`
-
-const ScreenSelectButton = styled.select`
-  padding: 8px;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  background: #f8f9fa;
-  cursor: pointer;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-
-  &:focus {
-    border-color: #4285f4;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
-  }
-`
-
-const ErrorMessage = styled.div`
-  color: #d93025;
-  margin: 5px 0;
-  padding: 8px;
-  background: #fce8e6;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
-  animation: fadeInOut 3s ease-in-out;
-
-  @keyframes fadeInOut {
-    0% { opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { opacity: 0; }
-  }
-`
-
-const SplitScreenModal = ({
-  leftSrc: initialLeftSrc = "",
-  rightSrc: initialRightSrc = null,
-  setLeftSrc,
-  setRightSrc,
-  onClose,
-}) => {
-  const [error, setError] = useState(null)
-  const [leftFile, setLeftFile] = useState(null)
-  const [rightFile, setRightFile] = useState(null)
-  const [screenMode, setScreenMode] = useState("both")
-  const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
-  const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
-  const BACKEND_URL = "https://split-screen-backend.vercel.app"
+const SplitScreenModal = ({ leftSrc, rightSrc, setLeftSrc, setRightSrc, onClose }) => {
+  const [leftUrl, setLeftUrl] = useState(leftSrc || '');
+  const [rightUrl, setRightUrl] = useState(rightSrc || '');
+  const [targetScreen, setTargetScreen] = useState('both');
+  const leftInputRef = useRef(null);
+  const rightInputRef = useRef(null);
 
   useEffect(() => {
-    if (!setLeftSrc) {
-      console.error("setLeftSrc is not provided")
-    } else if (!leftSrc && initialLeftSrc) {
-      setLeftSrc(initialLeftSrc)
-      setLocalLeftSrc(initialLeftSrc)
-    }
-  }, [leftSrc, initialLeftSrc, setLeftSrc])
-
-  useEffect(() => {
-    if (!setRightSrc) {
-      console.error("setRightSrc is not provided")
-    } else if (!rightSrc && initialRightSrc) {
-      setRightSrc(initialRightSrc)
-      setLocalRightSrc(initialRightSrc)
-    }
-  }, [rightSrc, initialRightSrc, setRightSrc])
-
-  const handleUploadComplete = async (side, file) => {
-    if (!file) {
-      setError("No file selected")
-      return
-    }
-
-    try {
-      const blobUrl = URL.createObjectURL(file)
-      console.log(`File uploaded for ${side} side, Blob URL: ${blobUrl} - Handling client-side, File: ${file.name}`)
-      if (side === "left") {
-        setLocalLeftSrc(blobUrl)
-        if (setLeftSrc) setLeftSrc(blobUrl)
-        setLeftFile(file)
-      } else {
-        setLocalRightSrc(blobUrl)
-        if (setRightSrc) setRightSrc(blobUrl)
-        setRightFile(file)
+    const handleMessage = (event) => {
+      if (event.data.type === 'linkClick') {
+        const url = event.data.url;
+        if (targetScreen === 'left') {
+          setLeftUrl(url);
+          setLeftSrc(url);
+        } else if (targetScreen === 'right') {
+          setRightUrl(url);
+          setRightSrc(url);
+        } else {
+          setLeftUrl(url);
+          setRightUrl(url);
+          setLeftSrc(url);
+          setRightSrc(url);
+        }
       }
-    } catch (err) {
-      console.error("Upload error:", err)
-      setError(`Failed to process file: ${err.message}`)
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [targetScreen, setLeftSrc, setRightSrc]);
+
+  const handleLeftInputChange = (e) => {
+    setLeftUrl(e.target.value);
+  };
+
+  const handleRightInputChange = (e) => {
+    setRightUrl(e.target.value);
+  };
+
+  const handleLeftInputKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      setLeftSrc(leftUrl);
     }
-  }
+  };
 
-  const handleLinkClick = (side, newUrl) => {
-    console.log(`Link clicked: ${newUrl} on ${side} side`)
-    if (side === "left") {
-      setLocalLeftSrc(newUrl)
-      if (setLeftSrc) setLeftSrc(newUrl)
-    } else {
-      setLocalRightSrc(newUrl)
-      if (setRightSrc) setRightSrc(newUrl)
+  const handleRightInputKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      setRightSrc(rightUrl);
     }
-  }
+  };
 
-  const handleLeftSrcChange = (value) => {
-    setLocalLeftSrc(value)
-    if (setLeftSrc) setLeftSrc(value)
-  }
+  const handleLeftInputBlur = () => {
+    setLeftSrc(leftUrl);
+  };
 
-  const handleRightSrcChange = (value) => {
-    setLocalRightSrc(value)
-    if (setRightSrc) setRightSrc(value)
-  }
+  const handleRightInputBlur = () => {
+    setRightSrc(rightUrl);
+  };
 
-  const renderContent = (src, side) => {
-    if (!src) {
-      return (
-        <div
-          style={{
-            color: "#5f6368",
-            textAlign: "center",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "16px",
-            fontFamily: "'Roboto', Arial, sans-serif",
-          }}
-        >
-          Enter a URL or upload a file to view content
-        </div>
-      )
-    }
-
-    const isBlobUrl = src.startsWith("blob:")
-    const file = isBlobUrl ? (side === "left" ? leftFile : rightFile) : null
-    return (
-      <ProxyContent
-        url={src}
-        backendUrl={BACKEND_URL}
-        onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
-        isFileUpload={isBlobUrl}
-        fileName={file ? file.name : null}
-      />
-    )
-  }
+  const proxyUrl = (url) => {
+    if (!url) return '';
+    return `https://split-screen-backend.vercel.app/api/proxy?url=${encodeURIComponent(url)}`;
+  };
 
   return (
-    <ModalBackground onClick={onClose}>
-      <ModalContent onClick={(e) => e.stopPropagation()}>
-        <HeaderContainer>
+    <ModalOverlay>
+      <ModalContent>
+        <CloseButton onClick={onClose}>×</CloseButton>
+        <InputContainer>
           <InputWrapper>
-            <StyledInput
+            <UrlInput
+              ref={leftInputRef}
               type="text"
-              placeholder="Enter left URL"
-              value={leftSrc || ""}
-              onChange={(e) => handleLeftSrcChange(e.target.value)}
+              value={leftUrl}
+              onChange={handleLeftInputChange}
+              onKeyPress={handleLeftInputKeyPress}
+              onBlur={handleLeftInputBlur}
+              placeholder="Enter URL for left screen"
             />
-            <FileInputWrapper>
-              <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-              <UploadButton style={{backgroundColor: 'rgb(199, 51, 155)'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
-            </FileInputWrapper>
-            <StyledInput
-              type="text"
-              placeholder="Enter right URL"
-              value={rightSrc || ""}
-              onChange={(e) => handleRightSrcChange(e.target.value)}
-            />
-            <FileInputWrapper>
-              <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-              <UploadButton style={{backgroundColor: 'rgb(165, 0, 255)'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
-            </FileInputWrapper>
-            <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
-              <option value="both">Both Screens</option>
-              <option value="left">Left Screen</option>
-              <option value="right">Right Screen</option>
-            </ScreenSelectButton>
-            <CloseButton onClick={onClose}>×</CloseButton>
           </InputWrapper>
-        </HeaderContainer>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
-          {renderContent(leftSrc, "left")}
-          {renderContent(rightSrc, "right")}
-        </SplitScreen>
+          <InputWrapper>
+            <UrlInput
+              ref={rightInputRef}
+              type="text"
+              value={rightUrl}
+              onChange={handleRightInputChange}
+              onKeyPress={handleRightInputKeyPress}
+              onBlur={handleRightInputBlur}
+              placeholder="Enter URL for right screen"
+            />
+          </InputWrapper>
+          <ButtonContainer>
+            <ActionButton onClick={() => setTargetScreen('left')}>
+              Left Screen
+            </ActionButton>
+            <ActionButton className="both-screen" onClick={() => setTargetScreen('both')}>
+              Both Screen
+            </ActionButton>
+            <ActionButton onClick={() => setTargetScreen('right')}>
+              Right Screen
+            </ActionButton>
+          </ButtonContainer>
+        </InputContainer>
+        <SplitScreenContainer>
+          <Screen src={proxyUrl(leftSrc)} />
+          <Screen src={proxyUrl(rightSrc)} />
+        </SplitScreenContainer>
       </ModalContent>
-    </ModalBackground>
-  )
-}
+    </ModalOverlay>
+  );
+};
 
-export default SplitScreenModal
+export default SplitScreenModal;
