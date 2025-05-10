@@ -4,6 +4,45 @@ import mammoth from "mammoth";
 
 const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 
+// Styling for the tabbed interface
+const TabContainer = styled.div`
+  display: flex;
+  overflow-x: auto;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dadce0;
+  padding: 0;
+  margin: 0;
+`;
+
+const TabButton = styled.button`
+  padding: 10px 20px;
+  background-color: ${(props) => (props.active ? "#ffffff" : "#f8f9fa")};
+  color: ${(props) => (props.active ? "#000000" : "#5f6368")};
+  border: none;
+  border-right: 1px solid #dadce0;
+  font-size: 14px;
+  font-family: 'Roboto', Arial, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background-color: ${(props) => (props.active ? "#f0f0f0" : "#e8eaed")};
+  }
+
+  &:focus {
+    outline: none;
+  }
+`;
+
+const TabContent = styled.div`
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  font-family: 'Roboto', Arial, sans-serif;
+  background: #fff;
+`;
+
 const ContentWrapper = styled.div`
   height: 100%;
   width: 100%;
@@ -97,6 +136,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const [htmlContent, setHtmlContent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [directIframe, setDirectIframe] = useState(false);
+  const [activeTab, setActiveTab] = useState("Overview");
   const iframeRef = useRef(null);
 
   const isPatentUrl = (urlToCheck) => {
@@ -225,9 +265,12 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           throw new Error(`Failed to process file: ${err.message}`);
         }
       } else if (isPatentUrl(url)) {
+        // For Google Patents, we'll fetch the content and parse it for tabbed view
         const proxyUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
-        setDirectIframe(true);
-        setContent({ type: "iframe", url: proxyUrl });
+        response = await fetchWithRetry(proxyUrl);
+        const html = await response.text();
+        setHtmlContent(html); // We'll use this HTML to extract tab content
+        setDirectIframe(false); // We won't use iframe directly for tabbed view
       } else if (url.includes("docs.google.com") || url.includes("drive.google.com")) {
         setDirectIframe(true);
         setContent({ type: "iframe", url });
@@ -343,6 +386,217 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     return () => window.removeEventListener("message", handleMessage);
   }, [onLinkClick, fileName]);
 
+  // Tabbed Interface for Google Patents
+  const renderTabbedInterface = () => {
+    const tabs = [
+      "Overview", "PDF", "Drawings", "Claims", "Description", "Equivalents",
+      "Family", "Priority Map", "Citations Map", "B Citations", "F Citations",
+      "Priority Pubs", "Assignments", "Status"
+    ];
+
+    const renderTabContent = () => {
+      // Parse the HTML content using DOMParser
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, "text/html");
+
+      // Helper functions to extract content from HTML using DOM queries
+      const extractPatentTitle = () => {
+        const titleElement = doc.querySelector('h1[itemprop="title"]');
+        return titleElement ? titleElement.textContent.trim() : "Title not found";
+      };
+
+      const extractPatentAbstract = () => {
+        const abstractElement = doc.querySelector('section[itemprop="abstract"]');
+        return abstractElement ? abstractElement.textContent.trim() : "Abstract not found";
+      };
+
+      const extractPatentInventors = () => {
+        const inventorElements = doc.querySelectorAll('dd[itemprop="inventor"]');
+        const inventors = Array.from(inventorElements).map(el => el.textContent.trim());
+        return inventors.length > 0 ? inventors.join(", ") : "Inventors not found";
+      };
+
+      const extractPatentNumber = () => {
+        const numberElement = doc.querySelector('span[itemprop="publicationNumber"]');
+        return numberElement ? numberElement.textContent.trim() : "Publication number not found";
+      };
+
+      const extractPatentDrawings = () => {
+        const drawingElements = doc.querySelectorAll('div.patent-image img');
+        if (drawingElements.length > 0) {
+          return Array.from(drawingElements).map((img, index) => (
+            <img
+              key={index}
+              src={img.getAttribute("src")}
+              alt={`Drawing ${index + 1}`}
+              style={{ maxWidth: "100%" }}
+            />
+          ));
+        }
+        return <p>No drawings found.</p>;
+      };
+
+      const extractPatentClaims = () => {
+        const claimsElement = doc.querySelector('section[itemprop="claims"]');
+        return claimsElement ? (
+          <div dangerouslySetInnerHTML={{ __html: claimsElement.innerHTML }} />
+        ) : (
+          <p>No claims found.</p>
+        );
+      };
+
+      const extractPatentDescription = () => {
+        const descriptionElement = doc.querySelector('section[itemprop="description"]');
+        return descriptionElement ? (
+          <div dangerouslySetInnerHTML={{ __html: descriptionElement.innerHTML }} />
+        ) : (
+          <p>No description found.</p>
+        );
+      };
+
+      switch (activeTab) {
+        case "Overview":
+          return (
+            <TabContent>
+              <h2>Overview</h2>
+              {htmlContent ? (
+                <div>
+                  <h3>{extractPatentTitle()}</h3>
+                  <p><strong>Abstract:</strong> {extractPatentAbstract()}</p>
+                  <p><strong>Inventors:</strong> {extractPatentInventors()}</p>
+                  <p><strong>Publication #:</strong> {extractPatentNumber()}</p>
+                </div>
+              ) : (
+                <p>Loading overview...</p>
+              )}
+            </TabContent>
+          );
+        case "PDF":
+          return (
+            <TabContent>
+              <PatentIframe
+                src={`${url.replace(/\/patent\//, "/patent/pdf/")}#view=FitH`}
+                title="Patent PDF"
+                type="application/pdf"
+              />
+            </TabContent>
+          );
+        case "Drawings":
+          return (
+            <TabContent>
+              <h2>Drawings</h2>
+              {extractPatentDrawings()}
+            </TabContent>
+          );
+        case "Claims":
+          return (
+            <TabContent>
+              <h2>Claims</h2>
+              {extractPatentClaims()}
+            </TabContent>
+          );
+        case "Description":
+          return (
+            <TabContent>
+              <h2>Description</h2>
+              {extractPatentDescription()}
+            </TabContent>
+          );
+        case "Equivalents":
+          return (
+            <TabContent>
+              <h2>Equivalents</h2>
+              <p>Related patents will be listed here.</p>
+              {/* Add logic to fetch equivalents */}
+            </TabContent>
+          );
+        case "Family":
+          return (
+            <TabContent>
+              <h2>Family</h2>
+              <p>Patent family members will be listed here.</p>
+              {/* Add logic to fetch family */}
+            </TabContent>
+          );
+        case "Priority Map":
+          return (
+            <TabContent>
+              <h2>Priority Map</h2>
+              <p>Priority dates timeline will be shown here.</p>
+              {/* Add logic for priority map */}
+            </TabContent>
+          );
+        case "Citations Map":
+          return (
+            <TabContent>
+              <h2>Citations Map</h2>
+              <p>Visual representation of citations will be shown here.</p>
+              {/* Add logic for citations map */}
+            </TabContent>
+          );
+        case "B Citations":
+          return (
+            <TabContent>
+              <h2>Backward Citations</h2>
+              <p>Backward citations will be listed here.</p>
+              {/* Add logic for backward citations */}
+            </TabContent>
+          );
+        case "F Citations":
+          return (
+            <TabContent>
+              <h2>Forward Citations</h2>
+              <p>Forward citations will be listed here.</p>
+              {/* Add logic for forward citations */}
+            </TabContent>
+          );
+        case "Priority Pubs":
+          return (
+            <TabContent>
+              <h2>Priority Publications</h2>
+              <p>Priority publications will be listed here.</p>
+              {/* Add logic for priority publications */}
+            </TabContent>
+          );
+        case "Assignments":
+          return (
+            <TabContent>
+              <h2>Assignments</h2>
+              <p>Ownership details will be listed here.</p>
+              {/* Add logic for assignments */}
+            </TabContent>
+          );
+        case "Status":
+          return (
+            <TabContent>
+              <h2>Status</h2>
+              <p>Current legal status will be shown here.</p>
+              {/* Add logic for status */}
+            </TabContent>
+          );
+        default:
+          return <TabContent>Select a tab to view content.</TabContent>;
+      }
+    };
+
+    return (
+      <ContentWrapper>
+        <TabContainer>
+          {tabs.map((tab) => (
+            <TabButton
+              key={tab}
+              active={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </TabButton>
+          ))}
+        </TabContainer>
+        {renderTabContent()}
+      </ContentWrapper>
+    );
+  };
+
   if (loading) {
     return <LoadingIndicator>Loading content...</LoadingIndicator>;
   }
@@ -380,6 +634,10 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         </ErrorContainer>
       </ContentWrapper>
     );
+  }
+
+  if (isPatentUrl(url) && htmlContent) {
+    return renderTabbedInterface();
   }
 
   if (directIframe || content?.type === "iframe") {
