@@ -178,12 +178,24 @@ const UploadButton = styled.button`
 `
 
 const ScreenSelectButton = styled.select`
+  background: rgb(5, 252, 252);
+  color: #333; /* Dark text for better contrast */
   padding: 6px;
   font-size: 13px;
   font-family: 'Roboto', Arial, sans-serif;
   cursor: pointer;
   border-radius: 4px;
   border: 1px solid #dadce0;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: rgb(0, 230, 230); /* Slightly darker shade on hover */
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #4285f4;
+  }
 `
 
 const ErrorMessage = styled.div`

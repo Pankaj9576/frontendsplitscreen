@@ -7,23 +7,12 @@ const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 // Basic styling
 const TabContainer = styled.div`
   display: flex;
-  overflow-x: auto;
+  flex-wrap: wrap;
   background-color: #f5f5f5;
   border-bottom: 2px solid #e0e0e0;
   padding: 0;
   margin: 0;
-  width: 100%; /* Ensure container takes full width */
-  scrollbar-width: thin; /* For Firefox */
-  &::-webkit-scrollbar {
-    height: 8px; /* Scrollbar height for horizontal scroll */
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 4px;
-  }
-  &::-webkit-scrollbar-track {
-    background: #f5f5f5;
-  }
+  width: 100%;
 `;
 
 const TabButton = styled.button`
@@ -38,7 +27,7 @@ const TabButton = styled.button`
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
-  flex-shrink: 0; /* Prevent tabs from shrinking, forcing horizontal scroll */
+  flex-shrink: 0;
 
   &:hover {
     background-color: ${(props) => (props.$active ? "#ffffff" : "#e8e8e8")};
@@ -52,27 +41,15 @@ const TabButton = styled.button`
 
 const TabContent = styled.div`
   flex: 1;
-  overflow-y: auto;
   padding: 20px;
   font-family: 'Arial', sans-serif;
   background: #fff;
   font-size: 14px;
   line-height: 1.6;
   color: #333;
-  height: calc(100% - 50px); /* Adjust height for tab bar */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
-  text-align: left; /* Align content to the left */
-  scrollbar-width: thin; /* For Firefox */
-  &::-webkit-scrollbar {
-    width: 8px; /* Scrollbar width for vertical scroll */
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 4px;
-  }
-  &::-webkit-scrollbar-track {
-    background: #fff;
-  }
+  text-align: left;
+  max-width: 100%;
+  overflow-x: hidden;
 
   h2 {
     font-size: 18px;
@@ -93,11 +70,18 @@ const TabContent = styled.div`
   p {
     margin: 8px 0;
     color: #555;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
+    word-wrap: break-word;
   }
 
   strong {
     font-weight: 600;
     color: #333;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
   }
 
   img {
@@ -113,19 +97,27 @@ const TabContent = styled.div`
   li {
     margin: 5px 0;
     color: #555;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
     margin: 10px 0;
+    table-layout: fixed;
+    word-wrap: break-word;
   }
 
   th, td {
     padding: 8px;
     border: 1px solid #e0e0e0;
     text-align: left;
-    font-size: 14px;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
+    word-wrap: break-word;
   }
 
   th {
@@ -137,6 +129,9 @@ const TabContent = styled.div`
     color: #1a73e8;
     text-decoration: none;
     cursor: pointer;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
   }
 
   a:hover {
@@ -145,11 +140,24 @@ const TabContent = styled.div`
 `;
 
 const ContentWrapper = styled.div`
-  height: 100vh; /* Use viewport height for proper scrolling */
+  height: 100vh;
   width: 100%;
-  overflow: hidden; /* Prevent outer scroll */
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #fff;
+  }
 `;
 
 const PatentIframe = styled.iframe`
@@ -163,7 +171,6 @@ const PatentIframe = styled.iframe`
 const DocViewer = styled.div`
   width: 100%;
   height: 100%;
-  overflow-y: auto;
   font-family: 'Arial', sans-serif;
   padding: 10px;
   box-sizing: border-box;
@@ -239,7 +246,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const [activeTab, setActiveTab] = useState(null);
   const [availableTabs, setAvailableTabs] = useState([]);
   const iframeRef = useRef(null);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState(null); // For PDF fallback
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
 
   const isPatentUrl = (urlToCheck) => {
     return urlToCheck && urlToCheck.includes("patents.google.com/patent");
