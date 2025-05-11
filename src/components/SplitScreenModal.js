@@ -178,7 +178,7 @@ const UploadButton = styled.button`
 `
 
 const ScreenSelectButton = styled.select`
-  background: rgb(5, 252, 252);
+  background: #462A68;
   color: #333; /* Dark text for better contrast */
   padding: 6px;
   font-size: 13px;
