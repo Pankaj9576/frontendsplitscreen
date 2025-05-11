@@ -643,7 +643,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         case "Claims":
           return (
             <TabContent>
-              <h2>Claims</h2>
+              {/* <h2>Claims</h2> */}
               {patentData.claims ? (
                 <div dangerouslySetInnerHTML={{ __html: patentData.claims }} />
               ) : (
@@ -654,7 +654,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         case "Description":
           return (
             <TabContent>
-              <h2>Description</h2>
+              {/* <h2>Description</h2> */}
               {patentData.description ? (
                 <div dangerouslySetInnerHTML={{ __html: patentData.description }} />
               ) : (
