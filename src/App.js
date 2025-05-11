@@ -10,7 +10,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true); // Bypassing authentication
 
   const GOOGLE_SHEET_URL = 'https://www.wipo.int/export/sites/www/sme/en/documents/pdf/ip_panorama_3_learning_points.pdf';
-  const PATENT_URL = 'https://patents.google.com/patent/GB2459793B';
+  const PATENT_URL = 'https://patents.google.com/patent/US8900904B2';
 
   // useEffect(() => {
   //   const token = localStorage.getItem('token');
