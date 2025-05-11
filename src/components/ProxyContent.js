@@ -4,30 +4,45 @@ import mammoth from "mammoth";
 
 const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 
-// Styling for the tabbed interface
+// Basic styling
 const TabContainer = styled.div`
   display: flex;
   overflow-x: auto;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dadce0;
+  background-color: #f5f5f5;
+  border-bottom: 2px solid #e0e0e0;
   padding: 0;
   margin: 0;
+  width: 100%; /* Ensure container takes full width */
+  scrollbar-width: thin; /* For Firefox */
+  &::-webkit-scrollbar {
+    height: 8px; /* Scrollbar height for horizontal scroll */
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f5f5f5;
+  }
 `;
 
 const TabButton = styled.button`
-  padding: 10px 20px;
-  background-color: ${(props) => (props.active ? "#ffffff" : "#f8f9fa")};
-  color: ${(props) => (props.active ? "#000000" : "#5f6368")};
+  padding: 12px 24px;
+  background-color: ${(props) => (props.$active ? "#ffffff" : "#f5f5f5")};
+  color: ${(props) => (props.$active ? "#1a73e8" : "#333")};
   border: none;
-  border-right: 1px solid #dadce0;
+  border-bottom: ${(props) => (props.$active ? "2px solid #1a73e8" : "none")};
   font-size: 14px;
-  font-family: 'Roboto', Arial, sans-serif;
+  font-family: 'Arial', sans-serif;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: all 0.2s ease;
+  flex-shrink: 0; /* Prevent tabs from shrinking, forcing horizontal scroll */
 
   &:hover {
-    background-color: ${(props) => (props.active ? "#f0f0f0" : "#e8eaed")};
+    background-color: ${(props) => (props.$active ? "#ffffff" : "#e8e8e8")};
+    color: #1a73e8;
   }
 
   &:focus {
@@ -37,37 +52,119 @@ const TabButton = styled.button`
 
 const TabContent = styled.div`
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
   padding: 20px;
-  font-family: 'Roboto', Arial, sans-serif;
+  font-family: 'Arial', sans-serif;
   background: #fff;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  height: calc(100% - 50px); /* Adjust height for tab bar */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
+  text-align: left; /* Align content to the left */
+  scrollbar-width: thin; /* For Firefox */
+  &::-webkit-scrollbar {
+    width: 8px; /* Scrollbar width for vertical scroll */
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #fff;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a73e8;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    margin: 10px 0;
+  }
+
+  p {
+    margin: 8px 0;
+    color: #555;
+  }
+
+  strong {
+    font-weight: 600;
+    color: #333;
+  }
+
+  img {
+    max-width: 100%;
+    margin: 10px 0;
+  }
+
+  ul, ol {
+    padding-left: 20px;
+    margin: 10px 0;
+  }
+
+  li {
+    margin: 5px 0;
+    color: #555;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+  }
+
+  th, td {
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+  }
+
+  a {
+    color: #1a73e8;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
 `;
 
 const ContentWrapper = styled.div`
-  height: 100%;
+  height: 100vh; /* Use viewport height for proper scrolling */
   width: 100%;
-  overflow: auto;
-  position: relative;
+  overflow: hidden; /* Prevent outer scroll */
   display: flex;
   flex-direction: column;
 `;
 
 const PatentIframe = styled.iframe`
   width: 100%;
-  max-width: 100%;
   height: 100%;
   border: none;
   background: #fff;
-  font-family: 'Roboto', Arial, sans-serif;
   box-sizing: border-box;
 `;
 
 const DocViewer = styled.div`
   width: 100%;
-  max-width: 100%;
   height: 100%;
-  overflow: auto;
-  font-family: 'Roboto', Arial, sans-serif;
+  overflow-y: auto;
+  font-family: 'Arial', sans-serif;
   padding: 10px;
   box-sizing: border-box;
 
@@ -88,10 +185,11 @@ const FallbackMessage = styled.div`
   text-align: center;
   padding: 20px;
   color: #666;
+  font-family: 'Arial', sans-serif;
 `;
 
 const DownloadLink = styled.a`
-  color: rgb(81, 80, 98);
+  color: #1a73e8;
   text-decoration: none;
   &:hover {
     text-decoration: underline;
@@ -106,6 +204,7 @@ const LoadingIndicator = styled.div`
   width: 100%;
   font-size: 16px;
   color: #5f6368;
+  font-family: 'Arial', sans-serif;
 `;
 
 const ErrorContainer = styled.div`
@@ -119,25 +218,28 @@ const ErrorContainer = styled.div`
 
 const RetryButton = styled.button`
   padding: 8px 16px;
-  background-color: rgb(85, 88, 92);
+  background-color: #555;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  font-family: 'Arial', sans-serif;
   &:hover {
-    background-color: rgb(79, 85, 96);
+    background-color: #666;
   }
 `;
 
 const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) => {
   const [content, setContent] = useState(null);
   const [error, setError] = useState(null);
-  const [htmlContent, setHtmlContent] = useState(null);
+  const [patentData, setPatentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [directIframe, setDirectIframe] = useState(false);
-  const [activeTab, setActiveTab] = useState("Overview");
+  const [activeTab, setActiveTab] = useState(null);
+  const [availableTabs, setAvailableTabs] = useState([]);
   const iframeRef = useRef(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null); // For PDF fallback
 
   const isPatentUrl = (urlToCheck) => {
     return urlToCheck && urlToCheck.includes("patents.google.com/patent");
@@ -185,6 +287,32 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     }
   };
 
+  const fetchPdfAsBlob = async (pdfUrl) => {
+    try {
+      const proxyUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(pdfUrl)}`;
+      const response = await fetch(proxyUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          Referer: "https://patents.google.com/",
+          Accept: "application/pdf",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch PDF: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      setPdfBlobUrl(blobUrl);
+      return blobUrl;
+    } catch (err) {
+      console.error("PDF fetch error:", err);
+      throw err;
+    }
+  };
+
   const handleWordFile = async (blob, fileName) => {
     try {
       const maxSize = 10 * 1024 * 1024;
@@ -207,9 +335,10 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         throw new Error("Failed to convert Word document: Empty or invalid content.");
       }
 
-      setHtmlContent(
-        `<div style="padding: 20px; font-family: 'Roboto', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">${result.value}</div>`
-      );
+      setContent({
+        type: "html",
+        data: `<div style="padding: 20px; font-family: 'Arial', sans-serif; max-width: 100%; box-sizing: border-box;">${result.value}</div>`,
+      });
     } catch (err) {
       console.error("Error in handleWordFile:", err);
       setError(
@@ -231,10 +360,13 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
     console.log("Fetching content for URL:", url);
     setContent(null);
-    setHtmlContent(null);
+    setPatentData(null);
     setError(null);
     setLoading(true);
     setDirectIframe(false);
+    setAvailableTabs([]);
+    setActiveTab(null);
+    setPdfBlobUrl(null);
 
     try {
       let response;
@@ -265,17 +397,22 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           throw new Error(`Failed to process file: ${err.message}`);
         }
       } else if (isPatentUrl(url)) {
-        // For Google Patents, we'll fetch the content and parse it for tabbed view
         const proxyUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
         response = await fetchWithRetry(proxyUrl);
-        const html = await response.text();
-        setHtmlContent(html); // We'll use this HTML to extract tab content
-        setDirectIframe(false); // We won't use iframe directly for tabbed view
+        const data = await response.json();
+
+        if (data.type === "patent") {
+          setPatentData(data.data);
+          console.log("Frontend Received Patent Data:", JSON.stringify(data.data, null, 2));
+        } else {
+          throw new Error("Unexpected response format");
+        }
       } else if (url.includes("docs.google.com") || url.includes("drive.google.com")) {
         setDirectIframe(true);
         setContent({ type: "iframe", url });
       } else if (isPdfUrl(url)) {
-        setContent({ type: "pdf", url: `${url}#view=FitH` });
+        const blobUrl = await fetchPdfAsBlob(url);
+        setContent({ type: "pdf", url: `${blobUrl}#view=FitH` });
       } else {
         const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
         await handleProxyContent(fetchUrl);
@@ -294,8 +431,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
     if (contentType.includes("text/html")) {
       const html = await response.clone().text();
-      const processedHtml = processHtml(html, url);
-      setHtmlContent(processedHtml);
+      setContent({ type: "html", data: processHtml(html, url) });
     } else {
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -373,7 +509,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         } else {
           onLinkClick(event.data.url);
           setContent(null);
-          setHtmlContent(null);
+          setPatentData(null);
           setError(null);
           setLoading(true);
           setDirectIframe(false);
@@ -386,192 +522,328 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     return () => window.removeEventListener("message", handleMessage);
   }, [onLinkClick, fileName]);
 
-  // Tabbed Interface for Google Patents
   const renderTabbedInterface = () => {
-    const tabs = [
-      "Overview", "PDF", "Drawings", "Claims", "Description", "Equivalents",
-      "Family", "Priority Map", "Citations Map", "B Citations", "F Citations",
-      "Priority Pubs", "Assignments", "Status"
+    if (!patentData) return null;
+
+    const possibleTabs = [
+      {
+        name: "Overview",
+        hasData:
+          patentData.title ||
+          patentData.abstract ||
+          patentData.inventors?.length ||
+          patentData.publicationNumber,
+      },
+      { name: "PDF", hasData: true },
+      { name: "Drawings", hasData: patentData.drawings?.length > 0 },
+      { name: "Claims", hasData: !!patentData.claims },
+      { name: "Description", hasData: !!patentData.description },
+      { name: "Classifications", hasData: patentData.classifications?.length > 0 },
+      { name: "Citations", hasData: patentData.citations?.length > 0 },
+      { name: "Cited By", hasData: patentData.citedBy?.length > 0 },
+      { name: "Legal Events", hasData: patentData.legalEvents?.length > 0 },
+      { name: "Patent Family", hasData: patentData.patentFamily?.length > 0 },
+      { name: "Similar Documents", hasData: patentData.similarDocs?.length > 0 },
     ];
 
+    const tabs = possibleTabs.filter((tab) => tab.hasData);
+    if (tabs.length > 0 && !activeTab) {
+      setActiveTab(tabs[0].name);
+      setAvailableTabs(tabs.map((tab) => tab.name));
+    }
+
+    const handleCitationClick = (number) => {
+      const citationUrl = `https://patents.google.com/patent/${number}`;
+      onLinkClick(citationUrl);
+      fetchContent();
+    };
+
     const renderTabContent = () => {
-      // Parse the HTML content using DOMParser
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlContent, "text/html");
-
-      // Helper functions to extract content from HTML using DOM queries
-      const extractPatentTitle = () => {
-        const titleElement = doc.querySelector('h1[itemprop="title"]');
-        return titleElement ? titleElement.textContent.trim() : "Title not found";
-      };
-
-      const extractPatentAbstract = () => {
-        const abstractElement = doc.querySelector('section[itemprop="abstract"]');
-        return abstractElement ? abstractElement.textContent.trim() : "Abstract not found";
-      };
-
-      const extractPatentInventors = () => {
-        const inventorElements = doc.querySelectorAll('dd[itemprop="inventor"]');
-        const inventors = Array.from(inventorElements).map(el => el.textContent.trim());
-        return inventors.length > 0 ? inventors.join(", ") : "Inventors not found";
-      };
-
-      const extractPatentNumber = () => {
-        const numberElement = doc.querySelector('span[itemprop="publicationNumber"]');
-        return numberElement ? numberElement.textContent.trim() : "Publication number not found";
-      };
-
-      const extractPatentDrawings = () => {
-        const drawingElements = doc.querySelectorAll('div.patent-image img');
-        if (drawingElements.length > 0) {
-          return Array.from(drawingElements).map((img, index) => (
-            <img
-              key={index}
-              src={img.getAttribute("src")}
-              alt={`Drawing ${index + 1}`}
-              style={{ maxWidth: "100%" }}
-            />
-          ));
-        }
-        return <p>No drawings found.</p>;
-      };
-
-      const extractPatentClaims = () => {
-        const claimsElement = doc.querySelector('section[itemprop="claims"]');
-        return claimsElement ? (
-          <div dangerouslySetInnerHTML={{ __html: claimsElement.innerHTML }} />
-        ) : (
-          <p>No claims found.</p>
-        );
-      };
-
-      const extractPatentDescription = () => {
-        const descriptionElement = doc.querySelector('section[itemprop="description"]');
-        return descriptionElement ? (
-          <div dangerouslySetInnerHTML={{ __html: descriptionElement.innerHTML }} />
-        ) : (
-          <p>No description found.</p>
-        );
-      };
-
       switch (activeTab) {
         case "Overview":
           return (
             <TabContent>
               <h2>Overview</h2>
-              {htmlContent ? (
-                <div>
-                  <h3>{extractPatentTitle()}</h3>
-                  <p><strong>Abstract:</strong> {extractPatentAbstract()}</p>
-                  <p><strong>Inventors:</strong> {extractPatentInventors()}</p>
-                  <p><strong>Publication #:</strong> {extractPatentNumber()}</p>
-                </div>
-              ) : (
-                <p>Loading overview...</p>
+              {patentData.title && <h3>{patentData.title}</h3>}
+              {patentData.publicationNumber && (
+                <p>
+                  <strong>Publication Number:</strong> {patentData.publicationNumber}
+                </p>
+              )}
+              {patentData.publicationDate && (
+                <p>
+                  <strong>Publication Date:</strong> {patentData.publicationDate}
+                </p>
+              )}
+              {patentData.filingDate && (
+                <p>
+                  <strong>Filing Date:</strong> {patentData.filingDate}
+                </p>
+              )}
+              {patentData.priorityDate && (
+                <p>
+                  <strong>Priority Date:</strong> {patentData.priorityDate}
+                </p>
+              )}
+              {patentData.inventors?.length > 0 && (
+                <p>
+                  <strong>Inventors:</strong> {patentData.inventors.join(", ")}
+                </p>
+              )}
+              {patentData.assignee && (
+                <p>
+                  <strong>Assignee:</strong> {patentData.assignee}
+                </p>
+              )}
+              {patentData.status && (
+                <p>
+                  <strong>Status:</strong> {patentData.status}
+                </p>
+              )}
+              {patentData.abstract && (
+                <p>
+                  <strong>Abstract:</strong> {patentData.abstract}
+                </p>
               )}
             </TabContent>
           );
         case "PDF":
+          const pdfUrl = patentData.pdfUrl;
           return (
             <TabContent>
-              <PatentIframe
-                src={`${url.replace(/\/patent\//, "/patent/pdf/")}#view=FitH`}
-                title="Patent PDF"
-                type="application/pdf"
-              />
+              <FallbackMessage>
+                <DownloadLink href={pdfUrl} target="_blank">
+                  Open PDF in New Tab
+                </DownloadLink>
+                {" | "}
+                <DownloadLink href={pdfUrl} download>
+                  Download PDF
+                </DownloadLink>
+              </FallbackMessage>
             </TabContent>
           );
         case "Drawings":
           return (
             <TabContent>
               <h2>Drawings</h2>
-              {extractPatentDrawings()}
+              {patentData.drawings?.length > 0 ? (
+                patentData.drawings.map((drawing, index) => (
+                  <img
+                    key={index}
+                    src={drawing}
+                    alt={`Drawing ${index + 1}`}
+                    style={{ maxWidth: "100%" }}
+                  />
+                ))
+              ) : (
+                <p>No drawings found.</p>
+              )}
             </TabContent>
           );
         case "Claims":
           return (
             <TabContent>
               <h2>Claims</h2>
-              {extractPatentClaims()}
+              {patentData.claims ? (
+                <div dangerouslySetInnerHTML={{ __html: patentData.claims }} />
+              ) : (
+                <p>No claims found.</p>
+              )}
             </TabContent>
           );
         case "Description":
           return (
             <TabContent>
               <h2>Description</h2>
-              {extractPatentDescription()}
+              {patentData.description ? (
+                <div dangerouslySetInnerHTML={{ __html: patentData.description }} />
+              ) : (
+                <p>No description found.</p>
+              )}
             </TabContent>
           );
-        case "Equivalents":
+        case "Classifications":
           return (
             <TabContent>
-              <h2>Equivalents</h2>
-              <p>Related patents will be listed here.</p>
-              {/* Add logic to fetch equivalents */}
+              <h2>Classifications</h2>
+              {patentData.classifications?.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {patentData.classifications.map((cls, index) => (
+                      <tr key={index}>
+                        <td>{cls.code || "N/A"}</td>
+                        <td>{cls.description || "N/A"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>No classifications found.</p>
+              )}
             </TabContent>
           );
-        case "Family":
+        case "Citations":
           return (
             <TabContent>
-              <h2>Family</h2>
-              <p>Patent family members will be listed here.</p>
-              {/* Add logic to fetch family */}
+              <h2>Citations</h2>
+              {patentData.citations?.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Publication Number</th>
+                      <th>Date</th>
+                      <th>Title</th>
+                      <th>Assignee</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {patentData.citations.map((citation, index) => (
+                      <tr key={index}>
+                        <td>
+                          {citation.number ? (
+                            <a onClick={() => handleCitationClick(citation.number)}>
+                              {citation.number}
+                            </a>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+                        <td>{citation.date || "N/A"}</td>
+                        <td>{citation.title || "N/A"}</td>
+                        <td>{citation.assignee || "N/A"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>No citations found.</p>
+              )}
             </TabContent>
           );
-        case "Priority Map":
+        case "Cited By":
           return (
             <TabContent>
-              <h2>Priority Map</h2>
-              <p>Priority dates timeline will be shown here.</p>
-              {/* Add logic for priority map */}
+              <h2>Cited By</h2>
+              {patentData.citedBy?.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Publication Number</th>
+                      <th>Date</th>
+                      <th>Title</th>
+                      <th>Assignee</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {patentData.citedBy.map((cite, index) => (
+                      <tr key={index}>
+                        <td>
+                          {cite.number ? (
+                            <a onClick={() => handleCitationClick(cite.number)}>
+                              {cite.number}
+                            </a>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+                        <td>{cite.date || "N/A"}</td>
+                        <td>{cite.title || "N/A"}</td>
+                        <td>{cite.assignee || "N/A"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>No cited by documents found.</p>
+              )}
             </TabContent>
           );
-        case "Citations Map":
+        case "Legal Events":
           return (
             <TabContent>
-              <h2>Citations Map</h2>
-              <p>Visual representation of citations will be shown here.</p>
-              {/* Add logic for citations map */}
+              <h2>Legal Events</h2>
+              {patentData.legalEvents?.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {patentData.legalEvents.map((event, index) => (
+                      <tr key={index}>
+                        <td>{event.date || "N/A"}</td>
+                        <td>{event.description || "N/A"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>No legal events found.</p>
+              )}
             </TabContent>
           );
-        case "B Citations":
+        case "Patent Family":
           return (
             <TabContent>
-              <h2>Backward Citations</h2>
-              <p>Backward citations will be listed here.</p>
-              {/* Add logic for backward citations */}
+              <h2>Patent Family</h2>
+              {patentData.patentFamily?.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Publication Number</th>
+                      <th>Date</th>
+                      <th>Country</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {patentData.patentFamily.map((family, index) => (
+                      <tr key={index}>
+                        <td>{family.number || "N/A"}</td>
+                        <td>{family.date || "N/A"}</td>
+                        <td>{family.country || "N/A"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>No patent family found.</p>
+              )}
             </TabContent>
           );
-        case "F Citations":
+        case "Similar Documents":
           return (
             <TabContent>
-              <h2>Forward Citations</h2>
-              <p>Forward citations will be listed here.</p>
-              {/* Add logic for forward citations */}
-            </TabContent>
-          );
-        case "Priority Pubs":
-          return (
-            <TabContent>
-              <h2>Priority Publications</h2>
-              <p>Priority publications will be listed here.</p>
-              {/* Add logic for priority publications */}
-            </TabContent>
-          );
-        case "Assignments":
-          return (
-            <TabContent>
-              <h2>Assignments</h2>
-              <p>Ownership details will be listed here.</p>
-              {/* Add logic for assignments */}
-            </TabContent>
-          );
-        case "Status":
-          return (
-            <TabContent>
-              <h2>Status</h2>
-              <p>Current legal status will be shown here.</p>
-              {/* Add logic for status */}
+              <h2>Similar Documents</h2>
+              {patentData.similarDocs?.length > 0 ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Publication Number</th>
+                      <th>Date</th>
+                      <th>Title</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {patentData.similarDocs.map((doc, index) => (
+                      <tr key={index}>
+                        <td>{doc.number || "N/A"}</td>
+                        <td>{doc.date || "N/A"}</td>
+                        <td>{doc.title || "N/A"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>No similar documents found.</p>
+              )}
             </TabContent>
           );
         default:
@@ -582,17 +854,24 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     return (
       <ContentWrapper>
         <TabContainer>
-          {tabs.map((tab) => (
+          {availableTabs.map((tab) => (
             <TabButton
               key={tab}
-              active={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
+              $active={activeTab === tab}
+              onClick={() => {
+                setActiveTab(tab);
+                if (tab === "PDF" && patentData.pdfUrl && !pdfBlobUrl) {
+                  fetchPdfAsBlob(patentData.pdfUrl).catch((err) => {
+                    setError(`Failed to load PDF: ${err.message}`);
+                  });
+                }
+              }}
             >
               {tab}
             </TabButton>
           ))}
         </TabContainer>
-        {renderTabContent()}
+        {activeTab && renderTabContent()}
       </ContentWrapper>
     );
   };
@@ -636,7 +915,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     );
   }
 
-  if (isPatentUrl(url) && htmlContent) {
+  if (isPatentUrl(url) && patentData) {
     return renderTabbedInterface();
   }
 
@@ -662,10 +941,10 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     );
   }
 
-  if (htmlContent) {
+  if (content?.type === "html") {
     return (
       <ContentWrapper>
-        <DocViewer dangerouslySetInnerHTML={{ __html: htmlContent }} />
+        <DocViewer dangerouslySetInnerHTML={{ __html: content.data }} />
       </ContentWrapper>
     );
   }

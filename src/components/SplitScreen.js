@@ -12,7 +12,6 @@ const SplitScreenContainer = styled.div`
 
 const Panel = styled.div`
   height: 100%;
-  overflow-x: auto;
   overflow-y: auto;
   border: 1px solid #e0e0e0;
   background: #f9f9f9;
@@ -80,48 +79,6 @@ const ResizeHandle = styled.div`
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 `;
 
-const CustomScrollbar = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 12px;
-  background: #e0e0e0;
-  border-top: 1px solid #d1d1d1;
-  overflow-x: auto;
-  overflow-y: hidden;
-  z-index: 1000;
-  display: block;
-
-  &::-webkit-scrollbar {
-    height: 12px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #e0e0e0;
-    border-radius: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgb(86, 91, 97);
-    border-radius: 6px;
-    border: 2px solid #e0e0e0;
-    min-width: 100px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgb(81, 88, 95);
-  }
-
-  scrollbar-width: thin;
-  scrollbar-color: rgb(91, 96, 103) #e0e0e0;
-`;
-
-const ScrollbarContent = styled.div`
-  height: 12px;
-  width: ${({ $scrollWidth }) => $scrollWidth}px;
-`;
-
 const SplitScreen = ({ children, screenMode }) => {
   const [leftWidth, setLeftWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
@@ -129,11 +86,6 @@ const SplitScreen = ({ children, screenMode }) => {
   const handleRef = useRef(null);
   const leftPanelRef = useRef(null);
   const rightPanelRef = useRef(null);
-  const leftScrollRef = useRef(null);
-  const rightScrollRef = useRef(null);
-  const [leftScrollWidth, setLeftScrollWidth] = useState(0);
-  const [rightScrollWidth, setRightScrollWidth] = useState(0);
-  const lastUpdateRef = useRef(0);
   const timeoutRef = useRef(null);
 
   const [left, right] = children;
@@ -196,133 +148,6 @@ const SplitScreen = ({ children, screenMode }) => {
     };
   }, [isResizing, handleResize]);
 
-  useEffect(() => {
-    const updateScrollWidth = () => {
-      if (leftPanelRef.current) {
-        const contentWidth = leftPanelRef.current.scrollWidth;
-        const panelWidth = leftPanelRef.current.clientWidth;
-        const minScrollWidth = Math.max(contentWidth, panelWidth * 1.5);
-        setLeftScrollWidth(minScrollWidth);
-        leftPanelRef.current.scrollLeft = leftPanelRef.current.scrollLeft; // Force re-sync
-      }
-      if (rightPanelRef.current) {
-        const contentWidth = rightPanelRef.current.scrollWidth;
-        const panelWidth = rightPanelRef.current.clientWidth;
-        const minScrollWidth = Math.max(contentWidth, panelWidth * 1.5);
-        setRightScrollWidth(minScrollWidth);
-        rightPanelRef.current.scrollLeft = rightPanelRef.current.scrollLeft; // Force re-sync
-      }
-    };
-
-    updateScrollWidth();
-
-    const resizeObserver = new ResizeObserver(() => {
-      updateScrollWidth();
-    });
-    if (leftPanelRef.current) resizeObserver.observe(leftPanelRef.current);
-    if (rightPanelRef.current) resizeObserver.observe(rightPanelRef.current);
-
-    const mutationObserver = new MutationObserver(() => {
-      updateScrollWidth();
-    });
-    if (leftPanelRef.current) mutationObserver.observe(leftPanelRef.current, { childList: true, subtree: true });
-    if (rightPanelRef.current) mutationObserver.observe(rightPanelRef.current, { childList: true, subtree: true });
-
-    return () => {
-      resizeObserver.disconnect();
-      mutationObserver.disconnect();
-    };
-  }, [children, screenMode]);
-
-  useEffect(() => {
-    let isScrolling = false;
-
-    const syncScroll = (panel, scrollBar) => {
-      if (isScrolling || !panel.current || !scrollBar.current) return;
-      isScrolling = true;
-      scrollBar.current.scrollLeft = panel.current.scrollLeft;
-      requestAnimationFrame(() => {
-        isScrolling = false;
-      });
-    };
-
-    const syncCustomScroll = (panel, scrollBar) => {
-      if (isScrolling || !panel.current || !scrollBar.current) return;
-      isScrolling = true;
-      panel.current.scrollLeft = scrollBar.current.scrollLeft;
-      requestAnimationFrame(() => {
-        isScrolling = false;
-      });
-    };
-
-    const handleLeftPanelScroll = () => syncScroll(leftPanelRef, leftScrollRef);
-    const handleRightPanelScroll = () => syncScroll(rightPanelRef, rightScrollRef);
-    const handleLeftCustomScroll = () => syncCustomScroll(leftPanelRef, leftScrollRef);
-    const handleRightCustomScroll = () => syncCustomScroll(rightPanelRef, rightScrollRef);
-
-    if (leftPanelRef.current) leftPanelRef.current.addEventListener("scroll", handleLeftPanelScroll, { passive: true });
-    if (rightPanelRef.current) rightPanelRef.current.addEventListener("scroll", handleRightPanelScroll, { passive: true });
-    if (leftScrollRef.current) leftScrollRef.current.addEventListener("scroll", handleLeftCustomScroll, { passive: true });
-    if (rightScrollRef.current) rightScrollRef.current.addEventListener("scroll", handleRightCustomScroll, { passive: true });
-
-    return () => {
-      if (leftPanelRef.current) leftPanelRef.current.removeEventListener("scroll", handleLeftPanelScroll);
-      if (rightPanelRef.current) rightPanelRef.current.removeEventListener("scroll", handleRightPanelScroll);
-      if (leftScrollRef.current) leftScrollRef.current.removeEventListener("scroll", handleLeftCustomScroll);
-      if (rightScrollRef.current) rightScrollRef.current.removeEventListener("scroll", handleRightCustomScroll);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      const activeElement = document.activeElement;
-      const isInputFocused = activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA";
-      if (isInputFocused) return;
-
-      const scrollAmount = 50;
-      if (e.key === "ArrowLeft") {
-        if (leftPanelRef.current && screenMode !== "right") {
-          leftPanelRef.current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
-        }
-        if (rightPanelRef.current && screenMode !== "left") {
-          rightPanelRef.current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
-        }
-      } else if (e.key === "ArrowRight") {
-        if (leftPanelRef.current && screenMode !== "right") {
-          leftPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-        }
-        if (rightPanelRef.current && screenMode !== "left") {
-          rightPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [screenMode]);
-
-  useEffect(() => {
-    const handleWheel = (e) => {
-      const scrollAmount = e.deltaY;
-      if (leftPanelRef.current && screenMode !== "right" && (e.target === leftPanelRef.current || leftPanelRef.current.contains(e.target))) {
-        leftPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-        e.preventDefault();
-      }
-      if (rightPanelRef.current && screenMode !== "left" && (e.target === rightPanelRef.current || rightPanelRef.current.contains(e.target))) {
-        rightPanelRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-        e.preventDefault();
-      }
-    };
-
-    if (leftPanelRef.current) leftPanelRef.current.addEventListener("wheel", handleWheel, { passive: false });
-    if (rightPanelRef.current) rightPanelRef.current.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      if (leftPanelRef.current) leftPanelRef.current.removeEventListener("wheel", handleWheel);
-      if (rightPanelRef.current) rightPanelRef.current.removeEventListener("wheel", handleWheel);
-    };
-  }, [screenMode]);
-
   const leftStyle = {
     width: screenMode === "left" ? "100%" : screenMode === "right" ? "0%" : `${leftWidth}%`,
     display: screenMode === "right" ? "none" : "block",
@@ -341,9 +166,6 @@ const SplitScreen = ({ children, screenMode }) => {
     <SplitScreenContainer ref={containerRef}>
       <Panel ref={leftPanelRef} style={leftStyle}>
         {left}
-        <CustomScrollbar ref={leftScrollRef}>
-          <ScrollbarContent $scrollWidth={leftScrollWidth} />
-        </CustomScrollbar>
       </Panel>
       <ResizeHandle
         ref={handleRef}
@@ -354,9 +176,6 @@ const SplitScreen = ({ children, screenMode }) => {
       />
       <Panel ref={rightPanelRef} style={rightStyle}>
         {right}
-        <CustomScrollbar ref={rightScrollRef}>
-          <ScrollbarContent $scrollWidth={rightScrollWidth} />
-        </CustomScrollbar>
       </Panel>
     </SplitScreenContainer>
   );
