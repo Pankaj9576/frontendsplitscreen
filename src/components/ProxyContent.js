@@ -7,12 +7,26 @@ const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 // Basic styling
 const TabContainer = styled.div`
   display: flex;
-  flex-wrap: wrap;
   background-color: #f5f5f5;
   border-bottom: 2px solid #e0e0e0;
   padding: 0;
   margin: 0;
   width: 100%;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: hidden; /* Disable vertical scrolling */
+  white-space: nowrap; /* Keep tabs in a single line */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on touch devices */
+  scrollbar-width: thin; /* Firefox scrollbar styling */
+  &::-webkit-scrollbar {
+    height: 6px; /* Scrollbar height for horizontal scroll */
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f5f5f5;
+  }
 `;
 
 const TabButton = styled.button`
@@ -650,7 +664,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         case "Claims":
           return (
             <TabContent>
-              {/* <h2>Claims</h2> */}
+              <h2>Claims</h2>
               {patentData.claims ? (
                 <div dangerouslySetInnerHTML={{ __html: patentData.claims }} />
               ) : (
@@ -661,7 +675,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         case "Description":
           return (
             <TabContent>
-              {/* <h2>Description</h2> */}
+              <h2>Description</h2>
               {patentData.description ? (
                 <div dangerouslySetInnerHTML={{ __html: patentData.description }} />
               ) : (
