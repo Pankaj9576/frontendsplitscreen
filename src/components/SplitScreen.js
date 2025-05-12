@@ -35,19 +35,19 @@ const Panel = styled.div`
   }
 
   &::-webkit-scrollbar {
-    width: 14px;
+    width: 8px; /* Reduced from 14px to make scrollbar thinner */
   }
 
   &::-webkit-scrollbar-track {
     background: #e0e0e0;
-    border-radius: 7px;
+    border-radius: 4px; /* Adjusted from 7px to match thinner scrollbar */
     margin: 5px;
   }
 
   &::-webkit-scrollbar-thumb {
     background: rgb(87, 92, 99);
-    border-radius: 7px;
-    border: 2px solid #e0e0e0;
+    border-radius: 4px; /* Adjusted from 7px to match thinner scrollbar */
+    border: 1px solid #e0e0e0; /* Reduced from 2px to fit thinner scrollbar */
   }
 
   &::-webkit-scrollbar-thumb:hover {
@@ -59,8 +59,8 @@ const Panel = styled.div`
 `;
 
 const ResizeHandle = styled.div`
-  width: 6px;
-  background: rgb(67, 12, 27);
+  width: 4px;
+  background: green;
   cursor: col-resize;
   position: absolute;
   top: 0;
@@ -69,11 +69,11 @@ const ResizeHandle = styled.div`
   transition: background 0.2s ease, left 0.1s ease-out;
 
   &:hover {
-    background: rgb(67, 12, 27);
+    background: rgb(76, 129, 65);
   }
 
   &:active {
-    background: rgb(67, 12, 27);
+    background: rgb(101, 163, 65);
   }
 
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
@@ -87,8 +87,7 @@ const SplitScreen = ({ children, screenMode }) => {
   const leftPanelRef = useRef(null);
   const rightPanelRef = useRef(null);
   const timeoutRef = useRef(null);
-
-  const [left, right] = children;
+  const lastUpdateRef = useRef(0); // Define lastUpdateRef using useRef and initialize to 0
 
   useEffect(() => {
     console.log("SplitScreen - screenMode:", screenMode);
@@ -165,7 +164,7 @@ const SplitScreen = ({ children, screenMode }) => {
   return (
     <SplitScreenContainer ref={containerRef}>
       <Panel ref={leftPanelRef} style={leftStyle}>
-        {left}
+        {children[0]}
       </Panel>
       <ResizeHandle
         ref={handleRef}
@@ -175,7 +174,7 @@ const SplitScreen = ({ children, screenMode }) => {
         }}
       />
       <Panel ref={rightPanelRef} style={rightStyle}>
-        {right}
+        {children[1]}
       </Panel>
     </SplitScreenContainer>
   );

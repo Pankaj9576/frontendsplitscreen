@@ -4,7 +4,7 @@ import mammoth from "mammoth";
 
 const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 
-// Basic styling
+// Basic styling (unchanged)
 const TabContainer = styled.div`
   display: flex;
   background-color: #f5f5f5;
@@ -12,13 +12,13 @@ const TabContainer = styled.div`
   padding: 0;
   margin: 0;
   width: 100%;
-  overflow-x: auto; /* Enable horizontal scrolling */
-  overflow-y: hidden; /* Disable vertical scrolling */
-  white-space: nowrap; /* Keep tabs in a single line */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on touch devices */
-  scrollbar-width: thin; /* Firefox scrollbar styling */
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
   &::-webkit-scrollbar {
-    height: 6px; /* Scrollbar height for horizontal scroll */
+    height: 6px;
   }
   &::-webkit-scrollbar-thumb {
     background-color: #888;
@@ -30,7 +30,7 @@ const TabContainer = styled.div`
 `;
 
 const TabButton = styled.button`
-  padding: 12px 24px;
+  padding: 6px 12px;
   background-color: ${(props) => (props.$active ? "#ffffff" : "#f5f5f5")};
   color: ${(props) => (props.$active ? "#1a73e8" : "#333")};
   border: none;
@@ -53,6 +53,7 @@ const TabButton = styled.button`
   }
 `;
 
+// Base TabContent for non-patent content
 const TabContent = styled.div`
   flex: 1;
   padding: 20px;
@@ -63,7 +64,10 @@ const TabContent = styled.div`
   color: #333;
   text-align: left;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: auto;
+  overflow-y: auto;
+  height: calc(100vh - 60px); /* Increased height to match ScrollWrapper */
+  box-sizing: border-box;
 
   h2 {
     font-size: 18px;
@@ -87,7 +91,6 @@ const TabContent = styled.div`
     line-height: 19pt;
     font-size: 10pt;
     font-family: "Inter", sans-serif;
-    word-wrap: break-word;
   }
 
   strong {
@@ -121,7 +124,6 @@ const TabContent = styled.div`
     border-collapse: collapse;
     margin: 10px 0;
     table-layout: fixed;
-    word-wrap: break-word;
   }
 
   th, td {
@@ -131,7 +133,6 @@ const TabContent = styled.div`
     line-height: 19pt;
     font-size: 10pt;
     font-family: "Inter", sans-serif;
-    word-wrap: break-word;
   }
 
   th {
@@ -151,27 +152,165 @@ const TabContent = styled.div`
   a:hover {
     text-decoration: underline;
   }
-`;
 
-const ContentWrapper = styled.div`
-  height: 100vh;
-  width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+    height: 6px;
   }
+
   &::-webkit-scrollbar-thumb {
     background-color: #888;
     border-radius: 4px;
   }
+
   &::-webkit-scrollbar-track {
-    background: #fff;
+    background: #f5f5f5;
   }
+`;
+
+// ScrollWrapper (unchanged)
+const ScrollWrapper = styled.div`
+  width: 100%;
+  height: calc(100vh - 60px);
+  overflow-x: auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  position: relative;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f5f5f5;
+  }
+`;
+
+// PatentTabContent (unchanged)
+const PatentTabContent = styled.div`
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+  background: #fff;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  text-align: left;
+  min-width: 700px;
+  max-width: 1600px;
+  width: fit-content;
+  white-space: normal;
+  box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a73e8;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+    white-space: normal;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    margin: 10px 0;
+    white-space: normal;
+  }
+
+  p {
+    margin: 8px 0;
+    color: #555;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
+    white-space: normal;
+  }
+
+  strong {
+    font-weight: 600;
+    color: #333;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
+    white-space: normal;
+  }
+
+  img {
+    max-width: 100%;
+    margin: 10px 0;
+  }
+
+  ul, ol {
+    padding-left: 20px;
+    margin: 10px 0;
+  }
+
+  li {
+    margin: 5px 0;
+    color: #555;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
+    white-space: normal;
+  }
+
+  table {
+    max-width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    table-layout: fixed;
+  }
+
+  th, td {
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    text-align: left;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
+    white-space: normal;
+  }
+
+  th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+  }
+
+  a {
+    color: #1a73e8;
+    text-decoration: none;
+    cursor: pointer;
+    line-height: 19pt;
+    font-size: 10pt;
+    font-family: "Inter", sans-serif;
+    white-space: normal;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+`;
+
+// Rest of the styled components (unchanged)
+const ContentWrapper = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 `;
 
 const PatentIframe = styled.iframe`
@@ -432,6 +571,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         setDirectIframe(true);
         setContent({ type: "iframe", url });
       } else if (isPdfUrl(url)) {
+        console.log("Detected PDF URL, fetching as blob:", url);
         const blobUrl = await fetchPdfAsBlob(url);
         setContent({ type: "pdf", url: `${blobUrl}#view=FitH` });
       } else {
@@ -514,12 +654,14 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   };
 
   useEffect(() => {
+    console.log("useEffect triggered with URL:", url);
     fetchContent();
   }, [url, backendUrl, isFileUpload, fileName]);
 
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data.type === "linkClick" && event.data.url) {
+        console.log("Received linkClick event with URL:", event.data.url);
         if (isDownloadLink(event.data.url)) {
           const link = document.createElement("a");
           link.href = event.data.url;
@@ -543,38 +685,44 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     return () => window.removeEventListener("message", handleMessage);
   }, [onLinkClick, fileName]);
 
+  // Initialize tabs when patentData changes
+  useEffect(() => {
+    if (patentData) {
+      const possibleTabs = [
+        {
+          name: "Overview",
+          hasData:
+            patentData.title ||
+            patentData.abstract ||
+            patentData.inventors?.length ||
+            patentData.publicationNumber,
+        },
+        { name: "PDF", hasData: !!patentData.pdfUrl },
+        { name: "Images", hasData: patentData.drawings?.length > 0 }, // Renamed "Drawings" to "Images"
+        { name: "Claims", hasData: !!patentData.claims },
+        { name: "Description", hasData: !!patentData.description },
+        { name: "Classifications", hasData: patentData.classifications?.length > 0 },
+        { name: "Citations", hasData: patentData.citations?.length > 0 },
+        { name: "Cited By", hasData: patentData.citedBy?.length > 0 },
+        { name: "Legal Events", hasData: patentData.legalEvents?.length > 0 },
+        { name: "Patent Family", hasData: patentData.patentFamily?.length > 0 },
+        { name: "Similar Documents", hasData: patentData.similarDocs?.length > 0 },
+      ];
+
+      const tabs = possibleTabs.filter((tab) => tab.hasData);
+      if (tabs.length > 0 && !activeTab) {
+        setActiveTab(tabs[0].name);
+        setAvailableTabs(tabs.map((tab) => tab.name));
+      }
+    }
+  }, [patentData, activeTab]);
+
   const renderTabbedInterface = () => {
     if (!patentData) return null;
 
-    const possibleTabs = [
-      {
-        name: "Overview",
-        hasData:
-          patentData.title ||
-          patentData.abstract ||
-          patentData.inventors?.length ||
-          patentData.publicationNumber,
-      },
-      { name: "PDF", hasData: true },
-      { name: "Drawings", hasData: patentData.drawings?.length > 0 },
-      { name: "Claims", hasData: !!patentData.claims },
-      { name: "Description", hasData: !!patentData.description },
-      { name: "Classifications", hasData: patentData.classifications?.length > 0 },
-      { name: "Citations", hasData: patentData.citations?.length > 0 },
-      { name: "Cited By", hasData: patentData.citedBy?.length > 0 },
-      { name: "Legal Events", hasData: patentData.legalEvents?.length > 0 },
-      { name: "Patent Family", hasData: patentData.patentFamily?.length > 0 },
-      { name: "Similar Documents", hasData: patentData.similarDocs?.length > 0 },
-    ];
-
-    const tabs = possibleTabs.filter((tab) => tab.hasData);
-    if (tabs.length > 0 && !activeTab) {
-      setActiveTab(tabs[0].name);
-      setAvailableTabs(tabs.map((tab) => tab.name));
-    }
-
     const handleCitationClick = (number) => {
       const citationUrl = `https://patents.google.com/patent/${number}`;
+      console.log("Citation clicked, triggering onLinkClick with URL:", citationUrl);
       onLinkClick(citationUrl);
       fetchContent();
     };
@@ -583,292 +731,317 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       switch (activeTab) {
         case "Overview":
           return (
-            <TabContent>
-              <h2>Overview</h2>
-              {patentData.title && <h3>{patentData.title}</h3>}
-              {patentData.publicationNumber && (
-                <p>
-                  <strong>Publication Number:</strong> {patentData.publicationNumber}
-                </p>
-              )}
-              {patentData.publicationDate && (
-                <p>
-                  <strong>Publication Date:</strong> {patentData.publicationDate}
-                </p>
-              )}
-              {patentData.filingDate && (
-                <p>
-                  <strong>Filing Date:</strong> {patentData.filingDate}
-                </p>
-              )}
-              {patentData.priorityDate && (
-                <p>
-                  <strong>Priority Date:</strong> {patentData.priorityDate}
-                </p>
-              )}
-              {patentData.inventors?.length > 0 && (
-                <p>
-                  <strong>Inventors:</strong> {patentData.inventors.join(", ")}
-                </p>
-              )}
-              {patentData.assignee && (
-                <p>
-                  <strong>Assignee:</strong> {patentData.assignee}
-                </p>
-              )}
-              {patentData.status && (
-                <p>
-                  <strong>Status:</strong> {patentData.status}
-                </p>
-              )}
-              {patentData.abstract && (
-                <p>
-                  <strong>Abstract:</strong> {patentData.abstract}
-                </p>
-              )}
-            </TabContent>
+            <ScrollWrapper>
+              <PatentTabContent>
+                <h2>Overview</h2>
+                {patentData.title && <h3>{patentData.title}</h3>}
+                {patentData.publicationNumber && (
+                  <p>
+                    <strong>Publication Number:</strong> {patentData.publicationNumber}
+                  </p>
+                )}
+                {patentData.publicationDate && (
+                  <p>
+                    <strong>Publication Date:</strong> {patentData.publicationDate}
+                  </p>
+                )}
+                {patentData.filingDate && (
+                  <p>
+                    <strong>Filing Date:</strong> {patentData.filingDate}
+                  </p>
+                )}
+                {patentData.priorityDate && (
+                  <p>
+                    <strong>Priority Date:</strong> {patentData.priorityDate}
+                  </p>
+                )}
+                {patentData.inventors?.length > 0 && (
+                  <p>
+                    <strong>Inventors:</strong> {patentData.inventors.join(", ")}
+                  </p>
+                )}
+                {patentData.assignee && (
+                  <p>
+                    <strong>Assignee:</strong> {patentData.assignee}
+                  </p>
+                )}
+                {patentData.status && (
+                  <p>
+                    <strong>Status:</strong> {patentData.status}
+                  </p>
+                )}
+                {patentData.abstract && (
+                  <p>
+                    <strong>Abstract:</strong> {patentData.abstract}
+                  </p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         case "PDF":
           const pdfUrl = patentData.pdfUrl;
+          if (pdfUrl) {
+            console.log("PDF tab clicked, triggering onLinkClick with URL:", pdfUrl);
+            onLinkClick(pdfUrl);
+            return <TabContent><LoadingIndicator>Redirecting to PDF...</LoadingIndicator></TabContent>;
+          }
           return (
-            <TabContent>
-              <FallbackMessage>
-                <DownloadLink href={pdfUrl} target="_blank">
-                  Open PDF in New Tab
-                </DownloadLink>
-                {" | "}
-                <DownloadLink href={pdfUrl} download>
-                  Download PDF
-                </DownloadLink>
-              </FallbackMessage>
-            </TabContent>
+            <ScrollWrapper>
+              <PatentTabContent>
+                <FallbackMessage>
+                  PDF link not available.
+                </FallbackMessage>
+              </PatentTabContent>
+            </ScrollWrapper>
           );
-        case "Drawings":
+        case "Images": // Renamed from "Drawings" to "Images"
           return (
-            <TabContent>
-              <h2>Drawings</h2>
-              {patentData.drawings?.length > 0 ? (
-                patentData.drawings.map((drawing, index) => (
-                  <img
-                    key={index}
-                    src={drawing}
-                    alt={`Drawing ${index + 1}`}
-                    style={{ maxWidth: "100%" }}
-                  />
-                ))
-              ) : (
-                <p>No drawings found.</p>
-              )}
-            </TabContent>
+            <ScrollWrapper>
+              <PatentTabContent>
+                <h2>Images</h2>
+                {patentData.drawings?.length > 0 ? (
+                  patentData.drawings.map((drawing, index) => (
+                    <img
+                      key={index}
+                      src={drawing}
+                      alt={`Image ${index + 1}`}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  ))
+                ) : (
+                  <p>No images found.</p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         case "Claims":
           return (
-            <TabContent>
-              <h2>Claims</h2>
-              {patentData.claims ? (
-                <div dangerouslySetInnerHTML={{ __html: patentData.claims }} />
-              ) : (
-                <p>No claims found.</p>
-              )}
-            </TabContent>
+            <ScrollWrapper>
+              <PatentTabContent>
+                {/* <h2>Claims</h2> */}
+                {patentData.claims ? (
+                  <div dangerouslySetInnerHTML={{ __html: patentData.claims }} />
+                ) : (
+                  <p>No claims found.</p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         case "Description":
           return (
-            <TabContent>
-              <h2>Description</h2>
-              {patentData.description ? (
-                <div dangerouslySetInnerHTML={{ __html: patentData.description }} />
-              ) : (
-                <p>No description found.</p>
-              )}
-            </TabContent>
+            <ScrollWrapper>
+              <PatentTabContent>
+                {/* <h2>Description</h2> */}
+                {patentData.description ? (
+                  <div dangerouslySetInnerHTML={{ __html: patentData.description }} />
+                ) : (
+                  <p>No description found.</p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         case "Classifications":
           return (
-            <TabContent>
-              <h2>Classifications</h2>
-              {patentData.classifications?.length > 0 ? (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Code</th>
-                      <th>Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {patentData.classifications.map((cls, index) => (
-                      <tr key={index}>
-                        <td>{cls.code || "N/A"}</td>
-                        <td>{cls.description || "N/A"}</td>
+            <ScrollWrapper>
+              <PatentTabContent>
+                <h2>Classifications</h2>
+                {patentData.classifications?.length > 0 ? (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Code</th>
+                        <th>Description</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p>No classifications found.</p>
-              )}
-            </TabContent>
+                    </thead>
+                    <tbody>
+                      {patentData.classifications.map((cls, index) => (
+                        <tr key={index}>
+                          <td>{cls.code || "N/A"}</td>
+                          <td>{cls.description || "N/A"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>No classifications found.</p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         case "Citations":
           return (
-            <TabContent>
-              <h2>Citations</h2>
-              {patentData.citations?.length > 0 ? (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Publication Number</th>
-                      <th>Date</th>
-                      <th>Title</th>
-                      <th>Assignee</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {patentData.citations.map((citation, index) => (
-                      <tr key={index}>
-                        <td>
-                          {citation.number ? (
-                            <a onClick={() => handleCitationClick(citation.number)}>
-                              {citation.number}
-                            </a>
-                          ) : (
-                            "N/A"
-                          )}
-                        </td>
-                        <td>{citation.date || "N/A"}</td>
-                        <td>{citation.title || "N/A"}</td>
-                        <td>{citation.assignee || "N/A"}</td>
+            <ScrollWrapper>
+              <PatentTabContent>
+                <h2>Citations</h2>
+                {patentData.citations?.length > 0 ? (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Publication Number</th>
+                        <th>Date</th>
+                        <th>Title</th>
+                        <th>Assignee</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p>No citations found.</p>
-              )}
-            </TabContent>
+                    </thead>
+                    <tbody>
+                      {patentData.citations.map((citation, index) => (
+                        <tr key={index}>
+                          <td>
+                            {citation.number ? (
+                              <a onClick={() => handleCitationClick(citation.number)}>
+                                {citation.number}
+                              </a>
+                            ) : (
+                              "N/A"
+                            )}
+                          </td>
+                          <td>{citation.date || "N/A"}</td>
+                          <td>{citation.title || "N/A"}</td>
+                          <td>{citation.assignee || "N/A"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>No citations found.</p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         case "Cited By":
           return (
-            <TabContent>
-              <h2>Cited By</h2>
-              {patentData.citedBy?.length > 0 ? (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Publication Number</th>
-                      <th>Date</th>
-                      <th>Title</th>
-                      <th>Assignee</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {patentData.citedBy.map((cite, index) => (
-                      <tr key={index}>
-                        <td>
-                          {cite.number ? (
-                            <a onClick={() => handleCitationClick(cite.number)}>
-                              {cite.number}
-                            </a>
-                          ) : (
-                            "N/A"
-                          )}
-                        </td>
-                        <td>{cite.date || "N/A"}</td>
-                        <td>{cite.title || "N/A"}</td>
-                        <td>{cite.assignee || "N/A"}</td>
+            <ScrollWrapper>
+              <PatentTabContent>
+                <h2>Cited By</h2>
+                {patentData.citedBy?.length > 0 ? (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Publication Number</th>
+                        <th>Date</th>
+                        <th>Title</th>
+                        <th>Assignee</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p>No cited by documents found.</p>
-              )}
-            </TabContent>
+                    </thead>
+                    <tbody>
+                      {patentData.citedBy.map((cite, index) => (
+                        <tr key={index}>
+                          <td>
+                            {cite.number ? (
+                              <a onClick={() => handleCitationClick(cite.number)}>
+                                {cite.number}
+                              </a>
+                            ) : (
+                              "N/A"
+                            )}
+                          </td>
+                          <td>{cite.date || "N/A"}</td>
+                          <td>{cite.title || "N/A"}</td>
+                          <td>{cite.assignee || "N/A"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>No cited by documents found.</p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         case "Legal Events":
           return (
-            <TabContent>
-              <h2>Legal Events</h2>
-              {patentData.legalEvents?.length > 0 ? (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {patentData.legalEvents.map((event, index) => (
-                      <tr key={index}>
-                        <td>{event.date || "N/A"}</td>
-                        <td>{event.description || "N/A"}</td>
+            <ScrollWrapper>
+              <PatentTabContent>
+                <h2>Legal Events</h2>
+                {patentData.legalEvents?.length > 0 ? (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Description</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p>No legal events found.</p>
-              )}
-            </TabContent>
+                    </thead>
+                    <tbody>
+                      {patentData.legalEvents.map((event, index) => (
+                        <tr key={index}>
+                          <td>{event.date || "N/A"}</td>
+                          <td>{event.description || "N/A"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>No legal events found.</p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         case "Patent Family":
           return (
-            <TabContent>
-              <h2>Patent Family</h2>
-              {patentData.patentFamily?.length > 0 ? (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Publication Number</th>
-                      <th>Date</th>
-                      <th>Country</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {patentData.patentFamily.map((family, index) => (
-                      <tr key={index}>
-                        <td>{family.number || "N/A"}</td>
-                        <td>{family.date || "N/A"}</td>
-                        <td>{family.country || "N/A"}</td>
+            <ScrollWrapper>
+              <PatentTabContent>
+                <h2>Patent Family</h2>
+                {patentData.patentFamily?.length > 0 ? (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Publication Number</th>
+                        <th>Date</th>
+                        <th>Country</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p>No patent family found.</p>
-              )}
-            </TabContent>
+                    </thead>
+                    <tbody>
+                      {patentData.patentFamily.map((family, index) => (
+                        <tr key={index}>
+                          <td>{family.number || "N/A"}</td>
+                          <td>{family.date || "N/A"}</td>
+                          <td>{family.country || "N/A"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>No patent family found.</p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         case "Similar Documents":
           return (
-            <TabContent>
-              <h2>Similar Documents</h2>
-              {patentData.similarDocs?.length > 0 ? (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Publication Number</th>
-                      <th>Date</th>
-                      <th>Title</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {patentData.similarDocs.map((doc, index) => (
-                      <tr key={index}>
-                        <td>{doc.number || "N/A"}</td>
-                        <td>{doc.date || "N/A"}</td>
-                        <td>{doc.title || "N/A"}</td>
+            <ScrollWrapper>
+              <PatentTabContent>
+                <h2>Similar Documents</h2>
+                {patentData.similarDocs?.length > 0 ? (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Publication Number</th>
+                        <th>Date</th>
+                        <th>Title</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p>No similar documents found.</p>
-              )}
-            </TabContent>
+                    </thead>
+                    <tbody>
+                      {patentData.similarDocs.map((doc, index) => (
+                        <tr key={index}>
+                          <td>{doc.number || "N/A"}</td>
+                          <td>{doc.date || "N/A"}</td>
+                          <td>{doc.title || "N/A"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>No similar documents found.</p>
+                )}
+              </PatentTabContent>
+            </ScrollWrapper>
           );
         default:
-          return <TabContent>Select a tab to view content.</TabContent>;
+          return (
+            <ScrollWrapper>
+              <PatentTabContent>Select a tab to view content.</PatentTabContent>
+            </ScrollWrapper>
+          );
       }
     };
 
@@ -879,14 +1052,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             <TabButton
               key={tab}
               $active={activeTab === tab}
-              onClick={() => {
-                setActiveTab(tab);
-                if (tab === "PDF" && patentData.pdfUrl && !pdfBlobUrl) {
-                  fetchPdfAsBlob(patentData.pdfUrl).catch((err) => {
-                    setError(`Failed to load PDF: ${err.message}`);
-                  });
-                }
-              }}
+              onClick={() => setActiveTab(tab)}
             >
               {tab}
             </TabButton>

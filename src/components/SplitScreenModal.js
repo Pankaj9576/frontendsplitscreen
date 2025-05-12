@@ -78,12 +78,12 @@ const CloseButton = styled.button`
   transition: background 0.3s ease, color 0.3s ease;
 
   &:hover {
-    background: rgb(50, 38, 38);
-    color: white;
+    background: rgb(78, 71, 71);
+    color: red;
   }
 
   &:active {
-    background: rgb(55, 43, 43);
+    background: rgb(82, 74, 74);
   }
 `
 
@@ -153,7 +153,7 @@ const FileInput = styled.input`
 
 const UploadButton = styled.button`
   padding: 6px 8px;
-  color: white;
+  color: black;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -178,8 +178,8 @@ const UploadButton = styled.button`
 `
 
 const ScreenSelectButton = styled.select`
-  background: rgb(5, 252, 252);
-  color: #333; /* Dark text for better contrast */
+  background:black;
+  color: white; /* Dark text for better contrast */
   padding: 6px;
   font-size: 13px;
   font-family: 'Roboto', Arial, sans-serif;
@@ -189,12 +189,12 @@ const ScreenSelectButton = styled.select`
   transition: background 0.3s ease;
 
   &:hover {
-    background: rgb(0, 230, 230); /* Slightly darker shade on hover */
+    background:black; /* Slightly darker shade on hover */
   }
 
   &:focus {
     outline: none;
-    border-color: #4285f4;
+    border-color: white;
   }
 `
 
@@ -342,7 +342,7 @@ const SplitScreenModal = ({
               />
               <FileInputWrapper>
                 <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: 'rgb(199, 51, 155)'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+                <UploadButton style={{backgroundColor: '#5367FF',color:'white'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
               </FileInputWrapper>
             </SideContainer>
 
@@ -361,7 +361,7 @@ const SplitScreenModal = ({
               />
               <FileInputWrapper>
                 <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: 'rgb(165, 0, 255)'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+                <UploadButton style={{backgroundColor: '#00F3BB'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
               </FileInputWrapper>
             </SideContainer>
 
