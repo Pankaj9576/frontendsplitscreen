@@ -2,9 +2,7 @@ import React, { useEffect, useState, useRef, Suspense } from "react";
 import styled from "styled-components";
 import mammoth from "mammoth";
 
-// Lazy load viewers
-const ExcelViewer = React.lazy(() => import("./ExcelViewer")); // Assuming this exists
-const PptViewer = React.lazy(() => import("./PptViewer"));
+const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 
 // Basic styling (unchanged)
 const TabContainer = styled.div`
@@ -402,7 +400,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const [availableTabs, setAvailableTabs] = useState([]);
   const iframeRef = useRef(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
-  const [pdfBlob, setPdfBlob] = useState(null); // New state for PDF blob
 
   const isPatentUrl = (urlToCheck) => {
     return urlToCheck && urlToCheck.includes("patents.google.com/patent");
@@ -521,7 +518,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       return;
     }
 
-    console.log("ProxyContent: Fetching content for URL:", url);
+    console.log("Fetching content for URL:", url);
     setContent(null);
     setPatentData(null);
     setError(null);
@@ -530,7 +527,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     setAvailableTabs([]);
     setActiveTab(null);
     setPdfBlobUrl(null);
-    setPdfBlob(null);
 
     try {
       let response;
@@ -538,11 +534,9 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
       if (isFileUpload && fileName) {
         try {
-          console.log("ProxyContent: Fetching file from URL:", url);
           response = await fetch(url, { mode: "cors" });
           if (!response.ok) throw new Error(`Blob fetch failed: ${response.status} - ${response.statusText}`);
           blob = await response.blob();
-          console.log("ProxyContent: Blob fetched:", blob);
 
           const fileExt = fileName.split(".").pop().toLowerCase();
 
@@ -550,13 +544,12 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             setContent({ type: "excel", blob });
           } else if (["doc", "docx"].includes(fileExt)) {
             await handleWordFile(blob, fileName);
-          } else if (["pdf", "ppt", "pptx"].includes(fileExt)) {
-            // Treat PPT/PPTX as PDF since backend converts to PDF
+          } else if (fileExt === "pdf") {
             setContent({ type: "pdf", url: `${url}#view=FitH` });
           } else {
             setContent({
               type: "download",
-              url: URL.createObjectURL(blob),
+              url,
               message: "This file type is not directly renderable. Please download to view.",
             });
           }
@@ -596,7 +589,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const handleProxyContent = async (fetchUrl) => {
     const response = await fetchWithRetry(fetchUrl);
     const contentType = response.headers.get("content-type") || "";
-    console.log("ProxyContent: Content-Type received:", contentType);
 
     if (contentType.includes("text/html")) {
       const html = await response.clone().text();
@@ -604,7 +596,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     } else {
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
-      console.log("ProxyContent: Blob created for non-HTML content:", blob);
 
       if (contentType.includes("application/pdf")) {
         setContent({ type: "pdf", url: `${blobUrl}#view=FitH` });
@@ -662,31 +653,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     return processedHtml;
   };
 
-  // Fetch PDF blob when content.type is "pdf"
-  useEffect(() => {
-    if (content?.type === "pdf" && content.url) {
-      const fetchBlob = async () => {
-        try {
-          const response = await fetch(content.url);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch PDF blob: ${response.statusText}`);
-          }
-          const blob = await response.blob();
-          setPdfBlob(new Blob([blob], { type: "application/pdf" }));
-        } catch (err) {
-          console.error("Error fetching PDF blob:", err);
-          setError(`Failed to load PDF: ${err.message}. Try downloading the file.`);
-          setContent({
-            type: "download",
-            url: content.url,
-            message: "Unable to render PDF. Please download to view.",
-          });
-        }
-      };
-      fetchBlob();
-    }
-  }, [content]);
-
   useEffect(() => {
     console.log("useEffect triggered with URL:", url);
     fetchContent();
@@ -732,7 +698,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             patentData.publicationNumber,
         },
         { name: "PDF", hasData: !!patentData.pdfUrl },
-        { name: "Images", hasData: patentData.drawings?.length > 0 },
+        { name: "Images", hasData: patentData.drawings?.length > 0 }, // Renamed "Drawings" to "Images"
         { name: "Claims", hasData: !!patentData.claims },
         { name: "Description", hasData: !!patentData.description },
         { name: "Classifications", hasData: patentData.classifications?.length > 0 },
@@ -828,7 +794,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
               </PatentTabContent>
             </ScrollWrapper>
           );
-        case "Images":
+        case "Images": // Renamed from "Drawings" to "Images"
           return (
             <ScrollWrapper>
               <PatentTabContent>
@@ -852,6 +818,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
+                {/* <h2>Claims</h2> */}
                 {patentData.claims ? (
                   <div dangerouslySetInnerHTML={{ __html: patentData.claims }} />
                 ) : (
@@ -864,6 +831,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
+                {/* <h2>Description</h2> */}
                 {patentData.description ? (
                   <div dangerouslySetInnerHTML={{ __html: patentData.description }} />
                 ) : (
@@ -1170,13 +1138,13 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
   if (content?.type === "pdf") {
     return (
-      <Suspense fallback={<LoadingIndicator>Loading PDF content...</LoadingIndicator>}>
-        {pdfBlob ? (
-          <PptViewer blob={pdfBlob} />
-        ) : (
-          <LoadingIndicator>Loading PDF content...</LoadingIndicator>
-        )}
-      </Suspense>
+      <ContentWrapper>
+        <PatentIframe
+          src={content.url}
+          title="File Content"
+          type="application/pdf"
+        />
+      </ContentWrapper>
     );
   }
 
