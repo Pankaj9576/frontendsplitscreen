@@ -64,10 +64,12 @@ const TabContent = styled.div`
   color: #333;
   text-align: left;
   max-width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden; // Changed to hidden to prevent horizontal scrollbar
   overflow-y: auto;
-  height: calc(100vh - 60px); /* Increased height to match ScrollWrapper */
+  height: calc(100vh - 60px);
   box-sizing: border-box;
+  overflow-wrap: break-word; // Ensures long words break and wrap
+  word-break: break-word; // Additional property to handle breaking of long words
 
   h2 {
     font-size: 18px;
@@ -91,6 +93,8 @@ const TabContent = styled.div`
     line-height: 19pt;
     font-size: 10pt;
     font-family: "Inter", sans-serif;
+    overflow-wrap: break-word; // Ensures text wraps within the container
+    word-break: break-word;
   }
 
   strong {
@@ -167,7 +171,6 @@ const TabContent = styled.div`
     background: #f5f5f5;
   }
 `;
-
 // ScrollWrapper (unchanged)
 const ScrollWrapper = styled.div`
   width: 100%;
@@ -203,14 +206,13 @@ const PatentTabContent = styled.div`
   line-height: 1.6;
   color: #333;
   text-align: left;
-  min-width: 700px;
-  max-width: 1600px;
-  width: fit-content;
-  white-space: normal;
+  width: 100%; // Changed from min-width/max-width to ensure it fits the container
   box-sizing: border-box;
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-wrap: break-word; // Ensures long words break and wrap
+  word-break: break-word; // Additional property to handle breaking of long words
 
   h2 {
     font-size: 18px;
@@ -237,6 +239,8 @@ const PatentTabContent = styled.div`
     font-size: 10pt;
     font-family: "Inter", sans-serif;
     white-space: normal;
+    overflow-wrap: break-word; // Ensures text wraps within the container
+    word-break: break-word;
   }
 
   strong {
@@ -310,7 +314,7 @@ const ContentWrapper = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto; // Changed from hidden to auto to allow scrolling
 `;
 
 const PatentIframe = styled.iframe`
@@ -730,54 +734,74 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     const renderTabContent = () => {
       switch (activeTab) {
         case "Overview":
-          return (
-            <ScrollWrapper>
-              <PatentTabContent>
-                <h2>Overview</h2>
-                {patentData.title && <h3>{patentData.title}</h3>}
-                {patentData.publicationNumber && (
-                  <p>
-                    <strong>Publication Number:</strong> {patentData.publicationNumber}
-                  </p>
-                )}
-                {patentData.publicationDate && (
-                  <p>
-                    <strong>Publication Date:</strong> {patentData.publicationDate}
-                  </p>
-                )}
-                {patentData.filingDate && (
-                  <p>
-                    <strong>Filing Date:</strong> {patentData.filingDate}
-                  </p>
-                )}
-                {patentData.priorityDate && (
-                  <p>
-                    <strong>Priority Date:</strong> {patentData.priorityDate}
-                  </p>
-                )}
-                {patentData.inventors?.length > 0 && (
-                  <p>
-                    <strong>Inventors:</strong> {patentData.inventors.join(", ")}
-                  </p>
-                )}
-                {patentData.assignee && (
-                  <p>
-                    <strong>Assignee:</strong> {patentData.assignee}
-                  </p>
-                )}
-                {patentData.status && (
-                  <p>
-                    <strong>Status:</strong> {patentData.status}
-                  </p>
-                )}
-                {patentData.abstract && (
-                  <p>
-                    <strong>Abstract:</strong> {patentData.abstract}
-                  </p>
-                )}
-              </PatentTabContent>
-            </ScrollWrapper>
-          );
+  // Parse publicationNumber and publicationDate into arrays if they are strings with multiple entries
+  const publicationNumbers = patentData.publicationNumber
+    ? patentData.publicationNumber.split(/,\s*/).filter(Boolean)
+    : [];
+  const publicationDates = patentData.publicationDate
+    ? patentData.publicationDate.split(/,\s*/).filter(Boolean)
+    : [];
+
+  return (
+    <ScrollWrapper>
+      <PatentTabContent>
+        <h2>Overview</h2>
+        {patentData.title && <h3>{patentData.title}</h3>}
+        {publicationNumbers.length > 0 && (
+          <p>
+            <strong>Publication Number:</strong>{" "}
+            {publicationNumbers.map((number, index) => (
+              <span key={index}>
+                {number}
+                {index < publicationNumbers.length - 1 ? ", " : ""}
+              </span>
+            ))}
+          </p>
+        )}
+        {publicationDates.length > 0 && (
+          <p>
+            <strong>Publication Date:</strong>{" "}
+            {publicationDates.map((date, index) => (
+              <span key={index}>
+                {date}
+                {index < publicationDates.length - 1 ? ", " : ""}
+              </span>
+            ))}
+          </p>
+        )}
+        {patentData.filingDate && (
+          <p>
+            <strong>Filing Date:</strong> {patentData.filingDate}
+          </p>
+        )}
+        {patentData.priorityDate && (
+          <p>
+            <strong>Priority Date:</strong> {patentData.priorityDate}
+          </p>
+        )}
+        {patentData.inventors?.length > 0 && (
+          <p>
+            <strong>Inventors:</strong> {patentData.inventors.join(", ")}
+          </p>
+        )}
+        {patentData.assignee && (
+          <p>
+            <strong>Assignee:</strong> {patentData.assignee}
+          </p>
+        )}
+        {patentData.status && (
+          <p>
+            <strong>Status:</strong> {patentData.status}
+          </p>
+        )}
+        {patentData.abstract && (
+          <p>
+            <strong>Abstract:</strong> {patentData.abstract}
+          </p>
+        )}
+      </PatentTabContent>
+    </ScrollWrapper>
+  );
         case "PDF":
           const pdfUrl = patentData.pdfUrl;
           if (pdfUrl) {

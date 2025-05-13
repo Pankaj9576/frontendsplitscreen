@@ -178,8 +178,8 @@ const UploadButton = styled.button`
 `
 
 const ScreenSelectButton = styled.select`
-  background:black;
-  color: white; /* Dark text for better contrast */
+  background: black;
+  color: white;
   padding: 6px;
   font-size: 13px;
   font-family: 'Roboto', Arial, sans-serif;
@@ -189,7 +189,7 @@ const ScreenSelectButton = styled.select`
   transition: background 0.3s ease;
 
   &:hover {
-    background:black; /* Slightly darker shade on hover */
+    background: black;
   }
 
   &:focus {
@@ -224,76 +224,78 @@ const SplitScreenModal = ({
   setRightSrc,
   onClose,
 }) => {
-  const [error, setError] = useState(null)
-  const [leftFile, setLeftFile] = useState(null)
-  const [rightFile, setRightFile] = useState(null)
-  const [screenMode, setScreenMode] = useState("both")
-  const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
-  const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
-  const BACKEND_URL = "https://split-screen-backend.vercel.app"
+  const [error, setError] = useState(null);
+  const [leftFile, setLeftFile] = useState(null);
+  const [rightFile, setRightFile] = useState(null);
+  const [screenMode, setScreenMode] = useState("both");
+  const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "");
+  const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "");
+  const [leftWidth, setLeftWidth] = useState(50);
+  const [rightWidth, setRightWidth] = useState(50);
+  const BACKEND_URL = "https://split-screen-backend.vercel.app";
 
   useEffect(() => {
     if (!setLeftSrc) {
-      console.error("setLeftSrc is not provided")
+      console.error("setLeftSrc is not provided");
     } else if (!leftSrc && initialLeftSrc) {
-      setLeftSrc(initialLeftSrc)
-      setLocalLeftSrc(initialLeftSrc)
+      setLeftSrc(initialLeftSrc);
+      setLocalLeftSrc(initialLeftSrc);
     }
-  }, [leftSrc, initialLeftSrc, setLeftSrc])
+  }, [leftSrc, initialLeftSrc, setLeftSrc]);
 
   useEffect(() => {
     if (!setRightSrc) {
-      console.error("setRightSrc is not provided")
+      console.error("setRightSrc is not provided");
     } else if (!rightSrc && initialRightSrc) {
-      setRightSrc(initialRightSrc)
-      setLocalRightSrc(initialRightSrc)
+      setRightSrc(initialRightSrc);
+      setLocalRightSrc(initialRightSrc);
     }
-  }, [rightSrc, initialRightSrc, setRightSrc])
+  }, [rightSrc, initialRightSrc, setRightSrc]);
 
   const handleUploadComplete = async (side, file) => {
     if (!file) {
-      setError("No file selected")
-      return
+      setError("No file selected");
+      return;
     }
 
     try {
-      const blobUrl = URL.createObjectURL(file)
-      console.log(`File uploaded for ${side} side, Blob URL: ${blobUrl} - Handling client-side, File: ${file.name}`)
+      const blobUrl = URL.createObjectURL(file);
+      console.log(`File uploaded for ${side} side, Blob URL: ${blobUrl} - Handling client-side, File: ${file.name}`);
       if (side === "left") {
-        setLocalLeftSrc(blobUrl)
-        if (setLeftSrc) setLeftSrc(blobUrl)
-        setLeftFile(file)
+        setLocalLeftSrc(blobUrl);
+        if (setLeftSrc) setLeftSrc(blobUrl);
+        setLeftFile(file);
       } else {
-        setLocalRightSrc(blobUrl)
-        if (setRightSrc) setRightSrc(blobUrl)
-        setRightFile(file)
+        setLocalRightSrc(blobUrl);
+        if (setRightSrc) setRightSrc(blobUrl);
+        setRightFile(file);
       }
     } catch (err) {
-      console.error("Upload error:", err)
-      setError(`Failed to process file: ${err.message}`)
+      console.error("Upload error:", err);
+      setError(`Failed to process file: ${err.message}`);
     }
-  }
+  };
 
   const handleLinkClick = (side, newUrl) => {
-    console.log(`Link clicked: ${newUrl} on ${side} side`)
+    console.log(`Link clicked: ${newUrl} on ${side} side`);
     if (side === "left") {
-      setLocalLeftSrc(newUrl)
-      if (setLeftSrc) setLeftSrc(newUrl)
+      setLocalLeftSrc(newUrl);
+      if (setLeftSrc) setLeftSrc(newUrl);
     } else {
-      setLocalRightSrc(newUrl)
-      if (setRightSrc) setRightSrc(newUrl)
+      setLocalRightSrc(newUrl);
+      if (setRightSrc) setRightSrc(newUrl);
     }
-  }
+  };
 
   const handleLeftSrcChange = (value) => {
-    setLocalLeftSrc(value)
-    if (setLeftSrc) setLeftSrc(value)
-  }
+    setLocalLeftSrc(value);
+    if (setLeftSrc) setLeftSrc(value);
+  };
 
   const handleRightSrcChange = (value) => {
-    setLocalRightSrc(value)
-    if (setRightSrc) setRightSrc(value)
-  }
+    setLocalRightSrc(value);
+    if (setRightSrc) setRightSrc(value);
+  };
 
   const renderContent = (src, side) => {
     if (!src) {
@@ -312,11 +314,14 @@ const SplitScreenModal = ({
         >
           Enter a URL or upload a file to view content
         </div>
-      )
+      );
     }
 
-    const isBlobUrl = src.startsWith("blob:")
-    const file = isBlobUrl ? (side === "left" ? leftFile : rightFile) : null
+    const isBlobUrl = src.startsWith("blob:");
+    const file = isBlobUrl ? (side === "left" ? leftFile : rightFile) : null;
+    const currentWidth = side === "left" ? leftWidth : rightWidth;
+    console.log(`Rendering ${side} side with width: ${currentWidth}%`);
+
     return (
       <ProxyContent
         url={src}
@@ -324,9 +329,11 @@ const SplitScreenModal = ({
         onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
         isFileUpload={isBlobUrl}
         fileName={file ? file.name : null}
+        side={side}
+        width={currentWidth}
       />
-    )
-  }
+    );
+  };
 
   return (
     <ModalBackground onClick={onClose}>
@@ -342,7 +349,7 @@ const SplitScreenModal = ({
               />
               <FileInputWrapper>
                 <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: '#5367FF',color:'white'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+                <UploadButton style={{ backgroundColor: '#5367FF', color: 'white' }} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
               </FileInputWrapper>
             </SideContainer>
 
@@ -361,7 +368,7 @@ const SplitScreenModal = ({
               />
               <FileInputWrapper>
                 <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: '#00F3BB'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+                <UploadButton style={{ backgroundColor: '#00F3BB' }} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
               </FileInputWrapper>
             </SideContainer>
 
@@ -369,13 +376,22 @@ const SplitScreenModal = ({
           </InputWrapper>
         </HeaderContainer>
         {error && <ErrorMessage>{error}</ErrorMessage>}
-        <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
+        <SplitScreen
+          screenMode={screenMode}
+          onWidthChange={(leftWidthRatio, rightWidthRatio) => {
+            const newLeftWidth = leftWidthRatio * 50;
+            const newRightWidth = rightWidthRatio * 50;
+            setLeftWidth(newLeftWidth);
+            setRightWidth(newRightWidth);
+            console.log(`Width updated - Left: ${newLeftWidth}%, Right: ${newRightWidth}%`);
+          }}
+        >
           {renderContent(leftSrc, "left")}
           {renderContent(rightSrc, "right")}
         </SplitScreen>
       </ModalContent>
     </ModalBackground>
-  )
-}
+  );
+};
 
-export default SplitScreenModal
+export default SplitScreenModal;
