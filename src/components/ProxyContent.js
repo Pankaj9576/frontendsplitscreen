@@ -110,6 +110,8 @@ const TabContent = styled.div`
   img {
     max-width: 100%;
     margin: 10px 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
   }
 
   ul, ol {
@@ -353,6 +355,10 @@ const FallbackMessage = styled.div`
   padding: 20px;
   color: #666;
   font-family: 'Arial', sans-serif;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin: 10px;
 `;
 
 const DownloadLink = styled.a`
@@ -572,7 +578,22 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         return aNum - bNum;
       });
 
-      let htmlContent = `<div style="padding: 20px; font-family: 'Arial', sans-serif; max-width: 100%; box-sizing: border-box;">`;
+      // Extract images from ppt/media/
+      const mediaFiles = Object.keys(zip.files).filter((file) =>
+        file.match(/^ppt\/media\/image\d+\.(png|jpeg|jpg|gif)$/i)
+      );
+
+      const mediaDataUrls = {};
+      for (const mediaFile of mediaFiles) {
+        const mediaBlob = await zip.file(mediaFile).async("blob");
+        const mediaUrl = URL.createObjectURL(mediaBlob);
+        const mediaId = mediaFile.match(/image\d+\./)[0].replace(".", "");
+        mediaDataUrls[mediaId] = mediaUrl;
+      }
+
+      let htmlContent = `
+        <div style="padding: 20px; font-family: 'Arial', sans-serif; max-width: 100%; box-sizing: border-box;">
+      `;
 
       for (let i = 0; i < slideFiles.length; i++) {
         const slideContent = await zip.file(slideFiles[i]).async("string");
@@ -607,18 +628,53 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           }
         });
 
-        htmlContent += `<h2>Slide ${i + 1}</h2>`;
+        // Extract images associated with this slide
+        const slideRelsFile = `ppt/slides/_rels/slide${i + 1}.xml.rels`;
+        let images = [];
+        if (zip.files[slideRelsFile]) {
+          const relsContent = await zip.file(slideRelsFile).async("string");
+          const relsData = parser.parse(relsContent);
+          const relationships = relsData?.Relationships?.Relationship || [];
+          const relArray = Array.isArray(relationships) ? relationships : [relationships].filter(Boolean);
+
+          images = relArray
+            .filter((rel) => rel["@_Target"]?.includes("../media/image"))
+            .map((rel) => {
+              const target = rel["@_Target"];
+              const imageId = target.match(/image\d+/i)?.[0];
+              return mediaDataUrls[imageId];
+            })
+            .filter(Boolean);
+        }
+
+        htmlContent += `
+          <div style="border: 1px solid #e0e0e0; border-radius: 4px; padding: 15px; margin-bottom: 20px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h2 style="font-size: 16px; color: #1a73e8; margin-bottom: 10px;">Slide ${i + 1}</h2>
+        `;
+
+        // Add images if available
+        if (images.length > 0) {
+          htmlContent += `<div style="margin-bottom: 15px;">`;
+          images.forEach((imageUrl, idx) => {
+            htmlContent += `<img src="${imageUrl}" alt="Slide ${i + 1} Image ${idx + 1}" style="max-width: 100%; margin: 10px 0; border: 1px solid #e0e0e0; border-radius: 4px;" />`;
+          });
+          htmlContent += `</div>`;
+        }
+
+        // Add text content
         if (texts.length > 0) {
-          htmlContent += `<ul>`;
+          htmlContent += `<ul style="padding-left: 20px; margin: 0;">`;
           texts.forEach((text) => {
             if (text.trim()) {
-              htmlContent += `<li>${text.trim()}</li>`;
+              htmlContent += `<li style="margin: 5px 0; color: #333; font-size: 14px;">${text.trim()}</li>`;
             }
           });
           htmlContent += `</ul>`;
         } else {
-          htmlContent += `<p>No text content found on this slide.</p>`;
+          htmlContent += `<p style="color: #666; font-size: 14px;">No text content found on this slide.</p>`;
         }
+
+        htmlContent += `</div>`;
       }
 
       htmlContent += `</div>`;
