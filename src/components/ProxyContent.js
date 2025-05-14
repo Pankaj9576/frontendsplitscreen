@@ -1,13 +1,10 @@
 import React, { useEffect, useState, useRef, Suspense } from "react";
 import styled from "styled-components";
 import mammoth from "mammoth";
-import { Document, Page, pdfjs } from "react-pdf";
-
-// Set PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 
+// Basic styling (unchanged)
 const TabContainer = styled.div`
   display: flex;
   background-color: #f5f5f5;
@@ -56,6 +53,7 @@ const TabButton = styled.button`
   }
 `;
 
+// Base TabContent for non-patent content
 const TabContent = styled.div`
   flex: 1;
   padding: 20px;
@@ -66,12 +64,12 @@ const TabContent = styled.div`
   color: #333;
   text-align: left;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: hidden; // Changed to hidden to prevent horizontal scrollbar
   overflow-y: auto;
   height: calc(100vh - 60px);
   box-sizing: border-box;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  overflow-wrap: break-word; // Ensures long words break and wrap
+  word-break: break-word; // Additional property to handle breaking of long words
 
   h2 {
     font-size: 18px;
@@ -95,7 +93,7 @@ const TabContent = styled.div`
     line-height: 19pt;
     font-size: 10pt;
     font-family: "Inter", sans-serif;
-    overflow-wrap: break-word;
+    overflow-wrap: break-word; // Ensures text wraps within the container
     word-break: break-word;
   }
 
@@ -173,7 +171,7 @@ const TabContent = styled.div`
     background: #f5f5f5;
   }
 `;
-
+// ScrollWrapper (unchanged)
 const ScrollWrapper = styled.div`
   width: 100%;
   height: calc(100vh - 60px);
@@ -199,6 +197,7 @@ const ScrollWrapper = styled.div`
   }
 `;
 
+// PatentTabContent (unchanged)
 const PatentTabContent = styled.div`
   padding: 20px;
   font-family: 'Arial', sans-serif;
@@ -207,13 +206,13 @@ const PatentTabContent = styled.div`
   line-height: 1.6;
   color: #333;
   text-align: left;
-  width: 100%;
+  width: 100%; // Changed from min-width/max-width to ensure it fits the container
   box-sizing: border-box;
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  overflow-wrap: break-word; // Ensures long words break and wrap
+  word-break: break-word; // Additional property to handle breaking of long words
 
   h2 {
     font-size: 18px;
@@ -240,7 +239,7 @@ const PatentTabContent = styled.div`
     font-size: 10pt;
     font-family: "Inter", sans-serif;
     white-space: normal;
-    overflow-wrap: break-word;
+    overflow-wrap: break-word; // Ensures text wraps within the container
     word-break: break-word;
   }
 
@@ -309,12 +308,13 @@ const PatentTabContent = styled.div`
   }
 `;
 
+// Rest of the styled components (unchanged)
 const ContentWrapper = styled.div`
   height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  overflow: auto; // Changed from hidden to auto to allow scrolling
 `;
 
 const PatentIframe = styled.iframe`
@@ -394,14 +394,7 @@ const RetryButton = styled.button`
   }
 `;
 
-const PptContentWrapper = styled.div`
-  padding: 20px;
-  background: #fff;
-  flex: 1;
-  overflow-y: auto;
-`;
-
-const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, side, width }) => {
+const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) => {
   const [content, setContent] = useState(null);
   const [error, setError] = useState(null);
   const [patentData, setPatentData] = useState(null);
@@ -409,9 +402,8 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
   const [directIframe, setDirectIframe] = useState(false);
   const [activeTab, setActiveTab] = useState(null);
   const [availableTabs, setAvailableTabs] = useState([]);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
-  const [pptContent, setPptContent] = useState(null);
   const iframeRef = useRef(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
 
   const isPatentUrl = (urlToCheck) => {
     return urlToCheck && urlToCheck.includes("patents.google.com/patent");
@@ -430,13 +422,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
     return (
       urlToCheck &&
       (urlToCheck.endsWith(".pdf") || urlToCheck.includes("/patent/pdf/"))
-    );
-  };
-
-  const isPptUrl = (urlToCheck) => {
-    return (
-      urlToCheck &&
-      (urlToCheck.endsWith(".ppt") || urlToCheck.endsWith(".pptx"))
     );
   };
 
@@ -489,63 +474,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
     } catch (err) {
       console.error("PDF fetch error:", err);
       throw err;
-    }
-  };
-
-  const handlePptFile = async (blob, fileName) => {
-    try {
-      const maxSize = 10 * 1024 * 1024;
-      if (blob.size > maxSize) {
-        throw new Error("File size exceeds 10MB limit. Please upload a smaller file.");
-      }
-
-      const fileExt = fileName.split(".").pop().toLowerCase();
-      if (!["ppt", "pptx"].includes(fileExt)) {
-        throw new Error("Unsupported file type. Please upload a .ppt or .pptx file.");
-      }
-
-      // Convert blob to base64 using FileReader
-      const base64String = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result;
-          // The result includes the data URL prefix (e.g., "data:application/octet-stream;base64,"), so we need to remove it
-          const base64Data = result.split(',')[1];
-          resolve(base64Data);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-
-      // Call backend to extract PPT content
-      const response = await fetch(`${backendUrl}/api/convert-ppt`, {
-        method: "POST",
-        body: JSON.stringify({
-          fileData: base64String,
-          fileName: fileName
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to process PPT: ${await response.text()}`);
-      }
-
-      const result = await response.json();
-      setPptContent(result.content);
-      setContent({ type: "ppt" });
-    } catch (err) {
-      console.error("Error in handlePptFile:", err);
-      setError(
-        err.message || "Failed to process PPT document. Try downloading the file instead."
-      );
-      setContent({
-        type: "download",
-        url: URL.createObjectURL(blob),
-        message: "Unable to render PPT document. Please download to view.",
-      });
     }
   };
 
@@ -603,7 +531,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
     setAvailableTabs([]);
     setActiveTab(null);
     setPdfBlobUrl(null);
-    setPptContent(null);
 
     try {
       let response;
@@ -623,8 +550,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             await handleWordFile(blob, fileName);
           } else if (fileExt === "pdf") {
             setContent({ type: "pdf", url: `${url}#view=FitH` });
-          } else if (["ppt", "pptx"].includes(fileExt)) {
-            await handlePptFile(blob, fileName);
           } else {
             setContent({
               type: "download",
@@ -653,9 +578,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
         console.log("Detected PDF URL, fetching as blob:", url);
         const blobUrl = await fetchPdfAsBlob(url);
         setContent({ type: "pdf", url: `${blobUrl}#view=FitH` });
-      } else if (isPptUrl(url)) {
-        console.log("Detected PPT URL, processing:", url);
-        await handlePptFile(await (await fetch(url)).blob(), url.split('/').pop());
       } else {
         const fetchUrl = `${backendUrl}/api/proxy?url=${encodeURIComponent(url)}`;
         await handleProxyContent(fetchUrl);
@@ -767,6 +689,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
     return () => window.removeEventListener("message", handleMessage);
   }, [onLinkClick, fileName]);
 
+  // Initialize tabs when patentData changes
   useEffect(() => {
     if (patentData) {
       const possibleTabs = [
@@ -779,7 +702,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             patentData.publicationNumber,
         },
         { name: "PDF", hasData: !!patentData.pdfUrl },
-        { name: "Images", hasData: patentData.drawings?.length > 0 },
+        { name: "Images", hasData: patentData.drawings?.length > 0 }, // Renamed "Drawings" to "Images"
         { name: "Claims", hasData: !!patentData.claims },
         { name: "Description", hasData: !!patentData.description },
         { name: "Classifications", hasData: patentData.classifications?.length > 0 },
@@ -811,92 +734,106 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
     const renderTabContent = () => {
       switch (activeTab) {
         case "Overview":
-          const publicationNumbers = patentData.publicationNumber
-            ? patentData.publicationNumber.split(/,\s*/).filter(Boolean)
-            : [];
-          const publicationDates = patentData.publicationDate
-            ? patentData.publicationDate.split(/,\s*/).filter(Boolean)
-            : [];
+  // Parse publicationNumber and publicationDate into arrays if they are strings with multiple entries
+  const publicationNumbers = patentData.publicationNumber
+    ? patentData.publicationNumber.split(/,\s*/).filter(Boolean)
+    : [];
+  const publicationDates = patentData.publicationDate
+    ? patentData.publicationDate.split(/,\s*/).filter(Boolean)
+    : [];
 
-          return (
-            <ScrollWrapper>
-              <PatentTabContent>
-                <h2>Overview</h2>
-                {patentData.title && <h2>{patentData.title}</h2>}
-                {publicationNumbers.length > 0 && (
-                  <p>
-                    <strong>Publication Number:</strong>{" "}
-                    {publicationNumbers.map((number, index) => (
-                      <span key={index}>
-                        {number}
-                        {index < publicationNumbers.length - 1 ? ", " : ""}
-                      </span>
-                    ))}
-                  </p>
-                )}
-                {publicationDates.length > 0 && (
-                  <p>
-                    <strong>Publication Date:</strong>{" "}
-                    {publicationDates.map((date, index) => (
-                      <span key={index}>
-                        {date}
-                        {index < publicationDates.length - 1 ? ", " : ""}
-                      </span>
-                    ))}
-                  </p>
-                )}
-                {patentData.filingDate && (
-                  <p>
-                    <strong>Filing Date:</strong> {patentData.filingDate}
-                  </p>
-                )}
-                {patentData.priorityDate && (
-                  <p>
-                    <strong>Priority Date:</strong> {patentData.priorityDate}
-                  </p>
-                )}
-                {patentData.inventors?.length > 0 && (
-                  <p>
-                    <strong>Inventors:</strong> {patentData.inventors.join(", ")}
-                  </p>
-                )}
-                {patentData.assignee && (
-                  <p>
-                    <strong>Assignee:</strong> {patentData.assignee}
-                  </p>
-                )}
-                {patentData.status && (
-                  <p>
-                    <strong>Status:</strong> {patentData.status}
-                  </p>
-                )}
-                {patentData.abstract && (
-                  <p>
-                    <strong>Abstract:</strong> {patentData.abstract}
-                  </p>
-                )}
-              </PatentTabContent>
-            </ScrollWrapper>
-          );
+  return (
+    <ScrollWrapper>
+      <PatentTabContent>
+        <h2>Overview</h2>
+        {patentData.title && <h3>{patentData.title}</h3>}
+        {publicationNumbers.length > 0 && (
+          <p>
+            <strong>Publication Number:</strong>{" "}
+            {publicationNumbers.map((number, index) => (
+              <span key={index}>
+                {number}
+                {index < publicationNumbers.length - 1 ? ", " : ""}
+              </span>
+            ))}
+          </p>
+        )}
+        {publicationDates.length > 0 && (
+          <p>
+            <strong>Publication Date:</strong>{" "}
+            {publicationDates.map((date, index) => (
+              <span key={index}>
+                {date}
+                {index < publicationDates.length - 1 ? ", " : ""}
+              </span>
+            ))}
+          </p>
+        )}
+        {patentData.filingDate && (
+          <p>
+            <strong>Filing Date:</strong> {patentData.filingDate}
+          </p>
+        )}
+        {patentData.priorityDate && (
+          <p>
+            <strong>Priority Date:</strong> {patentData.priorityDate}
+          </p>
+        )}
+        {patentData.inventors?.length > 0 && (
+          <p>
+            <strong>Inventors:</strong> {patentData.inventors.join(", ")}
+          </p>
+        )}
+        {patentData.assignee && (
+          <p>
+            <strong>Assignee:</strong> {patentData.assignee}
+          </p>
+        )}
+        {patentData.status && (
+          <p>
+            <strong>Status:</strong> {patentData.status}
+          </p>
+        )}
+        {patentData.abstract && (
+          <p>
+            <strong>Abstract:</strong> {patentData.abstract}
+          </p>
+        )}
+      </PatentTabContent>
+    </ScrollWrapper>
+  );
         case "PDF":
           const pdfUrl = patentData.pdfUrl;
           if (pdfUrl) {
             console.log("PDF tab clicked, triggering onLinkClick with URL:", pdfUrl);
             onLinkClick(pdfUrl);
-            return null;
+            return <TabContent><LoadingIndicator>Redirecting to PDF...</LoadingIndicator></TabContent>;
           }
-          return <FallbackMessage>No PDF available</FallbackMessage>;
-        case "Images":
+          return (
+            <ScrollWrapper>
+              <PatentTabContent>
+                <FallbackMessage>
+                  PDF link not available.
+                </FallbackMessage>
+              </PatentTabContent>
+            </ScrollWrapper>
+          );
+        case "Images": // Renamed from "Drawings" to "Images"
           return (
             <ScrollWrapper>
               <PatentTabContent>
                 <h2>Images</h2>
-                {patentData.drawings.length > 0 ? (
-                  patentData.drawings.map((src, index) => (
-                    <img key={index} src={src} alt={`Drawing ${index + 1}`} />
+                {patentData.drawings?.length > 0 ? (
+                  patentData.drawings.map((drawing, index) => (
+                    <img
+                      key={index}
+                      src={drawing}
+                      alt={`Image ${index + 1}`}
+                      style={{ maxWidth: "100%" }}
+                    />
                   ))
                 ) : (
-                  <p>No drawings available.</p>
+                  <p>No images found.</p>
                 )}
               </PatentTabContent>
             </ScrollWrapper>
@@ -905,11 +842,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Claims</h2>
+                {/* <h2>Claims</h2> */}
                 {patentData.claims ? (
                   <div dangerouslySetInnerHTML={{ __html: patentData.claims }} />
                 ) : (
-                  <p>No claims available.</p>
+                  <p>No claims found.</p>
                 )}
               </PatentTabContent>
             </ScrollWrapper>
@@ -918,11 +855,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Description</h2>
+                {/* <h2>Description</h2> */}
                 {patentData.description ? (
                   <div dangerouslySetInnerHTML={{ __html: patentData.description }} />
                 ) : (
-                  <p>No description available.</p>
+                  <p>No description found.</p>
                 )}
               </PatentTabContent>
             </ScrollWrapper>
@@ -932,7 +869,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             <ScrollWrapper>
               <PatentTabContent>
                 <h2>Classifications</h2>
-                {patentData.classifications.length > 0 ? (
+                {patentData.classifications?.length > 0 ? (
                   <table>
                     <thead>
                       <tr>
@@ -943,14 +880,14 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
                     <tbody>
                       {patentData.classifications.map((cls, index) => (
                         <tr key={index}>
-                          <td>{cls.code}</td>
-                          <td>{cls.description}</td>
+                          <td>{cls.code || "N/A"}</td>
+                          <td>{cls.description || "N/A"}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 ) : (
-                  <p>No classifications available.</p>
+                  <p>No classifications found.</p>
                 )}
               </PatentTabContent>
             </ScrollWrapper>
@@ -960,11 +897,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             <ScrollWrapper>
               <PatentTabContent>
                 <h2>Citations</h2>
-                {patentData.citations.length > 0 ? (
+                {patentData.citations?.length > 0 ? (
                   <table>
                     <thead>
                       <tr>
-                        <th>Number</th>
+                        <th>Publication Number</th>
                         <th>Date</th>
                         <th>Title</th>
                         <th>Assignee</th>
@@ -974,22 +911,23 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
                       {patentData.citations.map((citation, index) => (
                         <tr key={index}>
                           <td>
-                            <a
-                              href="#"
-                              onClick={() => handleCitationClick(citation.number)}
-                            >
-                              {citation.number}
-                            </a>
+                            {citation.number ? (
+                              <a onClick={() => handleCitationClick(citation.number)}>
+                                {citation.number}
+                              </a>
+                            ) : (
+                              "N/A"
+                            )}
                           </td>
-                          <td>{citation.date}</td>
-                          <td>{citation.title}</td>
-                          <td>{citation.assignee}</td>
+                          <td>{citation.date || "N/A"}</td>
+                          <td>{citation.title || "N/A"}</td>
+                          <td>{citation.assignee || "N/A"}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 ) : (
-                  <p>No citations available.</p>
+                  <p>No citations found.</p>
                 )}
               </PatentTabContent>
             </ScrollWrapper>
@@ -999,36 +937,37 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             <ScrollWrapper>
               <PatentTabContent>
                 <h2>Cited By</h2>
-                {patentData.citedBy.length > 0 ? (
+                {patentData.citedBy?.length > 0 ? (
                   <table>
                     <thead>
                       <tr>
-                        <th>Number</th>
+                        <th>Publication Number</th>
                         <th>Date</th>
                         <th>Title</th>
                         <th>Assignee</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {patentData.citedBy.map((cited, index) => (
+                      {patentData.citedBy.map((cite, index) => (
                         <tr key={index}>
                           <td>
-                            <a
-                              href="#"
-                              onClick={() => handleCitationClick(cited.number)}
-                            >
-                              {cited.number}
-                            </a>
+                            {cite.number ? (
+                              <a onClick={() => handleCitationClick(cite.number)}>
+                                {cite.number}
+                              </a>
+                            ) : (
+                              "N/A"
+                            )}
                           </td>
-                          <td>{cited.date}</td>
-                          <td>{cited.title}</td>
-                          <td>{cited.assignee}</td>
+                          <td>{cite.date || "N/A"}</td>
+                          <td>{cite.title || "N/A"}</td>
+                          <td>{cite.assignee || "N/A"}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 ) : (
-                  <p>No cited by references available.</p>
+                  <p>No cited by documents found.</p>
                 )}
               </PatentTabContent>
             </ScrollWrapper>
@@ -1038,7 +977,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             <ScrollWrapper>
               <PatentTabContent>
                 <h2>Legal Events</h2>
-                {patentData.legalEvents.length > 0 ? (
+                {patentData.legalEvents?.length > 0 ? (
                   <table>
                     <thead>
                       <tr>
@@ -1049,14 +988,14 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
                     <tbody>
                       {patentData.legalEvents.map((event, index) => (
                         <tr key={index}>
-                          <td>{event.date}</td>
-                          <td>{event.description}</td>
+                          <td>{event.date || "N/A"}</td>
+                          <td>{event.description || "N/A"}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 ) : (
-                  <p>No legal events available.</p>
+                  <p>No legal events found.</p>
                 )}
               </PatentTabContent>
             </ScrollWrapper>
@@ -1066,11 +1005,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             <ScrollWrapper>
               <PatentTabContent>
                 <h2>Patent Family</h2>
-                {patentData.patentFamily.length > 0 ? (
+                {patentData.patentFamily?.length > 0 ? (
                   <table>
                     <thead>
                       <tr>
-                        <th>Number</th>
+                        <th>Publication Number</th>
                         <th>Date</th>
                         <th>Country</th>
                       </tr>
@@ -1078,15 +1017,15 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
                     <tbody>
                       {patentData.patentFamily.map((family, index) => (
                         <tr key={index}>
-                          <td>{family.number}</td>
-                          <td>{family.date}</td>
-                          <td>{family.country}</td>
+                          <td>{family.number || "N/A"}</td>
+                          <td>{family.date || "N/A"}</td>
+                          <td>{family.country || "N/A"}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 ) : (
-                  <p>No patent family information available.</p>
+                  <p>No patent family found.</p>
                 )}
               </PatentTabContent>
             </ScrollWrapper>
@@ -1096,11 +1035,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             <ScrollWrapper>
               <PatentTabContent>
                 <h2>Similar Documents</h2>
-                {patentData.similarDocs.length > 0 ? (
+                {patentData.similarDocs?.length > 0 ? (
                   <table>
                     <thead>
                       <tr>
-                        <th>Number</th>
+                        <th>Publication Number</th>
                         <th>Date</th>
                         <th>Title</th>
                       </tr>
@@ -1108,21 +1047,25 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
                     <tbody>
                       {patentData.similarDocs.map((doc, index) => (
                         <tr key={index}>
-                          <td>{doc.number}</td>
-                          <td>{doc.date}</td>
-                          <td>{doc.title}</td>
+                          <td>{doc.number || "N/A"}</td>
+                          <td>{doc.date || "N/A"}</td>
+                          <td>{doc.title || "N/A"}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 ) : (
-                  <p>No similar documents available.</p>
+                  <p>No similar documents found.</p>
                 )}
               </PatentTabContent>
             </ScrollWrapper>
           );
         default:
-          return null;
+          return (
+            <ScrollWrapper>
+              <PatentTabContent>Select a tab to view content.</PatentTabContent>
+            </ScrollWrapper>
+          );
       }
     };
 
@@ -1139,130 +1082,110 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             </TabButton>
           ))}
         </TabContainer>
-        {renderTabContent()}
+        {activeTab && renderTabContent()}
       </ContentWrapper>
     );
   };
 
   if (loading) {
-    return <LoadingIndicator>Loading...</LoadingIndicator>;
+    return <LoadingIndicator>Loading content...</LoadingIndicator>;
   }
 
   if (error) {
     return (
-      <ErrorContainer>
-        <FallbackMessage>{error}</FallbackMessage>
-        <RetryButton onClick={fetchContent}>Retry</RetryButton>
-      </ErrorContainer>
-    );
-  }
+      <ContentWrapper>
+        <ErrorContainer>
+          <div
+            style={{
+              color: "#d93025",
+              padding: 12,
+              background: "#fce8e6",
+              borderRadius: "8px",
+              textAlign: "center",
+              fontSize: "16px",
+              marginBottom: "10px",
+              width: "100%",
+            }}
+          >
+            {error}
+          </div>
 
-  if (content) {
-    switch (content.type) {
-      case "iframe":
-        return (
-          <PatentIframe
-            ref={iframeRef}
-            src={content.url}
-            title={`${side} iframe`}
-          />
-        );
-      case "html":
-        return (
-          <TabContent>
-            <div dangerouslySetInnerHTML={{ __html: content.data }} />
-          </TabContent>
-        );
-      case "pdf":
-        return (
-          <ContentWrapper>
-            <TabContainer>
-              <TabButton
-                $active={activeTab === "PDF"}
-                onClick={() => setActiveTab("PDF")}
-              >
-                PDF View
-              </TabButton>
-            </TabContainer>
-            <PptContentWrapper>
-              <Document
-                file={content.url}
-                onLoadSuccess={({ numPages }) => setActiveTab("PDF")}
-              >
-                {Array.from(new Array(numPages || 1), (el, index) => (
-                  <Page
-                    key={`page_${index + 1}`}
-                    pageNumber={index + 1}
-                    width={width ? (width / 100) * window.innerWidth * 0.8 : 600}
-                  />
-                ))}
-              </Document>
-            </PptContentWrapper>
-          </ContentWrapper>
-        );
-      case "ppt":
-        return (
-          <ContentWrapper>
-            <TabContainer>
-              <TabButton
-                $active={activeTab === "Content"}
-                onClick={() => setActiveTab("Content")}
-              >
-                Content
-              </TabButton>
-            </TabContainer>
-            <PptContentWrapper>
-              <h2>PPT Content</h2>
-              {pptContent && pptContent.length > 0 ? (
-                pptContent.map((slide, slideIndex) => (
-                  <div key={slideIndex}>
-                    <h3>Slide {slideIndex + 1}</h3>
-                    {slide.map((text, textIndex) => (
-                      <p key={textIndex}>{text}</p>
-                    ))}
-                  </div>
-                ))
-              ) : (
-                <p>No content available to display.</p>
-              )}
-            </PptContentWrapper>
-          </ContentWrapper>
-        );
-      case "excel":
-        return (
-          <Suspense fallback={<LoadingIndicator>Loading Excel Viewer...</LoadingIndicator>}>
-            <ExcelViewer blob={content.blob} />
-          </Suspense>
-        );
-      case "download":
-        return (
-          <FallbackMessage>
-            {content.message}{" "}
-            <DownloadLink href={content.url} download={fileName || "file"}>
-              Download
+          {content?.type === "download" && (
+            <DownloadLink href={content.url} download={fileName || "document"}>
+              Download File
             </DownloadLink>
-          </FallbackMessage>
-        );
-      default:
-        return null;
-    }
-  }
+          )}
 
-  if (directIframe) {
-    return (
-      <PatentIframe
-        ref={iframeRef}
-        src={url}
-        title={`${side} iframe`}
-      />
+          <RetryButton onClick={fetchContent}>Retry Loading</RetryButton>
+
+          <RetryButton onClick={() => window.open(url, "_blank")} style={{ backgroundColor: "#34a853" }}>
+            Open in New Tab
+          </RetryButton>
+        </ErrorContainer>
+      </ContentWrapper>
     );
   }
 
-  if (patentData) {
+  if (isPatentUrl(url) && patentData) {
     return renderTabbedInterface();
   }
 
-  return <FallbackMessage>Unable to render content.</FallbackMessage>;
+  if (directIframe || content?.type === "iframe") {
+    return (
+      <ContentWrapper>
+        <PatentIframe
+          src={content.url}
+          title="External Content"
+          allowFullScreen
+          referrerPolicy="no-referrer"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+        />
+      </ContentWrapper>
+    );
+  }
+
+  if (content?.type === "excel") {
+    return (
+      <Suspense fallback={<LoadingIndicator>Loading Excel content...</LoadingIndicator>}>
+        <ExcelViewer blob={content.blob} />
+      </Suspense>
+    );
+  }
+
+  if (content?.type === "html") {
+    return (
+      <ContentWrapper>
+        <DocViewer dangerouslySetInnerHTML={{ __html: content.data }} />
+      </ContentWrapper>
+    );
+  }
+
+  if (content?.type === "pdf") {
+    return (
+      <ContentWrapper>
+        <PatentIframe
+          src={content.url}
+          title="File Content"
+          type="application/pdf"
+        />
+      </ContentWrapper>
+    );
+  }
+
+  if (content?.type === "download") {
+    return (
+      <ContentWrapper>
+        <FallbackMessage>
+          {content.message || "This file type is not directly renderable. Please download to view."}{" "}
+          <DownloadLink href={content.url} download={fileName || "file"}>
+            Download File
+          </DownloadLink>
+        </FallbackMessage>
+      </ContentWrapper>
+    );
+  }
+
+  return <ContentWrapper>Unsupported content type</ContentWrapper>;
 };
 
 export default ProxyContent;

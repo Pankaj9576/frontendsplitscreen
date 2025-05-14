@@ -35,19 +35,19 @@ const Panel = styled.div`
   }
 
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 8px; /* Reduced from 14px to make scrollbar thinner */
   }
 
   &::-webkit-scrollbar-track {
     background: #e0e0e0;
-    border-radius: 4px;
+    border-radius: 4px; /* Adjusted from 7px to match thinner scrollbar */
     margin: 5px;
   }
 
   &::-webkit-scrollbar-thumb {
     background: rgb(87, 92, 99);
-    border-radius: 4px;
-    border: 1px solid #e0e0e0;
+    border-radius: 4px; /* Adjusted from 7px to match thinner scrollbar */
+    border: 1px solid #e0e0e0; /* Reduced from 2px to fit thinner scrollbar */
   }
 
   &::-webkit-scrollbar-thumb:hover {
@@ -79,7 +79,7 @@ const ResizeHandle = styled.div`
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 `;
 
-const SplitScreen = ({ children, screenMode, onWidthChange }) => {
+const SplitScreen = ({ children, screenMode }) => {
   const [leftWidth, setLeftWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef(null);
@@ -87,13 +87,12 @@ const SplitScreen = ({ children, screenMode, onWidthChange }) => {
   const leftPanelRef = useRef(null);
   const rightPanelRef = useRef(null);
   const timeoutRef = useRef(null);
-  const lastUpdateRef = useRef(0);
+  const lastUpdateRef = useRef(0); // Define lastUpdateRef using useRef and initialize to 0
 
   useEffect(() => {
     console.log("SplitScreen - screenMode:", screenMode);
     console.log("Handle visibility:", screenMode === "both" ? "visible" : "hidden");
-    console.log(`Initial Left Width: ${leftWidth}%`);
-  }, [screenMode, leftWidth]);
+  }, [screenMode]);
 
   const handleResize = useCallback((e) => {
     if (!containerRef.current) return;
@@ -104,26 +103,15 @@ const SplitScreen = ({ children, screenMode, onWidthChange }) => {
     lastUpdateRef.current = now;
 
     const containerRect = containerRef.current.getBoundingClientRect();
-    let newLeftPercentage = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-    newLeftPercentage = Math.max(10, Math.min(90, newLeftPercentage));
-    setLeftWidth(newLeftPercentage);
-
-    const newRightPercentage = 100 - newLeftPercentage;
-
-    const leftWidthRatio = newLeftPercentage / 50;
-    const rightWidthRatio = newRightPercentage / 50;
-
-    if (onWidthChange) {
-      onWidthChange(leftWidthRatio, rightWidthRatio);
-    }
-
-    console.log(`Resizing - Left Width: ${newLeftPercentage}%, Right Width: ${newRightPercentage}%`);
+    let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+    newWidth = Math.max(10, Math.min(90, newWidth));
+    setLeftWidth(newWidth);
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       setIsResizing(false);
     }, 50);
-  }, [onWidthChange]);
+  }, []);
 
   useEffect(() => {
     const handlePointerDown = (e) => {
@@ -173,13 +161,10 @@ const SplitScreen = ({ children, screenMode, onWidthChange }) => {
 
   const handleVisibility = screenMode === "both" ? "visible" : "hidden";
 
-  const leftChild = React.cloneElement(children[0], { side: "left", width: leftWidth });
-  const rightChild = React.cloneElement(children[1], { side: "right", width: 100 - leftWidth });
-
   return (
     <SplitScreenContainer ref={containerRef}>
       <Panel ref={leftPanelRef} style={leftStyle}>
-        {leftChild}
+        {children[0]}
       </Panel>
       <ResizeHandle
         ref={handleRef}
@@ -189,7 +174,7 @@ const SplitScreen = ({ children, screenMode, onWidthChange }) => {
         }}
       />
       <Panel ref={rightPanelRef} style={rightStyle}>
-        {rightChild}
+        {children[1]}
       </Panel>
     </SplitScreenContainer>
   );
