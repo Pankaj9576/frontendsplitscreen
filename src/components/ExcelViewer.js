@@ -34,12 +34,12 @@ const SheetTabs = styled.div`
 `;
 
 const SheetTab = styled.button`
-  padding: 10px 20px;
+  padding: 8px 14px;
   background-color: ${(props) => (props.active ? "#ffffff" : "#1e6f3e")};
   color: ${(props) => (props.active ? "#000000" : "#ffffff")};
   border: none;
   border-right: 1px solid #d1d1d1;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.2s ease, color 0.2s ease;
