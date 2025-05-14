@@ -591,6 +591,52 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         mediaDataUrls[mediaId] = mediaUrl;
       }
 
+      // Extract theme information (for colors, fonts, etc.)
+      const themeFiles = Object.keys(zip.files).filter((file) =>
+        file.match(/^ppt\/theme\/theme\d+\.xml$/)
+      );
+      let themeData = {};
+      if (themeFiles.length > 0) {
+        const themeContent = await zip.file(themeFiles[0]).async("string");
+        themeData = parser.parse(themeContent);
+      }
+
+      // Extract slide master for default styles
+      const slideMasterFiles = Object.keys(zip.files).filter((file) =>
+        file.match(/^ppt\/slideMasters\/slideMaster\d+\.xml$/)
+      );
+      let slideMasterData = {};
+      if (slideMasterFiles.length > 0) {
+        const slideMasterContent = await zip.file(slideMasterFiles[0]).async("string");
+        slideMasterData = parser.parse(slideMasterContent);
+      }
+
+      // Extract slide layout for positioning
+      const slideLayoutFiles = Object.keys(zip.files).filter((file) =>
+        file.match(/^ppt\/slideLayouts\/slideLayout\d+\.xml$/)
+      );
+      let slideLayoutData = {};
+      if (slideLayoutFiles.length > 0) {
+        const slideLayoutContent = await zip.file(slideLayoutFiles[0]).async("string");
+        slideLayoutData = parser.parse(slideLayoutContent);
+      }
+
+      // Extract presentation.xml for slide size
+      let slideWidth = 960; // Default 4:3 aspect ratio (10 inches at 96 DPI)
+      let slideHeight = 720;
+      const presentationFile = "ppt/presentation.xml";
+      if (zip.files[presentationFile]) {
+        const presentationContent = await zip.file(presentationFile).async("string");
+        const presentationData = parser.parse(presentationContent);
+        const sldSz = presentationData?.["p:presentation"]?.["p:sldSz"];
+        if (sldSz) {
+          const cx = parseInt(sldSz["@_cx"]) || 9144000; // Default 10 inches in EMUs
+          const cy = parseInt(sldSz["@_cy"]) || 6858000; // Default 7.5 inches in EMUs
+          slideWidth = (cx / 914400) * 96; // Convert EMUs to pixels
+          slideHeight = (cy / 914400) * 96;
+        }
+      }
+
       let htmlContent = `
         <div style="padding: 20px; font-family: 'Arial', sans-serif; max-width: 100%; box-sizing: border-box;">
       `;
@@ -605,26 +651,197 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           continue;
         }
 
-        // Extract text from slide
+        // Extract background color (if available)
+        let backgroundColor = "#ffffff"; // Default to white
+        const bgFill = slideData?.["p:sld"]?.["p:cSld"]?.["p:bg"]?.["p:bgPr"]?.["a:solidFill"];
+        if (bgFill?.["a:srgbClr"]) {
+          backgroundColor = `#${bgFill["a:srgbClr"]["@_val"]}`;
+        } else if (bgFill?.["a:schemeClr"]) {
+          const schemeClr = bgFill["a:schemeClr"]["@_val"];
+          const colorMap = themeData?.["a:theme"]?.["a:themeElements"]?.["a:clrScheme"];
+          if (colorMap && colorMap[schemeClr]) {
+            const srgbClr = colorMap[schemeClr]["a:srgbClr"]?.["@_val"];
+            if (srgbClr) {
+              backgroundColor = `#${srgbClr}`;
+            }
+          }
+        }
+
+        // Start slide container with fixed dimensions and background color
+        htmlContent += `
+          <div style="position: relative; border: 2px solid #d3d3d3; border-radius: 6px; padding: 15px; margin-bottom: 20px; background: ${backgroundColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.15); width: ${slideWidth}px; height: ${slideHeight}px; max-width: 100%; max-height: calc(100vh - 100px); overflow: hidden; transform-origin: top left; transform: scale(${Math.min(1, 960 / slideWidth)});">
+            <h2 style="font-size: 16px; color: #1a73e8; margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #e0e0e0;">Slide ${i + 1}</h2>
+        `;
+
+        // Extract text with styling and positioning
         const texts = [];
+        let lastY = 40; // Start below the "Slide X" header
+        const occupiedPositions = []; // Track occupied positions to prevent overlap
         const pNodes = slideData?.["p:sld"]?.["p:cSld"]?.["p:spTree"]?.["p:sp"] || [];
 
-        // Handle both array and single object
         const shapes = Array.isArray(pNodes) ? pNodes : [pNodes].filter(Boolean);
-        shapes.forEach((shape) => {
+        shapes.forEach((shape, shapeIndex) => {
           if (shape["p:txBody"]) {
+            // Get position (if available)
+            let x = 0, y = 0, width = slideWidth - 30, height = "auto";
+            if (shape["p:spPr"]?.["a:xfrm"]) {
+              const xfrm = shape["p:spPr"]["a:xfrm"];
+              x = (xfrm["a:off"]?.["@_x"] || 0) / 914400 * 96; // Convert EMUs to pixels
+              y = (xfrm["a:off"]?.["@_y"] || 0) / 914400 * 96;
+              width = ((xfrm["a:ext"]?.["@_cx"] || 0) / 914400 * 96) || width;
+              height = ((xfrm["a:ext"]?.["@_cy"] || 0) / 914400 * 96) || height;
+            } else {
+              // Fallback positioning to avoid overlap
+              x = 15;
+              y = lastY;
+            }
+
+            // Check for overlap and adjust position
+            let adjustedY = y;
+            for (const pos of occupiedPositions) {
+              if (
+                x < pos.x + pos.width &&
+                x + width > pos.x &&
+                adjustedY < pos.y + pos.height &&
+                adjustedY + (height !== "auto" ? height : 50) > pos.y
+              ) {
+                adjustedY = pos.y + pos.height + 10; // Add padding to avoid overlap
+              }
+            }
+            y = adjustedY;
+            occupiedPositions.push({ x, y, width, height: height !== "auto" ? height : 50 });
+
             const paragraphs = shape["p:txBody"]["a:p"];
             const paraArray = Array.isArray(paragraphs) ? paragraphs : [paragraphs].filter(Boolean);
+            let paragraphText = [];
+            let paragraphStyle = {};
+
             paraArray.forEach((para) => {
+              let textAlign = "left";
+              let lineHeight = "1.2";
+              let listStyle = "none"; // For bullets
+              let marginLeft = "0px";
+
+              if (para["a:pPr"]) {
+                const pPr = para["a:pPr"];
+                textAlign = pPr["@_algn"] || textAlign; // left, ctr, right
+                if (pPr["a:lnSpc"]) {
+                  const lnSpc = pPr["a:lnSpc"]["a:spcPct"]?.["@_val"];
+                  if (lnSpc) {
+                    lineHeight = parseInt(lnSpc) / 100000;
+                  }
+                }
+                if (pPr["@_lvl"]) {
+                  const level = parseInt(pPr["@_lvl"]) || 0;
+                  marginLeft = `${level * 20}px`;
+                  if (pPr["a:buChar"]) {
+                    listStyle = "disc";
+                  } else if (pPr["a:buAutoNum"]) {
+                    listStyle = "decimal";
+                  }
+                }
+              }
+
               if (para["a:r"]) {
                 const runs = Array.isArray(para["a:r"]) ? para["a:r"] : [para["a:r"]].filter(Boolean);
+                let runText = [];
                 runs.forEach((run) => {
                   if (run["a:t"] && typeof run["a:t"] === "string") {
-                    texts.push(run["a:t"]);
+                    const text = run["a:t"];
+                    const rPr = run["a:rPr"] || {};
+
+                    // Extract text styling
+                    let fontFamily = "Arial";
+                    let fontSize = "14px";
+                    let color = "#000000";
+                    let isBold = false;
+                    let isItalic = false;
+                    let letterSpacing = "normal";
+
+                    // Font family mapping for web-safe fonts
+                    if (rPr["@_latin"]) {
+                      fontFamily = rPr["@_latin"]["@_typeface"] || fontFamily;
+                    } else if (rPr["@_typeface"]) {
+                      fontFamily = rPr["@_typeface"];
+                    }
+                    const fontMap = {
+                      "Calibri": "'Calibri', 'Arial', sans-serif",
+                      "Times New Roman": "'Times New Roman', 'Times', serif",
+                      "Arial": "'Arial', sans-serif",
+                      "Verdana": "'Verdana', sans-serif",
+                      "Helvetica": "'Helvetica', 'Arial', sans-serif",
+                      "Cambria": "'Cambria', 'Georgia', serif",
+                      "Garamond": "'Garamond', 'Times New Roman', serif",
+                    };
+                    fontFamily = fontMap[fontFamily] || `'${fontFamily}', 'Arial', sans-serif`;
+
+                    if (rPr["@_sz"]) {
+                      const sz = parseInt(rPr["@_sz"]) / 100; // Convert to points
+                      fontSize = `${sz}px`;
+                    }
+
+                    if (rPr["a:solidFill"]) {
+                      if (rPr["a:solidFill"]["a:srgbClr"]) {
+                        color = `#${rPr["a:solidFill"]["a:srgbClr"]["@_val"]}`;
+                      } else if (rPr["a:solidFill"]["a:schemeClr"]) {
+                        const schemeClr = rPr["a:solidFill"]["a:schemeClr"]["@_val"];
+                        const colorMap = themeData?.["a:theme"]?.["a:themeElements"]?.["a:clrScheme"];
+                        if (colorMap && colorMap[schemeClr]) {
+                          const srgbClr = colorMap[schemeClr]["a:srgbClr"]?.["@_val"];
+                          if (srgbClr) {
+                            color = `#${srgbClr}`;
+                          }
+                        }
+                      }
+                    }
+
+                    if (rPr["@_spc"]) {
+                      const spc = parseInt(rPr["@_spc"]) / 100; // Convert to points
+                      letterSpacing = `${spc}px`;
+                    }
+
+                    isBold = rPr["@_b"] === "1";
+                    isItalic = rPr["@_i"] === "1";
+
+                    runText.push({
+                      text: text.trim(),
+                      style: {
+                        fontFamily,
+                        fontSize,
+                        color,
+                        fontWeight: isBold ? "bold" : "normal",
+                        fontStyle: isItalic ? "italic" : "normal",
+                        letterSpacing,
+                      },
+                    });
                   }
                 });
+
+                if (runText.length > 0) {
+                  paragraphText.push(runText);
+                  paragraphStyle = {
+                    position: "absolute",
+                    left: `${x}px`,
+                    top: `${y}px`,
+                    width: `${width}px`,
+                    height: height !== "auto" ? `${height}px` : "auto",
+                    textAlign: textAlign === "ctr" ? "center" : textAlign === "r" ? "right" : "left",
+                    lineHeight,
+                    whiteSpace: "pre-wrap",
+                    overflow: "hidden",
+                    textShadow: "0 1px 1px rgba(0,0,0,0.1)",
+                    listStyleType: listStyle,
+                    marginLeft,
+                    paddingLeft: listStyle !== "none" ? "20px" : "0px",
+                  };
+                }
               }
             });
+
+            if (paragraphText.length > 0) {
+              texts.push({ paragraphs: paragraphText, style: paragraphStyle });
+              lastY = y + (height !== "auto" ? height : 50);
+            }
           }
         });
 
@@ -642,34 +859,73 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             .map((rel) => {
               const target = rel["@_Target"];
               const imageId = target.match(/image\d+/i)?.[0];
-              return mediaDataUrls[imageId];
-            })
-            .filter(Boolean);
-        }
+              const imageUrl = mediaDataUrls[imageId];
 
-        htmlContent += `
-          <div style="border: 1px solid #e0e0e0; border-radius: 4px; padding: 15px; margin-bottom: 20px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h2 style="font-size: 16px; color: #1a73e8; margin-bottom: 10px;">Slide ${i + 1}</h2>
-        `;
+              // Get image position
+              const shape = shapes.find((s) =>
+                s["p:spPr"]?.["a:blipFill"]?.["a:blip"]?.["@_r:embed"] === rel["@_Id"]
+              );
+              let x = 0, y = 0, width = "auto", height = "auto";
+              if (shape?.["p:spPr"]?.["a:xfrm"]) {
+                const xfrm = shape["p:spPr"]["a:xfrm"];
+                x = (xfrm["a:off"]?.["@_x"] || 0) / 914400 * 96;
+                y = (xfrm["a:off"]?.["@_y"] || 0) / 914400 * 96;
+                width = (xfrm["a:ext"]?.["@_cx"] || 0) / 914400 * 96;
+                height = (xfrm["a:ext"]?.["@_cy"] || 0) / 914400 * 96;
+              }
+
+              return { url: imageUrl, x, y, width, height };
+            })
+            .filter((img) => img.url);
+        }
 
         // Add images if available
         if (images.length > 0) {
-          htmlContent += `<div style="margin-bottom: 15px;">`;
-          images.forEach((imageUrl, idx) => {
-            htmlContent += `<img src="${imageUrl}" alt="Slide ${i + 1} Image ${idx + 1}" style="max-width: 100%; margin: 10px 0; border: 1px solid #e0e0e0; border-radius: 4px;" />`;
+          images.forEach((image, idx) => {
+            htmlContent += `
+              <img
+                src="${image.url}"
+                alt="Slide ${i + 1} Image ${idx + 1}"
+                style="
+                  position: absolute;
+                  left: ${image.x}px;
+                  top: ${image.y}px;
+                  width: ${image.width !== "auto" ? `${image.width}px` : "auto"};
+                  height: ${image.height !== "auto" ? `${image.height}px` : "auto"};
+                  max-width: 100%;
+                  max-height: 100%;
+                  border: 1px solid #e0e0e0;
+                  border-radius: 4px;
+                "
+              />
+            `;
           });
-          htmlContent += `</div>`;
         }
 
         // Add text content
         if (texts.length > 0) {
-          htmlContent += `<ul style="padding-left: 20px; margin: 0;">`;
-          texts.forEach((text) => {
-            if (text.trim()) {
-              htmlContent += `<li style="margin: 5px 0; color: #333; font-size: 14px;">${text.trim()}</li>`;
-            }
+          texts.forEach((textObj, idx) => {
+            const style = Object.entries(textObj.style)
+              .map(([key, value]) => `${key}: ${value}`)
+              .join("; ");
+            const listTag = textObj.style.listStyleType !== "none" ? (textObj.style.listStyleType === "disc" ? "ul" : "ol") : "div";
+            htmlContent += `<${listTag} style="${style}">`;
+            textObj.paragraphs.forEach((para) => {
+              if (textObj.style.listStyleType !== "none") {
+                htmlContent += `<li style="margin: 0;">`;
+              } else {
+                htmlContent += `<p style="margin: 0;">`;
+              }
+              para.forEach((run) => {
+                const runStyle = Object.entries(run.style)
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join("; ");
+                htmlContent += `<span style="${runStyle}">${run.text}</span>`;
+              });
+              htmlContent += textObj.style.listStyleType !== "none" ? `</li>` : `</p>`;
+            });
+            htmlContent += `</${listTag}>`;
           });
-          htmlContent += `</ul>`;
         } else {
           htmlContent += `<p style="color: #666; font-size: 14px;">No text content found on this slide.</p>`;
         }
