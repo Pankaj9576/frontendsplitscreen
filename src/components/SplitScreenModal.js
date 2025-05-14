@@ -348,8 +348,17 @@ const SplitScreenModal = ({
                 onChange={(e) => handleLeftSrcChange(e.target.value)}
               />
               <FileInputWrapper>
-                <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-                <UploadButton style={{ backgroundColor: '#5367FF', color: 'white' }} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+                <FileInput 
+                  type="file" 
+                  accept=".ppt,.pptx,.pdf,.doc,.docx,.xlsx,.xls" 
+                  onChange={(e) => setLeftFile(e.target.files[0])} 
+                />
+                <UploadButton 
+                  style={{ backgroundColor: '#5367FF', color: 'white' }} 
+                  onClick={() => handleUploadComplete("left", leftFile)}
+                >
+                  Upload
+                </UploadButton>
               </FileInputWrapper>
             </SideContainer>
 
@@ -367,8 +376,17 @@ const SplitScreenModal = ({
                 onChange={(e) => handleRightSrcChange(e.target.value)}
               />
               <FileInputWrapper>
-                <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-                <UploadButton style={{ backgroundColor: '#00F3BB' }} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+                <FileInput 
+                  type="file" 
+                  accept=".ppt,.pptx,.pdf,.doc,.docx,.xlsx,.xls" 
+                  onChange={(e) => setRightFile(e.target.files[0])} 
+                />
+                <UploadButton 
+                  style={{ backgroundColor: '#00F3BB' }} 
+                  onClick={() => handleUploadComplete("right", rightFile)}
+                >
+                  Upload
+                </UploadButton>
               </FileInputWrapper>
             </SideContainer>
 
