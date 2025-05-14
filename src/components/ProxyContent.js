@@ -401,15 +401,6 @@ const PptContentWrapper = styled.div`
   overflow-y: auto;
 `;
 
-const PdfWrapper = styled.div`
-  width: 100%;
-  height: calc(100vh - 60px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
 const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, side, width }) => {
   const [content, setContent] = useState(null);
   const [error, setError] = useState(null);
@@ -420,7 +411,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
   const [availableTabs, setAvailableTabs] = useState([]);
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
   const [pptContent, setPptContent] = useState(null);
-  const [numPages, setNumPages] = useState(null);
   const iframeRef = useRef(null);
 
   const isPatentUrl = (urlToCheck) => {
@@ -514,10 +504,26 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
         throw new Error("Unsupported file type. Please upload a .ppt or .pptx file.");
       }
 
-      // Call backend to convert PPT to PDF and extract content
+      // Convert blob to base64 using FileReader
+      const base64String = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result;
+          // The result includes the data URL prefix (e.g., "data:application/octet-stream;base64,"), so we need to remove it
+          const base64Data = result.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
+      // Call backend to extract PPT content
       const response = await fetch(`${backendUrl}/api/convert-ppt`, {
         method: "POST",
-        body: JSON.stringify({ fileUrl: URL.createObjectURL(blob) }),
+        body: JSON.stringify({
+          fileData: base64String,
+          fileName: fileName
+        }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -528,16 +534,8 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
       }
 
       const result = await response.json();
-      const pdfData = new Uint8Array(
-        atob(result.pdfBase64)
-          .split("")
-          .map((char) => char.charCodeAt(0))
-      );
-      const pdfBlob = new Blob([pdfData], { type: "application/pdf" });
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-
-      setContent({ type: "ppt", pdfUrl: `${pdfUrl}#view=FitH` });
       setPptContent(result.content);
+      setContent({ type: "ppt" });
     } catch (err) {
       console.error("Error in handlePptFile:", err);
       setError(
@@ -800,10 +798,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
     }
   }, [patentData, activeTab]);
 
-  const onDocumentLoadSuccess = ({ numPages }) => {
-    setNumPages(numPages);
-  };
-
   const renderTabbedInterface = () => {
     if (!patentData) return null;
 
@@ -828,7 +822,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
             <ScrollWrapper>
               <PatentTabContent>
                 <h2>Overview</h2>
-                {patentData.title && <h3>{patentData.title}</h3>}
+                {patentData.title && <h2>{patentData.title}</h2>}
                 {publicationNumbers.length > 0 && (
                   <p>
                     <strong>Publication Number:</strong>{" "}
@@ -1180,7 +1174,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
           </TabContent>
         );
       case "pdf":
-      case "ppt":
         return (
           <ContentWrapper>
             <TabContainer>
@@ -1190,43 +1183,49 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, si
               >
                 PDF View
               </TabButton>
-              {content.type === "ppt" && pptContent && (
-                <TabButton
-                  $active={activeTab === "Content"}
-                  onClick={() => setActiveTab("Content")}
-                >
-                  Content
-                </TabButton>
-              )}
             </TabContainer>
-            {activeTab === "PDF" || !pptContent ? (
-              <PdfWrapper>
-                <Document
-                  file={content.pdfUrl}
-                  onLoadSuccess={onDocumentLoadSuccess}
-                >
-                  {Array.from(new Array(numPages), (el, index) => (
-                    <Page
-                      key={`page_${index + 1}`}
-                      pageNumber={index + 1}
-                      width={width ? (width / 100) * window.innerWidth * 0.8 : 600}
-                    />
-                  ))}
-                </Document>
-              </PdfWrapper>
-            ) : (
-              <PptContentWrapper>
-                <h2>PPT Content</h2>
-                {pptContent.map((slide, slideIndex) => (
+            <PptContentWrapper>
+              <Document
+                file={content.url}
+                onLoadSuccess={({ numPages }) => setActiveTab("PDF")}
+              >
+                {Array.from(new Array(numPages || 1), (el, index) => (
+                  <Page
+                    key={`page_${index + 1}`}
+                    pageNumber={index + 1}
+                    width={width ? (width / 100) * window.innerWidth * 0.8 : 600}
+                  />
+                ))}
+              </Document>
+            </PptContentWrapper>
+          </ContentWrapper>
+        );
+      case "ppt":
+        return (
+          <ContentWrapper>
+            <TabContainer>
+              <TabButton
+                $active={activeTab === "Content"}
+                onClick={() => setActiveTab("Content")}
+              >
+                Content
+              </TabButton>
+            </TabContainer>
+            <PptContentWrapper>
+              <h2>PPT Content</h2>
+              {pptContent && pptContent.length > 0 ? (
+                pptContent.map((slide, slideIndex) => (
                   <div key={slideIndex}>
                     <h3>Slide {slideIndex + 1}</h3>
                     {slide.map((text, textIndex) => (
                       <p key={textIndex}>{text}</p>
                     ))}
                   </div>
-                ))}
-              </PptContentWrapper>
-            )}
+                ))
+              ) : (
+                <p>No content available to display.</p>
+              )}
+            </PptContentWrapper>
           </ContentWrapper>
         );
       case "excel":
