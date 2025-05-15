@@ -313,44 +313,6 @@ const PatentTabContent = styled.div`
   }
 `;
 
-// Navigation styling for slide-by-slide viewing
-const NavigationContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  background: #f5f5f5;
-  border-top: 1px solid #e0e0e0;
-`;
-
-const NavButton = styled.button`
-  padding: 8px 16px;
-  background-color: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-family: 'Arial', sans-serif;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: #1557b0;
-  }
-
-  &:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-`;
-
-const SlideCounter = styled.span`
-  font-size: 14px;
-  font-family: 'Arial', sans-serif;
-  color: #333;
-`;
-
 // Rest of the styled components (unchanged)
 const ContentWrapper = styled.div`
   height: 100%;
@@ -370,14 +332,10 @@ const PatentIframe = styled.iframe`
 
 const DocViewer = styled.div`
   width: 100%;
-  height: calc(100vh - 120px); /* Adjusted for navigation bar */
+  height: 100%;
   font-family: 'Arial', sans-serif;
   padding: 10px;
   box-sizing: border-box;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: auto;
 
   & > div {
     width: 100%;
@@ -455,8 +413,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const [availableTabs, setAvailableTabs] = useState([]);
   const iframeRef = useRef(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
-  const [slides, setSlides] = useState([]); // Store slide HTML content
-  const [currentSlide, setCurrentSlide] = useState(0); // Track current slide
 
   const isPatentUrl = (urlToCheck) => {
     try {
@@ -681,7 +637,9 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         }
       }
 
-      const slideContents = []; // Store HTML for each slide
+      let htmlContent = `
+        <div style="padding: 20px; font-family: 'Arial', sans-serif; max-width: 100%; box-sizing: border-box;">
+      `;
 
       for (let i = 0; i < slideFiles.length; i++) {
         const slideContent = await zip.file(slideFiles[i]).async("string");
@@ -709,14 +667,15 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           }
         }
 
-        // Start slide container
-        let slideHtml = `
-          <div style="position: relative; border: 2px solid #d3d3d3; border-radius: 6px; padding: 15px; background: ${backgroundColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.15); width: ${slideWidth}px; height: ${slideHeight}px; max-width: 100%; max-height: calc(100vh - 150px); overflow: hidden; transform-origin: top left; transform: scale(${Math.min(1, 960 / slideWidth)});">
+        // Start slide container with fixed dimensions and background color
+        htmlContent += `
+          <div style="position: relative; border: 2px solid #d3d3d3; border-radius: 6px; padding: 15px; margin-bottom: 20px; background: ${backgroundColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.15); width: ${slideWidth}px; height: ${slideHeight}px; max-width: 100%; max-height: calc(100vh - 100px); overflow: hidden; transform-origin: top left; transform: scale(${Math.min(1, 960 / slideWidth)});">
+            <h2 style="font-size: 16px; color: #1a73e8; margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #e0e0e0;">Slide ${i + 1}</h2>
         `;
 
         // Extract text with styling and positioning
         const texts = [];
-        let lastY = 15; // Start at top with small padding
+        let lastY = 40; // Start below the "Slide X" header
         const occupiedPositions = []; // Track occupied positions to prevent overlap
         const pNodes = slideData?.["p:sld"]?.["p:cSld"]?.["p:spTree"]?.["p:sp"] || [];
 
@@ -725,15 +684,12 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           if (shape["p:txBody"]) {
             // Get position (if available)
             let x = 0, y = 0, width = slideWidth - 30, height = "auto";
-            let rotation = 0;
             if (shape["p:spPr"]?.["a:xfrm"]) {
               const xfrm = shape["p:spPr"]["a:xfrm"];
               x = (xfrm["a:off"]?.["@_x"] || 0) / 914400 * 96; // Convert EMUs to pixels
               y = (xfrm["a:off"]?.["@_y"] || 0) / 914400 * 96;
               width = ((xfrm["a:ext"]?.["@_cx"] || 0) / 914400 * 96) || width;
               height = ((xfrm["a:ext"]?.["@_cy"] || 0) / 914400 * 96) || height;
-              rotation = parseInt(xfrm["@_rot"]) || 0; // Rotation in degrees * 60000
-              rotation = rotation / 60000; // Convert to degrees
             } else {
               // Fallback positioning to avoid overlap
               x = 15;
@@ -742,19 +698,16 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
             // Check for overlap and adjust position
             let adjustedY = y;
-            let adjustedX = x;
             for (const pos of occupiedPositions) {
-              const overlapX = adjustedX < pos.x + pos.width && adjustedX + width > pos.x;
-              const overlapY = adjustedY < pos.y + pos.height && adjustedY + (height !== "auto" ? height : 50) > pos.y;
-              if (overlapX && overlapY) {
-                adjustedY = pos.y + pos.height + 10; // Move down to avoid overlap
-                if (adjustedY + (height !== "auto" ? height : 50) > slideHeight - 30) {
-                  adjustedX = pos.x + pos.width + 10; // Move right if we run out of vertical space
-                  adjustedY = 15; // Reset Y to top
-                }
+              if (
+                x < pos.x + pos.width &&
+                x + width > pos.x &&
+                adjustedY < pos.y + pos.height &&
+                adjustedY + (height !== "auto" ? height : 50) > pos.y
+              ) {
+                adjustedY = pos.y + pos.height + 10; // Add padding to avoid overlap
               }
             }
-            x = adjustedX;
             y = adjustedY;
             occupiedPositions.push({ x, y, width, height: height !== "auto" ? height : 50 });
 
@@ -880,8 +833,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
                     listStyleType: listStyle,
                     marginLeft,
                     paddingLeft: listStyle !== "none" ? "20px" : "0px",
-                    transform: rotation ? `rotate(${rotation}deg)` : "none",
-                    transformOrigin: "top left",
                   };
                 }
               }
@@ -915,18 +866,15 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
                 s["p:spPr"]?.["a:blipFill"]?.["a:blip"]?.["@_r:embed"] === rel["@_Id"]
               );
               let x = 0, y = 0, width = "auto", height = "auto";
-              let rotation = 0;
               if (shape?.["p:spPr"]?.["a:xfrm"]) {
                 const xfrm = shape["p:spPr"]["a:xfrm"];
                 x = (xfrm["a:off"]?.["@_x"] || 0) / 914400 * 96;
                 y = (xfrm["a:off"]?.["@_y"] || 0) / 914400 * 96;
                 width = (xfrm["a:ext"]?.["@_cx"] || 0) / 914400 * 96;
                 height = (xfrm["a:ext"]?.["@_cy"] || 0) / 914400 * 96;
-                rotation = parseInt(xfrm["@_rot"]) || 0;
-                rotation = rotation / 60000; // Convert to degrees
               }
 
-              return { url: imageUrl, x, y, width, height, rotation };
+              return { url: imageUrl, x, y, width, height };
             })
             .filter((img) => img.url);
         }
@@ -934,7 +882,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         // Add images if available
         if (images.length > 0) {
           images.forEach((image, idx) => {
-            slideHtml += `
+            htmlContent += `
               <img
                 src="${image.url}"
                 alt="Slide ${i + 1} Image ${idx + 1}"
@@ -948,8 +896,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
                   max-height: 100%;
                   border: 1px solid #e0e0e0;
                   border-radius: 4px;
-                  transform: ${image.rotation ? `rotate(${image.rotation}deg)` : "none"};
-                  transform-origin: center;
                 "
               />
             `;
@@ -963,33 +909,36 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
               .map(([key, value]) => `${key}: ${value}`)
               .join("; ");
             const listTag = textObj.style.listStyleType !== "none" ? (textObj.style.listStyleType === "disc" ? "ul" : "ol") : "div";
-            slideHtml += `<${listTag} style="${style}">`;
+            htmlContent += `<${listTag} style="${style}">`;
             textObj.paragraphs.forEach((para) => {
               if (textObj.style.listStyleType !== "none") {
-                slideHtml += `<li style="margin: 0;">`;
+                htmlContent += `<li style="margin: 0;">`;
               } else {
-                slideHtml += `<p style="margin: 0;">`;
+                htmlContent += `<p style="margin: 0;">`;
               }
               para.forEach((run) => {
                 const runStyle = Object.entries(run.style)
                   .map(([key, value]) => `${key}: ${value}`)
                   .join("; ");
-                slideHtml += `<span style="${runStyle}">${run.text}</span>`;
+                htmlContent += `<span style="${runStyle}">${run.text}</span>`;
               });
-              slideHtml += textObj.style.listStyleType !== "none" ? `</li>` : `</p>`;
+              htmlContent += textObj.style.listStyleType !== "none" ? `</li>` : `</p>`;
             });
-            slideHtml += `</${listTag}>`;
+            htmlContent += `</${listTag}>`;
           });
         } else {
-          slideHtml += `<p style="color: #666; font-size: 14px; text-align: center; margin-top: 20px;">No text content found on this slide.</p>`;
+          htmlContent += `<p style="color: #666; font-size: 14px;">No text content found on this slide.</p>`;
         }
 
-        slideHtml += `</div>`;
-        slideContents.push(slideHtml);
+        htmlContent += `</div>`;
       }
 
-      setSlides(slideContents);
-      setContent({ type: "ppt" });
+      htmlContent += `</div>`;
+
+      setContent({
+        type: "html",
+        data: htmlContent,
+      });
     } catch (err) {
       console.error("Error in handlePptFile:", err);
       setError(
@@ -1019,8 +968,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     setAvailableTabs([]);
     setActiveTab(null);
     setPdfBlobUrl(null);
-    setSlides([]);
-    setCurrentSlide(0);
 
     try {
       let response;
@@ -1691,31 +1638,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           title="PDF Content"
           type="application/pdf"
         />
-      </ContentWrapper>
-    );
-  }
-
-  if (content?.type === "ppt" && slides.length > 0) {
-    return (
-      <ContentWrapper>
-        <DocViewer dangerouslySetInnerHTML={{ __html: slides[currentSlide] }} />
-        <NavigationContainer>
-          <NavButton
-            onClick={() => setCurrentSlide(currentSlide - 1)}
-            disabled={currentSlide === 0}
-          >
-            Previous
-          </NavButton>
-          <SlideCounter>
-            Slide {currentSlide + 1} of {slides.length}
-          </SlideCounter>
-          <NavButton
-            onClick={() => setCurrentSlide(currentSlide + 1)}
-            disabled={currentSlide === slides.length - 1}
-          >
-            Next
-          </NavButton>
-        </NavigationContainer>
       </ContentWrapper>
     );
   }
