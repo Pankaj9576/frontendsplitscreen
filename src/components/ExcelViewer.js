@@ -3,7 +3,7 @@ import { registerAllModules } from "handsontable/registry";
 import "handsontable/dist/handsontable.full.css";
 import styled from "styled-components";
 import * as XLSX from "xlsx";
-import { HotTable } from "@handsontable/react"; // Direct import instead of lazy-loading
+import { HotTable } from "@handsontable/react";
 
 // Register all Handsontable modules
 registerAllModules();
@@ -55,8 +55,10 @@ const SheetTab = styled.button`
 
 const TableContainer = styled.div`
   flex: 1;
-  overflow: auto;
-  min-width: 1500px; /* Ensure wide content to trigger horizontal scrollbar in SplitScreen */
+  overflow-x: auto; /* Ensure horizontal scrolling */
+  overflow-y: auto; /* Ensure vertical scrolling */
+  width: 100%; /* Use full width of parent */
+  min-width: 0; /* Remove min-width constraint to allow table to expand naturally */
 
   .handsontable {
     font-family: "Calibri", sans-serif;
@@ -88,6 +90,26 @@ const TableContainer = styled.div`
   .handsontable .currentCol {
     background-color: #e6f2ff;
   }
+
+  /* Custom scrollbar styles */
+  &::-webkit-scrollbar {
+    width: 2px; /* Even thinner vertical scrollbar */
+    height: 2px; /* Even thinner horizontal scrollbar */
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 1px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 1px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
 `;
 
 const LoadingMessage = styled.div`
@@ -104,7 +126,7 @@ const ErrorMessage = styled.div`
   margin: 20px;
   background-color: #fff3f3;
   border: 1px solid #ffcaca;
-  border-radius: 4px;
+  borderRadius: 4px;
   color: #d32f2f;
   text-align: center;
 `;
@@ -152,6 +174,7 @@ const ExcelViewer = ({ blob }) => {
   const [columnWidths, setColumnWidths] = useState([]);
   const [rowHeights, setRowHeights] = useState([]);
   const [isReady, setIsReady] = useState(false);
+  const [blobUrl, setBlobUrl] = useState(null);
 
   // Load the Excel file
   useEffect(() => {
@@ -162,6 +185,10 @@ const ExcelViewer = ({ blob }) => {
         if (!blob) {
           throw new Error("No file provided");
         }
+
+        // Create a blob URL for download in case of errors
+        const url = URL.createObjectURL(blob);
+        setBlobUrl(url);
 
         console.log("Excel blob:", blob);
         const arrayBuffer = await blob.arrayBuffer();
@@ -190,6 +217,13 @@ const ExcelViewer = ({ blob }) => {
     };
 
     loadExcel();
+
+    return () => {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+        setBlobUrl(null);
+      }
+    };
   }, [blob]);
 
   // Load sheet data when the selected sheet changes
@@ -346,14 +380,32 @@ const ExcelViewer = ({ blob }) => {
   }
 
   if (error) {
-    return <ErrorMessage>{error}</ErrorMessage>;
+    return (
+      <ErrorMessage>
+        {error}
+        <br />
+        {blobUrl && (
+          <DownloadLink href={blobUrl} download="spreadsheet.xlsx">
+            Download Excel File
+          </DownloadLink>
+        )}
+      </ErrorMessage>
+    );
   }
 
   if (!data || data.length === 0 || !isReady) {
-    return <ErrorMessage>No data available in the selected sheet.</ErrorMessage>;
+    return (
+      <ErrorMessage>
+        No data available in the selected sheet.
+        <br />
+        {blobUrl && (
+          <DownloadLink href={blobUrl} download="spreadsheet.xlsx">
+            Download Excel File
+          </DownloadLink>
+        )}
+      </ErrorMessage>
+    );
   }
-
-  const blobUrl = URL.createObjectURL(blob);
 
   return (
     <ExcelContainer>
@@ -377,7 +429,7 @@ const ExcelViewer = ({ blob }) => {
             rowHeaders={true}
             width="100%"
             height="100%"
-            stretchH="all"
+            stretchH="none" /* Prevent columns from stretching to fit container */
             licenseKey="non-commercial-and-evaluation"
             readOnly={true}
             mergeCells={mergeCells}
@@ -388,6 +440,7 @@ const ExcelViewer = ({ blob }) => {
             fillHandle={false}
             colWidths={columnWidths}
             rowHeights={rowHeights}
+            viewportColumnRenderingOffset={data[0]?.length || 100} /* Ensure all columns are rendered */
             cells={(row, col) => ({
               renderer: cellRenderer,
             })}
