@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useRef, Suspense } from "react"; // Added Suspense import
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import mammoth from "mammoth";
 import JSZip from "jszip";
 
-// Styled Components Import
 import {
   TabContainer,
   TabButton,
@@ -24,7 +23,7 @@ import {
   LoadingIndicator,
   ErrorContainer,
   RetryButton
-} from "./Styleproxy"; // Adjust path as needed
+} from "./Styleproxy";
 
 const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 
@@ -41,6 +40,10 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
   const [slideDimensions, setSlideDimensions] = useState({ width: 960, height: 720 });
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
+  const [pdfDisplayUrl, setPdfDisplayUrl] = useState(null);
+  const [previousUrl, setPreviousUrl] = useState(null);
 
   const isPatentUrl = (urlToCheck) => {
     try {
@@ -182,7 +185,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       try {
         zip = await JSZip.loadAsync(arrayBuffer);
       } catch (err) {
-        // If JSZip fails, it's likely a .ppt file (binary format)
         if (fileExt === "ppt") {
           console.warn("Detected .ppt file, which is not directly supported for rendering in the browser.");
           setContent({
@@ -195,7 +197,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         throw new Error("Failed to load PowerPoint file: " + err.message);
       }
 
-      // Step 1: Extract slide dimensions
       let slideWidth = 960;
       let slideHeight = 720;
       const presentationFile = "ppt/presentation.xml";
@@ -213,7 +214,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       }
       setSlideDimensions({ width: slideWidth, height: slideHeight });
 
-      // Step 2: Extract theme for default styling
       const themeFiles = Object.keys(zip.files).filter((file) =>
         file.match(/^ppt\/theme\/theme\d+\.xml$/i)
       );
@@ -239,7 +239,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         themeData[themeId] = { majorFont, minorFont, colors };
       }
 
-      // Step 3: Extract slide master and layouts for default styling and positioning
       const slideMasters = Object.keys(zip.files).filter((file) =>
         file.match(/^ppt\/slideMasters\/slideMaster\d+\.xml$/i)
       );
@@ -260,7 +259,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         const parser = new DOMParser();
         const masterDoc = parser.parseFromString(masterContent, "text/xml");
 
-        // Link to theme
         const masterRelFile = `ppt/slideMasters/_rels/${masterId}.xml.rels`;
         let themeId = null;
         if (zip.files[masterRelFile]) {
@@ -276,7 +274,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           }
         }
 
-        // Extract master background
         let background = { color: null, images: [] };
         const bgNode = masterDoc.getElementsByTagName("p:bg")[0];
         if (bgNode) {
@@ -295,7 +292,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
                 }
               }
             }
-            // Handle background images in master
             const blipFill = bgPr.getElementsByTagName("a:blipFill")[0];
             if (blipFill) {
               const blip = blipFill.getElementsByTagName("a:blip")[0];
@@ -325,7 +321,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           }
         }
 
-        // Extract placeholders from master
         const placeholders = {};
         const shapes = masterDoc.getElementsByTagName("p:sp");
         for (const shape of shapes) {
@@ -359,7 +354,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         const parser = new DOMParser();
         const layoutDoc = parser.parseFromString(layoutContent, "text/xml");
 
-        // Link to master
         const layoutRelFile = `ppt/slideLayouts/_rels/${layoutId}.xml.rels`;
         let masterId = null;
         if (zip.files[layoutRelFile]) {
@@ -375,7 +369,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           }
         }
 
-        // Extract layout background
         let background = { color: null, images: [] };
         const bgNode = layoutDoc.getElementsByTagName("p:bg")[0];
         if (bgNode) {
@@ -425,7 +418,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           background = masterData[masterId]?.background || { color: null, images: [] };
         }
 
-        // Extract placeholders from layout
         const placeholders = {};
         const shapes = layoutDoc.getElementsByTagName("p:sp");
         for (const shape of shapes) {
@@ -452,7 +444,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         };
       }
 
-      // Step 4: Extract images using JSZip
       const mediaFiles = Object.keys(zip.files).filter((file) =>
         file.match(/^ppt\/media\/image\d+\.(png|jpeg|jpg|gif)$/i)
       );
@@ -464,7 +455,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         mediaDataUrls[mediaId] = mediaUrl;
       }
 
-      // Step 5: Extract slide content (text, images, and backgrounds)
       const slides = [];
       let slideIndex = 1;
       while (true) {
@@ -476,7 +466,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
         const parser = new DOMParser();
         const slideDoc = parser.parseFromString(slideContent, "text/xml");
 
-        // Link to layout
         let layoutId = null;
         if (zip.files[slideRelFile]) {
           const relContent = await zip.file(slideRelFile).async("string");
@@ -491,7 +480,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           }
         }
 
-        // Extract slide background
         let background = { color: null, images: [] };
         const bgNode = slideDoc.getElementsByTagName("p:bg")[0];
         if (bgNode) {
@@ -559,14 +547,13 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           const txBody = shape.getElementsByTagName("p:txBody")[0];
           if (!txBody) continue;
 
-          // Compute position with group transformations
           let x = 15, y = 15, width = null;
           const xfrm = shape.getElementsByTagName("a:xfrm")[0];
           if (xfrm) {
             const off = xfrm.getElementsByTagName("a:off")[0];
             x = off ? parseInt(off.getAttribute("x")) / 914400 * 96 : 15;
             y = off ? parseInt(off.getAttribute("y")) / 914400 * 96 : 15;
-            const ext = xfrm.getElementsByTagName("a:ext")[0];
+            const ext = xfrm?.getElementsByTagName("a:ext")[0];
             width = ext ? parseInt(ext.getAttribute("cx")) / 914400 * 96 : null;
           } else if (placeholderId && layoutId) {
             const placeholder = layoutData[layoutId]?.placeholders[placeholderId] ||
@@ -578,7 +565,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             }
           }
 
-          // Handle group transformations
           let parent = shape.parentNode;
           while (parent && parent.tagName === "p:grpSp") {
             const grpXfrm = parent.getElementsByTagName("a:xfrm")[0];
@@ -592,7 +578,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             parent = parent.parentNode;
           }
 
-          // Extract paragraphs with multi-run support
           const paragraphs = txBody.getElementsByTagName("a:p");
           let currentY = y;
           for (let j = 0; j < paragraphs.length; j++) {
@@ -659,9 +644,8 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
                 textDecoration: underline,
               });
 
-              // Estimate text width (simplified)
               const fontSizeNum = parseFloat(fontSize) || 14;
-              currentX += runText.length * (fontSizeNum * 0.6); // Rough estimate
+              currentX += runText.length * (fontSizeNum * 0.6);
             }
 
             if (paragraphElements.length > 0) {
@@ -672,7 +656,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           }
         }
 
-        // Extract foreground images
         if (zip.files[slideRelFile]) {
           const relContent = await zip.file(slideRelFile).async("string");
           const relDoc = parser.parseFromString(relContent, "text/xml");
@@ -700,7 +683,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
                     height = ext ? parseInt(ext.getAttribute("cy")) / 914400 * 96 + "px" : "auto";
                   }
 
-                  // Handle group transformations for images
                   let parent = imageNode.parentNode;
                   while (parent && parent.tagName === "p:grpSp") {
                     const grpXfrm = parent.getElementsByTagName("a:xfrm")[0];
@@ -758,6 +740,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       return;
     }
 
+    if (url === previousUrl) {
+      setLoading(false);
+      return;
+    }
+
     console.log("Fetching content for URL:", url);
     setContent(null);
     setPatentData(null);
@@ -769,6 +756,10 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     setPdfBlobUrl(null);
     setCurrentSlide(0);
     setTotalSlides(0);
+    setPdfLoading(false);
+    setPdfError(null);
+    setPdfDisplayUrl(null);
+    setPreviousUrl(url);
 
     try {
       let response;
@@ -929,12 +920,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           document.body.removeChild(link);
         } else {
           onLinkClick(event.data.url);
-          setContent(null);
-          setPatentData(null);
-          setError(null);
-          setLoading(true);
-          setDirectIframe(false);
-          fetchContent();
         }
       }
     };
@@ -974,30 +959,78 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     }
   }, [patentData]);
 
+  useEffect(() => {
+    if (activeTab !== "PDF") {
+      if (pdfDisplayUrl) {
+        URL.revokeObjectURL(pdfDisplayUrl);
+      }
+      setPdfLoading(false);
+      setPdfError(null);
+      setPdfDisplayUrl(null);
+    }
+  }, [activeTab]);
+
   const renderTabbedInterface = () => {
     if (!patentData) return null;
 
+    const loadPdf = async (pdfUrl) => {
+      setPdfLoading(true);
+      setPdfError(null);
+      setPdfDisplayUrl(null);
+      try {
+        const blobUrl = await fetchPdfAsBlob(pdfUrl);
+        setPdfDisplayUrl(blobUrl);
+      } catch (err) {
+        setPdfError("Failed to load PDF: " + err.message);
+      } finally {
+        setPdfLoading(false);
+      }
+    };
+
     const handleCitationClick = (number) => {
-      const citationUrl = `https://patents.google.com/patent/${number}`;
+      // Log the original patent number for debugging
+      console.log("Original patent number:", number);
+
+      // Clean the patent number by removing any trailing spaces, language codes like (en), (fr), etc., and extra characters
+      let cleanNumber = number
+        .replace(/\s+/g, ' ') // Normalize multiple spaces to a single space
+        .replace(/\s*\([^()]+?\)\s*/g, '') // Remove (en), (fr), etc., even if not at the end, and surrounding spaces
+        .replace(/[^a-zA-Z0-9]/g, '') // Remove any remaining special characters
+        .trim(); // Trim any leading/trailing spaces
+
+      // Log the cleaned patent number for debugging
+      console.log("Cleaned patent number:", cleanNumber);
+
+      // Construct the clean URL
+      const citationUrl = `https://patents.google.com/patent/${cleanNumber}`;
       console.log("Citation clicked, triggering onLinkClick with URL:", citationUrl);
+
+      // Call the onLinkClick callback with the cleaned URL
       onLinkClick(citationUrl);
-      fetchContent();
     };
 
     const renderTabContent = () => {
       switch (activeTab) {
         case "Overview":
+          // Enhanced splitting logic to handle various delimiters and clean up entries
           const publicationNumbers = patentData.publicationNumber
-            ? patentData.publicationNumber.split(/,\s*/).filter(Boolean)
+            ? patentData.publicationNumber
+                .split(/,+\s*|\s*,\s*|\s+/) // Split on commas with optional spaces, or spaces alone
+                .map(item => item.trim()) // Trim whitespace from each item
+                .filter(item => item) // Remove empty items
             : [];
+
           const publicationDates = patentData.publicationDate
-            ? patentData.publicationDate.split(/,\s*/).filter(Boolean)
+            ? patentData.publicationDate
+                .split(/,+\s*|\s*,\s*|\s+/) // Split on commas with optional spaces, or spaces alone
+                .map(item => item.trim()) // Trim whitespace from each item
+                .filter(item => item) // Remove empty items
             : [];
 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Overview</h2>
+                <h2>Over view</h2>
                 {patentData.title && <h3>{patentData.title}</h3>}
                 {publicationNumbers.length > 0 && (
                   <p>
@@ -1056,25 +1089,61 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           );
         case "PDF":
           const pdfUrl = patentData.pdfUrl;
-          if (pdfUrl) {
-            console.log("PDF tab clicked, triggering onLinkClick with URL:", pdfUrl);
-            onLinkClick(pdfUrl);
-            return <TabContent><LoadingIndicator>Redirecting to PDF...</LoadingIndicator></TabContent>;
+          if (pdfUrl && !pdfDisplayUrl && !pdfLoading && !pdfError) {
+            loadPdf(pdfUrl);
           }
+
           return (
-            <ScrollWrapper>
-              <PatentTabContent>
-                <FallbackMessage>
-                  PDF link not available.
-                </FallbackMessage>
-              </PatentTabContent>
-            </ScrollWrapper>
+            <TabContent>
+              {pdfLoading && <LoadingIndicator>Loading PDF...</LoadingIndicator>}
+              {pdfError && (
+                <ErrorContainer>
+                  <div
+                    style={{
+                      color: "#d93025",
+                      padding: 12,
+                      background: "#fce8e6",
+                      borderRadius: "8px",
+                      textAlign: "center",
+                      fontSize: "16px",
+                      marginBottom: "10px",
+                      width: "100%",
+                    }}
+                  >
+                    {pdfError}
+                  </div>
+                  <RetryButton onClick={() => loadPdf(pdfUrl)}>Retry Loading PDF</RetryButton>
+                  <RetryButton
+                    onClick={() => window.open(pdfUrl, "_blank")}
+                    style={{ backgroundColor: "#34a853" }}
+                  >
+                    Open PDF in New Tab
+                  </RetryButton>
+                </ErrorContainer>
+              )}
+              {pdfDisplayUrl && (
+                <PatentIframe
+                  ref={iframeRef}
+                  src={`${pdfDisplayUrl}#view=FitH`}
+                  title="PDF Content"
+                  type="application/pdf"
+                  style={{ width: "100%", height: "600px", border: "none" }}
+                />
+              )}
+              {!pdfUrl && (
+                <ScrollWrapper>
+                  <PatentTabContent>
+                    <FallbackMessage>PDF link not available.</FallbackMessage>
+                  </PatentTabContent>
+                </ScrollWrapper>
+              )}
+            </TabContent>
           );
         case "Images":
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Images</h2>
+                <h2>Im ages</h2>
                 {patentData.drawings?.length > 0 ? (
                   patentData.drawings.map((drawing, index) => (
                     <img
@@ -1094,6 +1163,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
+                {/* <h2>Cl aims</h2> */}
                 {patentData.claims ? (
                   <div dangerouslySetInnerHTML={{ __html: patentData.claims }} />
                 ) : (
@@ -1106,6 +1176,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
+                {/* <h2>Des cription</h2> */}
                 {patentData.description ? (
                   <div dangerouslySetInnerHTML={{ __html: patentData.description }} />
                 ) : (
@@ -1118,7 +1189,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Classifications</h2>
+                <h2>Cla ssifications</h2>
                 {patentData.classifications?.length > 0 ? (
                   <table>
                     <thead>
@@ -1146,7 +1217,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Citations</h2>
+                <h2>Cit ations</h2>
                 {patentData.citations?.length > 0 ? (
                   <table>
                     <thead>
@@ -1192,7 +1263,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Cited By</h2>
+                <h2>Ci ted By</h2>
                 {patentData.citedBy?.length > 0 ? (
                   <table>
                     <thead>
@@ -1238,7 +1309,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Legal Events</h2>
+                <h2>Le gal Events</h2>
                 {patentData.legalEvents?.length > 0 ? (
                   <table>
                     <thead>
@@ -1266,7 +1337,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Patent Family</h2>
+                <h2>Pa tent Family</h2>
                 {patentData.patentFamily?.length > 0 ? (
                   <table>
                     <thead>
@@ -1296,7 +1367,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Similar Documents</h2>
+                <h2>Sim ilar Documents</h2>
                 {patentData.similarDocs?.length > 0 ? (
                   <table>
                     <thead>
