@@ -1030,7 +1030,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Over view</h2>
+                <h2>Overview</h2>
                 {patentData.title && <h3>{patentData.title}</h3>}
                 {publicationNumbers.length > 0 && (
                   <p>
@@ -1217,7 +1217,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Cit ations</h2>
+                <h2>Citations</h2>
                 {patentData.citations?.length > 0 ? (
                   <table>
                     <thead>
@@ -1263,7 +1263,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Ci ted By</h2>
+                <h2>Cited By</h2>
                 {patentData.citedBy?.length > 0 ? (
                   <table>
                     <thead>
@@ -1309,7 +1309,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Le gal Events</h2>
+                <h2>Legal Events</h2>
                 {patentData.legalEvents?.length > 0 ? (
                   <table>
                     <thead>
@@ -1367,7 +1367,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Sim ilar Documents</h2>
+                <h2>Similar Documents</h2>
                 {patentData.similarDocs?.length > 0 ? (
                   <table>
                     <thead>
