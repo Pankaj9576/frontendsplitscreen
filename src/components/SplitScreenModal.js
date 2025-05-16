@@ -178,8 +178,8 @@ const UploadButton = styled.button`
 `
 
 const ScreenSelectButton = styled.select`
-  background:black;
-  color: white; /* Dark text for better contrast */
+  background: black;
+  color: white;
   padding: 6px;
   font-size: 13px;
   font-family: 'Roboto', Arial, sans-serif;
@@ -189,7 +189,7 @@ const ScreenSelectButton = styled.select`
   transition: background 0.3s ease;
 
   &:hover {
-    background:black; /* Slightly darker shade on hover */
+    background: black;
   }
 
   &:focus {
@@ -217,6 +217,123 @@ const ErrorMessage = styled.div`
   }
 `
 
+// Updated styles for the full-screen image modal
+const ImageModalBackground = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  margin: 0;
+  padding: 0;
+`
+
+const ImageModalContent = styled.div`
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0; // Removed padding to ensure no extra space
+`
+
+const ImageContainer = styled.div`
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0; // Removed padding to ensure no extra space
+`
+
+const StyledImage = styled.img`
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover; // Use cover to fill the screen while maintaining aspect ratio
+  transition: transform 0.3s ease;
+  ${({ orientation }) =>
+    orientation === "portrait"
+      ? `
+        object-fit: contain; // Use contain for portrait to avoid cropping
+        width: auto;
+        height: 100vh;
+      `
+      : `
+        object-fit: cover; // Use cover for landscape to fill the screen
+        width: 100vw;
+        height: auto;
+      `}
+`
+
+const ButtonContainer = styled.div`
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 2100; // Ensure buttons are above the image
+`
+
+const OrientationButton = styled.button`
+  padding: 8px 16px;
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'Roboto', Arial, sans-serif;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: #3267d6;
+  }
+
+  &:active {
+    background: #2a56c6;
+  }
+`
+
+const ImageModalCloseButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  background-color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s ease, color 0.3s ease;
+  z-index: 2100; // Ensure close button is above the image
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    color: red;
+  }
+
+  &:active {
+    background: rgba(0, 0, 0, 1);
+  }
+`
+
 const SplitScreenModal = ({
   leftSrc: initialLeftSrc = "",
   rightSrc: initialRightSrc = null,
@@ -230,6 +347,8 @@ const SplitScreenModal = ({
   const [screenMode, setScreenMode] = useState("both")
   const [leftSrc, setLocalLeftSrc] = useState(initialLeftSrc || "")
   const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [orientation, setOrientation] = useState("landscape")
   const BACKEND_URL = "https://split-screen-backend.vercel.app"
 
   useEffect(() => {
@@ -295,6 +414,15 @@ const SplitScreenModal = ({
     if (setRightSrc) setRightSrc(value)
   }
 
+  const handleImageClick = (imageSrc) => {
+    setSelectedImage(imageSrc)
+  }
+
+  const closeImageModal = () => {
+    setSelectedImage(null)
+    setOrientation("landscape")
+  }
+
   const renderContent = (src, side) => {
     if (!src) {
       return (
@@ -324,57 +452,84 @@ const SplitScreenModal = ({
         onLinkClick={(newUrl) => handleLinkClick(side, newUrl)}
         isFileUpload={isBlobUrl}
         fileName={file ? file.name : null}
+        onImageClick={handleImageClick}
       />
     )
   }
 
   return (
-    <ModalBackground onClick={onClose}>
-      <ModalContent onClick={(e) => e.stopPropagation()}>
-        <HeaderContainer>
-          <InputWrapper>
-            <SideContainer>
-              <StyledInput
-                type="text"
-                placeholder="Enter left URL"
-                value={leftSrc || ""}
-                onChange={(e) => handleLeftSrcChange(e.target.value)}
+    <>
+      <ModalBackground onClick={onClose}>
+        <ModalContent onClick={(e) => e.stopPropagation()}>
+          <HeaderContainer>
+            <InputWrapper>
+              <SideContainer>
+                <StyledInput
+                  type="text"
+                  placeholder="Enter left URL"
+                  value={leftSrc || ""}
+                  onChange={(e) => handleLeftSrcChange(e.target.value)}
+                />
+                <FileInputWrapper>
+                  <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
+                  <UploadButton style={{backgroundColor: '#5367FF',color:'white'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+                </FileInputWrapper>
+              </SideContainer>
+
+              <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
+                <option value="both">Both Screens</option>
+                <option value="left">Left Screen</option>
+                <option value="right">Right Screen</option>
+              </ScreenSelectButton>
+
+              <SideContainer>
+                <StyledInput
+                  type="text"
+                  placeholder="Enter right URL"
+                  value={rightSrc || ""}
+                  onChange={(e) => handleRightSrcChange(e.target.value)}
+                />
+                <FileInputWrapper>
+                  <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
+                  <UploadButton style={{backgroundColor: '#00F3BB'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+                </FileInputWrapper>
+              </SideContainer>
+
+              <CloseButton onClick={onClose}>×</CloseButton>
+            </InputWrapper>
+          </HeaderContainer>
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+          <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
+            {renderContent(leftSrc, "left")}
+            {renderContent(rightSrc, "right")}
+          </SplitScreen>
+        </ModalContent>
+      </ModalBackground>
+
+      {/* Full-Screen Image Modal */}
+      {selectedImage && (
+        <ImageModalBackground onClick={closeImageModal}>
+          <ImageModalContent onClick={(e) => e.stopPropagation()}>
+            <ImageContainer>
+              <StyledImage
+                src={selectedImage}
+                alt="Full-screen patent drawing"
+                orientation={orientation}
               />
-              <FileInputWrapper>
-                <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: '#5367FF',color:'white'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
-              </FileInputWrapper>
-            </SideContainer>
-
-            <ScreenSelectButton value={screenMode} onChange={(e) => setScreenMode(e.target.value)}>
-              <option value="both">Both Screens</option>
-              <option value="left">Left Screen</option>
-              <option value="right">Right Screen</option>
-            </ScreenSelectButton>
-
-            <SideContainer>
-              <StyledInput
-                type="text"
-                placeholder="Enter right URL"
-                value={rightSrc || ""}
-                onChange={(e) => handleRightSrcChange(e.target.value)}
-              />
-              <FileInputWrapper>
-                <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-                <UploadButton style={{backgroundColor: '#00F3BB'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
-              </FileInputWrapper>
-            </SideContainer>
-
-            <CloseButton onClick={onClose}>×</CloseButton>
-          </InputWrapper>
-        </HeaderContainer>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        <SplitScreen leftWidth={1} rightWidth={1} screenMode={screenMode}>
-          {renderContent(leftSrc, "left")}
-          {renderContent(rightSrc, "right")}
-        </SplitScreen>
-      </ModalContent>
-    </ModalBackground>
+            </ImageContainer>
+            <ButtonContainer>
+              <OrientationButton onClick={() => setOrientation("portrait")}>
+                Portrait
+              </OrientationButton>
+              <OrientationButton onClick={() => setOrientation("landscape")}>
+                Landscape
+              </OrientationButton>
+            </ButtonContainer>
+            <ImageModalCloseButton onClick={closeImageModal}>×</ImageModalCloseButton>
+          </ImageModalContent>
+        </ImageModalBackground>
+      )}
+    </>
   )
 }
 

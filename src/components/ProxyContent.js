@@ -895,7 +895,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
   useEffect(() => {
     console.log("useEffect triggered with URL:", url);
-    fetchContent();
+    fetch>fetchContent();
   }, [url, backendUrl, isFileUpload, fileName]);
 
   useEffect(() => {
@@ -940,7 +940,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             patentData.publicationNumber,
         },
         { name: "PDF", hasData: !!patentData.pdfUrl },
-        { name: "Images", hasData: patentData.drawings?.length > 0 },
+        { name: "Images", hasData: patentData.drawingsFromCarousel?.length > 0 },
         { name: "Claims", hasData: !!patentData.claims },
         { name: "Description", hasData: !!patentData.description },
         { name: "Classifications", hasData: patentData.classifications?.length > 0 },
@@ -988,43 +988,37 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     };
 
     const handleCitationClick = (number) => {
-      // Log the original patent number for debugging
       console.log("Original patent number:", number);
 
-      // Clean the patent number by removing any trailing spaces, language codes like (en), (fr), etc., and extra characters
       let cleanNumber = number
-        .replace(/\s+/g, ' ') // Normalize multiple spaces to a single space
-        .replace(/\s*\([^()]+?\)\s*/g, '') // Remove (en), (fr), etc., even if not at the end, and surrounding spaces
-        .replace(/[^a-zA-Z0-9]/g, '') // Remove any remaining special characters
-        .trim(); // Trim any leading/trailing spaces
+        .replace(/\s+/g, ' ')
+        .replace(/\s*\([^()]+?\)\s*/g, '')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .trim();
 
-      // Log the cleaned patent number for debugging
       console.log("Cleaned patent number:", cleanNumber);
 
-      // Construct the clean URL
       const citationUrl = `https://patents.google.com/patent/${cleanNumber}`;
       console.log("Citation clicked, triggering onLinkClick with URL:", citationUrl);
 
-      // Call the onLinkClick callback with the cleaned URL
       onLinkClick(citationUrl);
     };
 
     const renderTabContent = () => {
       switch (activeTab) {
         case "Overview":
-          // Enhanced splitting logic to handle various delimiters and clean up entries
           const publicationNumbers = patentData.publicationNumber
             ? patentData.publicationNumber
-                .split(/,+\s*|\s*,\s*|\s+/) // Split on commas with optional spaces, or spaces alone
-                .map(item => item.trim()) // Trim whitespace from each item
-                .filter(item => item) // Remove empty items
+                .split(/,+\s*|\s*,\s*|\s+/)
+                .map(item => item.trim())
+                .filter(item => item)
             : [];
 
           const publicationDates = patentData.publicationDate
             ? patentData.publicationDate
-                .split(/,+\s*|\s*,\s*|\s+/) // Split on commas with optional spaces, or spaces alone
-                .map(item => item.trim()) // Trim whitespace from each item
-                .filter(item => item) // Remove empty items
+                .split(/,+\s*|\s*,\s*|\s+/)
+                .map(item => item.trim())
+                .filter(item => item)
             : [];
 
           return (
@@ -1143,16 +1137,49 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Im ages</h2>
-                {patentData.drawings?.length > 0 ? (
-                  patentData.drawings.map((drawing, index) => (
-                    <img
-                      key={index}
-                      src={drawing}
-                      alt={`Drawing ${index + 1}`}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  ))
+                <h2>Images</h2>
+                {patentData.drawingsFromCarousel?.length > 0 ? (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '20px',
+                    padding: '20px 0',
+                  }}>
+                    {patentData.drawingsFromCarousel.map((drawing, index) => (
+                      <div key={index} style={{
+                        background: '#fff',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        padding: '15px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        textAlign: 'center',
+                      }}>
+                        <img
+                          src={drawing}
+                          alt={`Drawing ${index + 1}`}
+                          style={{
+                            maxWidth: '100%',
+                            height: 'auto',
+                            display: 'block',
+                            margin: '0 auto',
+                            borderRadius: '4px',
+                          }}
+                          onError={(e) => {
+                            e.target.src = '/fallback-image.png'; // Optional: Add a fallback image
+                            console.error(`Failed to load image: ${drawing}`);
+                          }}
+                        />
+                        <p style={{
+                          margin: '10px 0 0',
+                          fontSize: '14px',
+                          color: '#333',
+                          fontFamily: '"Arial", sans-serif',
+                        }}>
+                          Figure {index + 1}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <p>No images found.</p>
                 )}
@@ -1163,7 +1190,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                {/* <h2>Cl aims</h2> */}
                 {patentData.claims ? (
                   <div dangerouslySetInnerHTML={{ __html: patentData.claims }} />
                 ) : (
@@ -1176,7 +1202,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                {/* <h2>Des cription</h2> */}
                 {patentData.description ? (
                   <div dangerouslySetInnerHTML={{ __html: patentData.description }} />
                 ) : (
@@ -1189,7 +1214,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Cla ssifications</h2>
+                <h2>Classifications</h2>
                 {patentData.classifications?.length > 0 ? (
                   <table>
                     <thead>
@@ -1337,7 +1362,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Pa tent Family</h2>
+                <h2>Patent Family</h2>
                 {patentData.patentFamily?.length > 0 ? (
                   <table>
                     <thead>
