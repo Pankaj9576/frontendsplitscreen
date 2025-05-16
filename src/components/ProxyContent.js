@@ -940,7 +940,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             patentData.publicationNumber,
         },
         { name: "PDF", hasData: !!patentData.pdfUrl },
-        { name: "Images", hasData: patentData.drawingsFromCarousel?.length > 0 },
+        { name: "Drawings", hasData: patentData.drawingsFromCarousel?.length > 0 },
         { name: "Claims", hasData: !!patentData.claims },
         { name: "Description", hasData: !!patentData.description },
         { name: "Classifications", hasData: patentData.classifications?.length > 0 },
