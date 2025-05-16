@@ -1137,7 +1137,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           return (
             <ScrollWrapper>
               <PatentTabContent>
-                <h2>Images</h2>
+                <h2>Drawings</h2>
                 {patentData.drawingsFromCarousel?.length > 0 ? (
                   <div style={{
                     display: 'flex',
