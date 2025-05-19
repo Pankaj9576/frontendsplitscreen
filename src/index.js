@@ -4,7 +4,7 @@ import App from './App.js';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Set Webpack publicPath at runtime
-// __webpack_public_path__ = process.env.PUBLIC_URL || '/';
+__webpack_public_path__ = process.env.PUBLIC_URL || '/';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

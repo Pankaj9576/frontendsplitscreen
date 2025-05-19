@@ -12,12 +12,12 @@
   margin: 0;
   font-size: 2.5em;
   transition: transform 0.3s ease-in-out, color 0.3s ease-in-out; /* Smooth transition for hover */
-  color: #333; /* Default text color */
+  color: rgb(9, 9, 9); /* Default text color */
 }
 
 .app-title:hover {
   transform: scale(1.1) rotate(5deg); /* Scale up and slight rotate on hover */
-  color: #007bff; /* Change color on hover for interactivity */
+  color:rgb(16, 17, 17); /* Change color on hover for interactivity */
 }
 
 .app-content {

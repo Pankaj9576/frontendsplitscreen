@@ -463,3 +463,117 @@ export const RetryButton = styled.button`
     background-color: #666;
   }
 `;
+export const ImageModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  overflow: hidden;
+`;
+export const ModalImage = styled.img`
+  max-width: 90%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+`;
+
+export const NavigationBar = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 10px;
+  background: #333;
+  border-radius: 8px;
+  margin-bottom: 10px;
+`;
+
+export const ModalNavButton = styled.button`
+  padding: 8px 16px;
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: 'Arial', sans-serif;
+  transition: background-color 0.2s ease;
+  &:hover {
+    background-color: #1557b0;
+  }
+  &:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+`;
+
+export const CloseButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #d93025;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover {
+    background: #b71c1c;
+  }
+`;
+
+export const ThumbnailGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  padding: 20px;
+`;
+
+export const Thumbnail = styled.img`
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  &:hover {
+    transform: scale(1.05);
+  }
+`;
+export const SlideshowContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: calc(100% - 60px); /* Adjust for h2 and navigation */
+  padding: 10px;
+  box-sizing: border-box;
+`;
+
+export const SlideshowImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ensures image is fully visible and readable */
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+`;

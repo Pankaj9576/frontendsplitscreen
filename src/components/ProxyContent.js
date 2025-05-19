@@ -22,7 +22,9 @@ import {
   DownloadLink,
   LoadingIndicator,
   ErrorContainer,
-  RetryButton
+  RetryButton,
+  SlideshowContainer,
+  SlideshowImage,
 } from "./Styleproxy";
 
 const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
@@ -44,6 +46,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const [pdfError, setPdfError] = useState(null);
   const [pdfDisplayUrl, setPdfDisplayUrl] = useState(null);
   const [previousUrl, setPreviousUrl] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0); // Added for slideshow
 
   const isPatentUrl = (urlToCheck) => {
     try {
@@ -760,6 +763,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     setPdfError(null);
     setPdfDisplayUrl(null);
     setPreviousUrl(url);
+    setSelectedImageIndex(0); // Reset slideshow index
 
     try {
       let response;
@@ -895,7 +899,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
   useEffect(() => {
     console.log("useEffect triggered with URL:", url);
-    fetch>fetchContent();
+    fetchContent();
   }, [url, backendUrl, isFileUpload, fileName]);
 
   useEffect(() => {
@@ -1002,6 +1006,18 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
       console.log("Citation clicked, triggering onLinkClick with URL:", citationUrl);
 
       onLinkClick(citationUrl);
+    };
+
+    const handlePrevImage = () => {
+      setSelectedImageIndex((prev) =>
+        prev > 0 ? prev - 1 : patentData.drawingsFromCarousel.length - 1
+      );
+    };
+
+    const handleNextImage = () => {
+      setSelectedImageIndex((prev) =>
+        prev < patentData.drawingsFromCarousel.length - 1 ? prev + 1 : 0
+      );
     };
 
     const renderTabContent = () => {
@@ -1135,56 +1151,33 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
           );
         case "Images":
           return (
-            <ScrollWrapper>
-              <PatentTabContent>
-                <h2>Drawings</h2>
-                {patentData.drawingsFromCarousel?.length > 0 ? (
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '20px',
-                    padding: '20px 0',
-                  }}>
-                    {patentData.drawingsFromCarousel.map((drawing, index) => (
-                      <div key={index} style={{
-                        background: '#fff',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        padding: '15px',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                        textAlign: 'center',
-                      }}>
-                        <img
-                          src={drawing}
-                          alt={`Drawing ${index + 1}`}
-                          style={{
-                            maxWidth: '100%',
-                            height: 'auto',
-                            display: 'block',
-                            margin: '0 auto',
-                            borderRadius: '4px',
-                          }}
-                          onError={(e) => {
-                            e.target.src = '/fallback-image.png'; // Optional: Add a fallback image
-                            console.error(`Failed to load image: ${drawing}`);
-                          }}
-                        />
-                        <p style={{
-                          margin: '10px 0 0',
-                          fontSize: '14px',
-                          color: '#333',
-                          fontFamily: '"Arial", sans-serif',
-                        }}>
-                          Figure {index + 1}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p>No images found.</p>
-                )}
-              </PatentTabContent>
-            </ScrollWrapper>
+            <TabContent>
+              <h2>Drawings</h2>
+              {patentData.drawingsFromCarousel?.length > 0 ? (
+                <SlideshowContainer>
+                  <SlideshowImage
+                    src={patentData.drawingsFromCarousel[selectedImageIndex]}
+                    alt={`Drawing ${selectedImageIndex + 1}`}
+                    onClick={() => onLinkClick(patentData.drawingsFromCarousel[selectedImageIndex])}
+                    onError={(e) => {
+                      e.target.src = '/fallback-image.png';
+                      console.error(`Failed to load image: ${patentData.drawingsFromCarousel[selectedImageIndex]}`);
+                    }}
+                  />
+                  {patentData.drawingsFromCarousel.length > 1 && (
+                    <NavigationContainer>
+                      <NavButton onClick={handlePrevImage}>Previous</NavButton>
+                      <SlideCounter>
+                        Figure {selectedImageIndex + 1} of {patentData.drawingsFromCarousel.length}
+                      </SlideCounter>
+                      <NavButton onClick={handleNextImage}>Next</NavButton>
+                    </NavigationContainer>
+                  )}
+                </SlideshowContainer>
+              ) : (
+                <FallbackMessage>No images found.</FallbackMessage>
+              )}
+            </TabContent>
           );
         case "Claims":
           return (
