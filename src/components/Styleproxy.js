@@ -463,6 +463,7 @@ export const RetryButton = styled.button`
     background-color: #666;
   }
 `;
+
 export const ImageModal = styled.div`
   position: fixed;
   top: 0;
@@ -477,6 +478,7 @@ export const ImageModal = styled.div`
   z-index: 1000;
   overflow: hidden;
 `;
+
 export const ModalImage = styled.img`
   max-width: 90%;
   max-height: 80vh;
@@ -554,6 +556,7 @@ export const Thumbnail = styled.img`
     transform: scale(1.05);
   }
 `;
+
 export const SlideshowContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -576,4 +579,14 @@ export const SlideshowImage = styled.img`
   &:hover {
     transform: scale(1.02);
   }
+`;
+
+export const StyledImage = styled.img`
+  width: 580px;
+  height: 500px;
+  object-fit: contain;
+  image-rendering: crisp-edges;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 5px;
 `;
