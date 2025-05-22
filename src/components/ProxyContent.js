@@ -29,7 +29,7 @@ import {
 
 const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
 
-const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, onImageClick }) => {
+const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) => {
   const [content, setContent] = useState(null);
   const [error, setError] = useState(null);
   const [patentData, setPatentData] = useState(null);
@@ -46,7 +46,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, on
   const [pdfError, setPdfError] = useState(null);
   const [pdfDisplayUrl, setPdfDisplayUrl] = useState(null);
   const [previousUrl, setPreviousUrl] = useState(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0); // For slideshow
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0); // Added for slideshow
 
   const isPatentUrl = (urlToCheck) => {
     try {
@@ -763,7 +763,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, on
     setPdfError(null);
     setPdfDisplayUrl(null);
     setPreviousUrl(url);
-    setSelectedImageIndex(0);
+    setSelectedImageIndex(0); // Reset slideshow index
 
     try {
       let response;
@@ -1158,7 +1158,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, on
                   <SlideshowImage
                     src={patentData.drawingsFromCarousel[selectedImageIndex]}
                     alt={`Drawing ${selectedImageIndex + 1}`}
-                    onClick={() => onImageClick(patentData.drawingsFromCarousel[selectedImageIndex])}
+                    onClick={() => onLinkClick(patentData.drawingsFromCarousel[selectedImageIndex])}
                     onError={(e) => {
                       e.target.src = '/fallback-image.png';
                       console.error(`Failed to load image: ${patentData.drawingsFromCarousel[selectedImageIndex]}`);
@@ -1545,8 +1545,8 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, on
         <DocViewer>
           {content.data.length > 0 ? (
             <SlideContainer
-              width={width}
-              height={height}
+              width={`${width}px`}
+              height={`${height}px`}
               background={currentSlideData.background.color || "#fff"}
             >
               {currentSlideData.background.images.map((bgImage, index) => (
@@ -1562,9 +1562,9 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, on
                   return (
                     <SlideText
                       key={index}
-                      x={element.x}
-                      y={element.y}
-                      width={element.width}
+                      x={`${element.x}px`}
+                      y={`${element.y}px`}
+                      width={`${element.width}px`}
                       fontSize={element.fontSize}
                       color={element.color}
                       fontFamily={element.fontFamily}
@@ -1574,8 +1574,6 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, on
                       lineHeight={element.lineHeight}
                       padding={element.padding}
                       textDecoration={element.textDecoration}
-                      slideWidth={width}
-                      slideHeight={height}
                     >
                       {element.content}
                     </SlideText>
@@ -1585,13 +1583,11 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName, on
                     <SlideImage
                       key={index}
                       src={element.url}
-                      x={element.x}
-                      y={element.y}
+                      x={`${element.x}px`}
+                      y={`${element.y}px`}
                       width={element.width}
                       height={element.height}
                       alt={`Slide ${currentSlide + 1} Image ${index + 1}`}
-                      slideWidth={width}
-                      slideHeight={height}
                     />
                   );
                 }
