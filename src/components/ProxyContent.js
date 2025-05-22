@@ -25,6 +25,11 @@ import {
   RetryButton,
   SlideshowContainer,
   SlideshowImage,
+  ImageModal,
+  ModalImage,
+  ModalNavButton,
+  CloseButton,
+  NavigationBar,
 } from "./Styleproxy";
 
 const ExcelViewer = React.lazy(() => import("./ExcelViewer"));
@@ -46,7 +51,32 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const [pdfError, setPdfError] = useState(null);
   const [pdfDisplayUrl, setPdfDisplayUrl] = useState(null);
   const [previousUrl, setPreviousUrl] = useState(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0); // Added for slideshow
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  // Modal ke liye states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalImageUrl, setModalImageUrl] = useState("");
+  const [isPortrait, setIsPortrait] = useState(true);
+
+  // Modal kholne aur band karne ke functions
+  const openModal = (imageUrl) => {
+    setModalImageUrl(imageUrl);
+    setIsModalOpen(true);
+    setIsPortrait(true); // Default portrait mode
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalImageUrl("");
+  };
+
+  const setPortraitMode = () => {
+    setIsPortrait(true);
+  };
+
+  const setLandscapeMode = () => {
+    setIsPortrait(false);
+  };
 
   const isPatentUrl = (urlToCheck) => {
     try {
@@ -763,7 +793,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     setPdfError(null);
     setPdfDisplayUrl(null);
     setPreviousUrl(url);
-    setSelectedImageIndex(0); // Reset slideshow index
+    setSelectedImageIndex(0);
 
     try {
       let response;
@@ -1158,7 +1188,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
                   <SlideshowImage
                     src={patentData.drawingsFromCarousel[selectedImageIndex]}
                     alt={`Drawing ${selectedImageIndex + 1}`}
-                    onClick={() => onLinkClick(patentData.drawingsFromCarousel[selectedImageIndex])}
+                    onClick={() => openModal(patentData.drawingsFromCarousel[selectedImageIndex])}
                     onError={(e) => {
                       e.target.src = '/fallback-image.png';
                       console.error(`Failed to load image: ${patentData.drawingsFromCarousel[selectedImageIndex]}`);
@@ -1176,6 +1206,29 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
                 </SlideshowContainer>
               ) : (
                 <FallbackMessage>No images found.</FallbackMessage>
+              )}
+              {isModalOpen && (
+                <ImageModal onClick={closeModal}>
+                  <ModalImage
+                    src={modalImageUrl}
+                    alt="High Resolution Drawing"
+                    style={{
+                      maxWidth: isPortrait ? "60%" : "80%",
+                      maxHeight: isPortrait ? "80%" : "60%",
+                      transition: "all 0.3s ease",
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <NavigationBar onClick={(e) => e.stopPropagation()}>
+                    <ModalNavButton onClick={setPortraitMode} $isActive={isPortrait}>
+                      Portrait
+                    </ModalNavButton>
+                    <ModalNavButton onClick={setLandscapeMode} $isActive={!isPortrait}>
+                      Landscape
+                    </ModalNavButton>
+                  </NavigationBar>
+                  <CloseButton onClick={closeModal}>×</CloseButton>
+                </ImageModal>
               )}
             </TabContent>
           );

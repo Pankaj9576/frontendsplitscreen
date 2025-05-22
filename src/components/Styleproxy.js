@@ -292,14 +292,14 @@ export const DocViewer = styled.div`
   flex: 1;
   padding: 20px;
   box-sizing: border-box;
-  display: block; /* Changed from flex to block to align content from the top-left */
+  display: block;
   overflow: auto;
   background: #f5f5f5;
-  text-align: left; /* Ensure text alignment starts from the left */
+  text-align: left;
   & > div {
-    margin: 0; /* Reset any margins that might push content */
+    margin: 0;
     padding: 0;
-    position: relative; /* Ensure child elements are positioned relative to this container */
+    position: relative;
   }
   &::-webkit-scrollbar {
     width: 6px;
@@ -470,46 +470,75 @@ export const ImageModal = styled.div`
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  justify-content: flex-start; /* Align to top */
+  padding-top: 10px; /* Reduced padding to ensure it starts closer to the top */
+  z-index: 2000; /* Increased z-index to ensure it appears above other elements like the green line */
   overflow: hidden;
+  animation: fadeIn 0.3s ease-in-out;
+
+  &:focus {
+    outline: none;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
 export const ModalImage = styled.img`
-  max-width: 90%;
-  max-height: 80vh;
+  width: 800px; /* Fixed width as requested */
+  height: 800px; /* Fixed height as requested */
+  max-width: 90vw; /* Ensure it doesn't overflow on smaller screens */
+  max-height: 90vh; /* Ensure it doesn't overflow vertically */
   object-fit: contain;
+  border: 2px solid #fff;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
 `;
 
 export const NavigationBar = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 20px;
-  padding: 10px;
-  background: #333;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  gap: 15px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 25px;
+  margin-top: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 export const ModalNavButton = styled.button`
-  padding: 8px 16px;
-  background-color: #1a73e8;
+  padding: 6px 14px;
+  background-color: ${(props) =>
+    props.$isActive ? "#1a73e8" : "#666"};
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   font-family: 'Arial', sans-serif;
-  transition: background-color 0.2s ease;
+  font-weight: 500;
+  transition: background-color 0.2s ease, transform 0.1s ease;
   &:hover {
-    background-color: #1557b0;
+    background-color: ${(props) =>
+      props.$isActive ? "#1557b0" : "#888"};
+    transform: scale(1.05);
+  }
+  &:focus {
+    outline: 2px solid #1a73e8;
+    outline-offset: 2px;
   }
   &:disabled {
     background-color: #cccccc;
@@ -519,21 +548,29 @@ export const ModalNavButton = styled.button`
 
 export const CloseButton = styled.button`
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background: #d93025;
-  color: white;
-  border: none;
+  top: 15px;
+  right: 15px;
+  background: #ffffff;
+  color: #333;
+  border: 1px solid #dadce0;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  font-size: 24px;
+  font-weight: 400;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease, color 0.2s ease;
   &:hover {
-    background: #b71c1c;
+    background: #f1f3f4;
+    color: #d93025;
+  }
+  &:focus {
+    outline: 2px solid #1a73e8;
+    outline-offset: 2px;
   }
 `;
 
@@ -563,7 +600,7 @@ export const SlideshowContainer = styled.div`
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: calc(100% - 60px); /* Adjust for h2 and navigation */
+  height: calc(100% - 60px);
   padding: 10px;
   box-sizing: border-box;
 `;
@@ -571,19 +608,23 @@ export const SlideshowContainer = styled.div`
 export const SlideshowImage = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Ensures image is fully visible and readable */
+  max-width: 800px;
+  max-height: 500px;
+  object-fit: contain;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.3s ease;
-
+  border: 1px solid #dadce0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   &:hover {
-    transform: scale(1.02);
+    transform: scale(1.03);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
 `;
 
 export const StyledImage = styled.img`
   width: 580px;
-  height: 500px;
+  height: 470px;
   object-fit: contain;
   image-rendering: crisp-edges;
   cursor: pointer;
