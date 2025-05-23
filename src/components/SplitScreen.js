@@ -35,19 +35,19 @@ const Panel = styled.div`
   }
 
   &::-webkit-scrollbar {
-    width: 8px; /* Reduced from 14px to make scrollbar thinner */
+    width: 8px;
   }
 
   &::-webkit-scrollbar-track {
     background: #e0e0e0;
-    border-radius: 4px; /* Adjusted from 7px to match thinner scrollbar */
+    border-radius: 4px;
     margin: 5px;
   }
 
   &::-webkit-scrollbar-thumb {
     background: rgb(87, 92, 99);
-    border-radius: 4px; /* Adjusted from 7px to match thinner scrollbar */
-    border: 1px solid #e0e0e0; /* Reduced from 2px to fit thinner scrollbar */
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
   }
 
   &::-webkit-scrollbar-thumb:hover {
@@ -59,14 +59,14 @@ const Panel = styled.div`
 `;
 
 const ResizeHandle = styled.div`
-  width: 4px;
+  width: 4px; /* Slightly wider for better clickability */
   background: green;
   cursor: col-resize;
   position: absolute;
   top: 0;
   bottom: 0;
   z-index: 1000;
-  transition: background 0.2s ease, left 0.1s ease-out;
+  transition: background 0.2s ease; /* Removed left transition for smoother dragging */
 
   &:hover {
     background: rgb(76, 129, 65);
@@ -86,32 +86,26 @@ const SplitScreen = ({ children, screenMode }) => {
   const handleRef = useRef(null);
   const leftPanelRef = useRef(null);
   const rightPanelRef = useRef(null);
-  const timeoutRef = useRef(null);
-  const lastUpdateRef = useRef(0); // Define lastUpdateRef using useRef and initialize to 0
-
-  useEffect(() => {
-    console.log("SplitScreen - screenMode:", screenMode);
-    console.log("Handle visibility:", screenMode === "both" ? "visible" : "hidden");
-  }, [screenMode]);
+  const rafRef = useRef(null);
 
   const handleResize = useCallback((e) => {
     if (!containerRef.current) return;
 
-    const now = performance.now();
-    if (now - lastUpdateRef.current < 10) return;
-
-    lastUpdateRef.current = now;
-
     const containerRect = containerRef.current.getBoundingClientRect();
     let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-    newWidth = Math.max(10, Math.min(90, newWidth));
+    newWidth = Math.max(10, Math.min(90, newWidth)); // Keep within 10-90% bounds
     setLeftWidth(newWidth);
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      setIsResizing(false);
-    }, 50);
   }, []);
+
+  const handlePointerMove = useCallback(
+    (e) => {
+      if (!isResizing) return;
+      // Use requestAnimationFrame for smooth updates
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => handleResize(e));
+    },
+    [isResizing, handleResize]
+  );
 
   useEffect(() => {
     const handlePointerDown = (e) => {
@@ -119,16 +113,15 @@ const SplitScreen = ({ children, screenMode }) => {
       if (handleRef.current) {
         handleRef.current.setPointerCapture(e.pointerId);
       }
+      // Prevent text selection during drag
+      document.body.style.userSelect = "none";
     };
 
-    const handlePointerMove = (e) => {
-      if (!isResizing) return;
-      handleResize(e);
-    };
-
-    const handlePointerUp = (e) => {
+    const handlePointerUp = () => {
       setIsResizing(false);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      // Restore text selection
+      document.body.style.userSelect = "";
     };
 
     if (handleRef.current) {
@@ -143,9 +136,10 @@ const SplitScreen = ({ children, screenMode }) => {
       }
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      document.body.style.userSelect = "";
     };
-  }, [isResizing, handleResize]);
+  }, [handlePointerMove]);
 
   const leftStyle = {
     width: screenMode === "left" ? "100%" : screenMode === "right" ? "0%" : `${leftWidth}%`,
@@ -169,7 +163,7 @@ const SplitScreen = ({ children, screenMode }) => {
       <ResizeHandle
         ref={handleRef}
         style={{
-          left: screenMode === "both" ? `${leftWidth}%` : "50%",
+          left: screenMode === "both" ? `calc(${leftWidth}% - 3px)` : "50%", 
           visibility: handleVisibility,
         }}
       />
