@@ -4,6 +4,7 @@ import SplitScreenModal from './components/SplitScreenModal';
 import './App.css';
 
 function App() {
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leftUrl, setLeftUrl] = useState('');
   const [rightUrl, setRightUrl] = useState('');

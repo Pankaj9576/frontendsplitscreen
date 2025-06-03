@@ -52,6 +52,7 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
   const [pdfDisplayUrl, setPdfDisplayUrl] = useState(null);
   const [previousUrl, setPreviousUrl] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isKnowledgeCardOpen, setIsKnowledgeCardOpen] = useState(false);
 
   // Modal ke liye states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -76,6 +77,10 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
 
   const setLandscapeMode = () => {
     setIsPortrait(false);
+  };
+
+  const toggleKnowledgeCard = () => {
+    setIsKnowledgeCardOpen(!isKnowledgeCardOpen);
   };
 
   const isPatentUrl = (urlToCheck) => {
@@ -971,7 +976,9 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
             patentData.title ||
             patentData.abstract ||
             patentData.inventors?.length ||
-            patentData.publicationNumber,
+            patentData.publicationNumber ||
+            patentData.anticipatedExpiration ||
+            patentData.applicationEvents?.length,
         },
         { name: "PDF", hasData: !!patentData.pdfUrl },
         { name: "Images", hasData: patentData.drawingsFromCarousel?.length > 0 },
@@ -1051,78 +1058,222 @@ const ProxyContent = ({ url, backendUrl, onLinkClick, isFileUpload, fileName }) 
     };
 
     const renderTabContent = () => {
+      // Helper function to extract the first valid publication number
+      const extractPrimaryPublicationNumber = (pubNumberString) => {
+        if (!pubNumberString) return "N/A";
+
+        const patentNumberRegex = /[A-Z]{2}\d+[A-Z0-9]+/g;
+        const matches = pubNumberString.match(patentNumberRegex);
+
+        return matches && matches.length > 0 ? matches[0] : "N/A";
+      };
+
       switch (activeTab) {
         case "Overview":
-          const publicationNumbers = patentData.publicationNumber
-            ? patentData.publicationNumber
-                .split(/,+\s*|\s*,\s*|\s+/)
-                .map(item => item.trim())
-                .filter(item => item)
-            : [];
+          const primaryPublicationNumber = extractPrimaryPublicationNumber(
+            patentData.publicationNumber
+          );
 
           const publicationDates = patentData.publicationDate
             ? patentData.publicationDate
                 .split(/,+\s*|\s*,\s*|\s+/)
-                .map(item => item.trim())
-                .filter(item => item)
+                .map((item) => item.trim())
+                .filter((item) => item)
             : [];
+
+          // Calculate counts for the "INFO" section
+          const citationCount = patentData.citations?.length || 0;
+          const citedByCount = patentData.citedBy?.length || 0;
+          const legalEventsCount = patentData.legalEvents?.length || 0;
+          const similarDocsCount = patentData.similarDocs?.length || 0;
+          const priorityAndRelatedCount = patentData.patentFamily?.length || 0;
+
+          // Define external links
+          const externalLinks = [
+            {
+              name: "USPTO",
+              url: `https://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO2&Sect2=HITOFF&p=1&u=%2Fnetahtml%2FPTO%2Fsearch-bool.html&r=0&f=S&l=50&TERM1=${primaryPublicationNumber}&FIELD1=&co1=AND&TERM2=&FIELD2=&d=PTXT`,
+            },
+            {
+              name: "USPTO PatentCenter",
+              url: `https://patentcenter.uspto.gov/#!/applications/${primaryPublicationNumber}`,
+            },
+            {
+              name: "USPTO",
+              url: `https://assignment.uspto.gov/patent/index.html#/patent/search/result?searchInput=${primaryPublicationNumber}`,
+            },
+            {
+              name: "Espacenet",
+              url: `https://worldwide.espacenet.com/patent/search/family/${primaryPublicationNumber}`,
+            },
+            {
+              name: "Global Dossier",
+              url: `https://globaldossier.uspto.gov/#/result/patent/${primaryPublicationNumber}`,
+            },
+            {
+              name: "Discuss",
+              url: `https://patents.google.com/patent/${primaryPublicationNumber}#discuss`,
+            },
+          ];
 
           return (
             <ScrollWrapper>
               <PatentTabContent>
                 <h2>Overview</h2>
-                {patentData.title && <h3>{patentData.title}</h3>}
-                {publicationNumbers.length > 0 && (
-                  <p>
-                    <strong>Publication Number:</strong>{" "}
-                    {publicationNumbers.map((number, index) => (
-                      <span key={index}>
-                        {number}
-                        {index < publicationNumbers.length - 1 ? ", " : ""}
-                      </span>
-                    ))}
-                  </p>
-                )}
-                {publicationDates.length > 0 && (
-                  <p>
-                    <strong>Publication Date:</strong>{" "}
-                    {publicationDates.map((date, index) => (
-                      <span key={index}>
-                        {date}
-                        {index < publicationDates.length - 1 ? ", " : ""}
-                      </span>
-                    ))}
-                  </p>
-                )}
-                {patentData.filingDate && (
-                  <p>
-                    <strong>Filing Date:</strong> {patentData.filingDate}
-                  </p>
-                )}
-                {patentData.priorityDate && (
-                  <p>
-                    <strong>Priority Date:</strong> {patentData.priorityDate}
-                  </p>
-                )}
-                {patentData.inventors?.length > 0 && (
-                  <p>
-                    <strong>Inventors:</strong> {patentData.inventors.join(", ")}
-                  </p>
-                )}
-                {patentData.assignee && (
-                  <p>
-                    <strong>Assignee:</strong> {patentData.assignee}
-                  </p>
-                )}
-                {patentData.status && (
-                  <p>
-                    <strong>Status:</strong> {patentData.status}
-                  </p>
-                )}
+                {patentData.title && <h3><strong style={{fontSize:'16px'}}>Title:</strong> {patentData.title}</h3>}
                 {patentData.abstract && (
                   <p>
                     <strong>Abstract:</strong> {patentData.abstract}
                   </p>
+                )}
+                <button
+                  onClick={toggleKnowledgeCard}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#4285F4",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    margin: "10px 0",
+                    fontSize: "16px",
+                  }}
+                >
+                  {isKnowledgeCardOpen
+                    ? "Hide Knowledge Card"
+                    : "Show Knowledge Card"}
+                </button>
+                {isKnowledgeCardOpen && (
+                  <div
+                    style={{
+                      padding: "10px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    {primaryPublicationNumber && (
+                      <p>
+                        <strong>Publication Number:</strong>{" "}
+                        {primaryPublicationNumber}
+                      </p>
+                    )}
+                    {publicationDates.length > 0 && (
+                      <p>
+                        <strong>Publication Date:</strong>{" "}
+                        {publicationDates.map((date, index) => (
+                          <span key={index}>
+                            {date}
+                            {index < publicationDates.length - 1 ? ", " : ""}
+                          </span>
+                        ))}
+                      </p>
+                    )}
+                    {patentData.filingDate && (
+                      <p>
+                        <strong>Filing Date:</strong> {patentData.filingDate}
+                      </p>
+                    )}
+                    {patentData.priorityDate && (
+                      <p>
+                        <strong>Priority Date:</strong>{" "}
+                        {patentData.priorityDate}
+                      </p>
+                    )}
+                    {patentData.anticipatedExpiration && (
+                      <p>
+                        <strong>Anticipated Expiration:</strong>{" "}
+                        {patentData.anticipatedExpiration}
+                      </p>
+                    )}
+                    {patentData.inventors?.length > 0 && (
+                      <p>
+                        <strong>Inventors:</strong>{" "}
+                        {patentData.inventors.join(", ")}
+                      </p>
+                    )}
+                    {patentData.assignee && (
+                      <p>
+                        <strong>Assignee:</strong> {patentData.assignee}
+                      </p>
+                    )}
+                    {patentData.status && (
+                      <p>
+                        <strong>Status:</strong> {patentData.status}
+                      </p>
+                    )}
+                    {/* External Links Section */}
+                    {externalLinks.length > 0 && (
+                      <div
+                        style={{
+                          marginBottom: "10px",
+                          padding: "8px",
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          backgroundColor: "#f9f9f9",
+                        }}
+                      >
+                        <strong style={{ fontSize: "14px" }}>External links:</strong>
+                        <span style={{ marginLeft: "5px", fontSize: "14px" }}>
+                          {externalLinks.map((link, index) => (
+                            <span key={link.name}>
+                              <a
+                                href={link.url}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  window.open(link.url, "_blank", "noopener,noreferrer");
+                                }}
+                                style={{
+                                  color: "#4285F4",
+                                  textDecoration: "none",
+                                  marginRight: "5px",
+                                }}
+                              >
+                                {link.name}
+                              </a>
+                              {index < externalLinks.length - 1 && ", "}
+                            </span>
+                          ))}
+                        </span>
+                      </div>
+                    )}
+                    {patentData.patentFamily?.length > 0 && (
+                      <>
+                        <h3>Worldwide Applications</h3>
+                        {patentData.patentFamily.map((family, index) => (
+                          <div key={index}>
+                            <h4>{family.year}</h4>
+                            <ul>
+                              {family.applications.map((app, appIndex) => (
+                                <li key={appIndex}>
+                                  <strong>{app.country}</strong>: {app.number}{" "}
+                                  (Filed on {app.date}, Status: {app.legalStatus})
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                    {patentData.applicationEvents?.length > 0 && (
+                      <>
+                        <h3>Application Events</h3>
+                        <ul>
+                          {patentData.applicationEvents.map((event, index) => (
+                            <li key={index}>
+                              <strong>{event.date}</strong>: {event.title}
+                              {event.details.length > 0 && (
+                                <ul>
+                                  {event.details.map((detail, detailIndex) => (
+                                    <li key={detailIndex}>{detail}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                  </div>
                 )}
               </PatentTabContent>
             </ScrollWrapper>

@@ -26,20 +26,20 @@ export const TabContainer = styled.div`
 
 export const TabButton = styled.button`
   padding: 6px 12px;
-  background-color: ${(props) => (props.$active ? "#ffffff" : "#f5f5f5")};
-  color: ${(props) => (props.$active ? "#1a73e8" : "#333")};
+  background-color: ${(props) => (props.$active ? "#E6DFFB" : "#E6DFFB")};
+  color: ${(props) => (props.$active ? "#f75b8c" : "#333")};
   border: none;
-  border-bottom: ${(props) => (props.$active ? "2px solid #1a73e8" : "none")};
-  font-size: 14px;
+  border-bottom: ${(props) => (props.$active ? "2px solid black" : "none")};
+  font-size: 13px;
   font-family: 'Arial', sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
   flex-shrink: 0;
   &:hover {
-    background-color: ${(props) => (props.$active ? "#ffffff" : "#e8e8e8")};
-    color: #1a73e8;
+    background-color: ${(props) => (props.$active ? "#E6DFFB" : "#E6DFFB")};
+    color: #704AE7;
   }
   &:focus {
     outline: none;

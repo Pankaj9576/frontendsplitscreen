@@ -60,7 +60,7 @@ const Panel = styled.div`
 
 const ResizeHandle = styled.div`
   width: 4px; /* Slightly wider for better clickability */
-  background: green;
+  background: #1A011E;
   cursor: col-resize;
   position: absolute;
   top: 0;
@@ -69,11 +69,11 @@ const ResizeHandle = styled.div`
   transition: background 0.2s ease; /* Removed left transition for smoother dragging */
 
   &:hover {
-    background: rgb(76, 129, 65);
+    background: #1A011E;
   }
 
   &:active {
-    background: rgb(101, 163, 65);
+    background:#1A011E;
   }
 
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);

@@ -5,6 +5,8 @@ import styled from "styled-components"
 import SplitScreen from "./SplitScreen"
 import ProxyContent from "./ProxyContent"
 
+// Existing styled components remain unchanged except for the new ones below
+
 const ModalBackground = styled.div`
   position: fixed;
   top: 0;
@@ -39,12 +41,48 @@ const ModalContent = styled.div`
   font-family: 'Roboto', Arial, sans-serif;
   animation: slideIn 0.3s ease-out;
   margin: 0;
-  padding: 0;
+  padding: 0; /* Ensure no padding at the top */
 
   @keyframes slideIn {
     from { transform: translateY(-30px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
+`
+
+// New styled component for the title container
+const TitleContainer = styled.div`
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+`
+
+const Title = styled.h3`
+  margin: 0;
+  padding: 8px 0 0 0; /* Minimal padding, no bottom padding */
+  font-size: 18px;
+  font-weight: 700;
+  color: rgb(20, 21, 23);
+` 
+
+const Subtitle = styled.p`
+  margin: 0;
+  padding: 0; /* No top padding, some bottom padding for SVG space */
+  font-size: 14px;
+  color: rgb(18, 19, 21);
+  position: relative;
+  font-weight: 700;
+`
+
+const SVGCurveContainer = styled.div`
+  width: 100%;
+  height: 20px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `
 
 const HeaderContainer = styled.div`
@@ -91,33 +129,35 @@ const InputWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 6px;
+  gap: 4px; /* Reduced gap to create more space */
   flex-wrap: nowrap;
   width: 100%;
   flex: 1;
 
   @media (max-width: 768px) {
-    gap: 4px;
+    gap: 3px;
   }
 `
 
 const SideContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px; /* Reduced gap to create more space */
   flex-wrap: nowrap;
   flex: 1;
+  margin: 0 8px; /* Added margin to both sides for symmetry */
 
   @media (max-width: 768px) {
-    gap: 4px;
+    gap: 3px;
+    margin: 0 4px;
   }
 `
 
 const StyledInput = styled.input`
-  padding: 6px 8px;
+  padding: 5px 6px; /* Reduced padding to make input smaller */
   border: 1px solid #dadce0;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 12px; /* Reduced font size */
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -138,26 +178,26 @@ const StyledInput = styled.input`
 const FileInputWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px; /* Reduced gap to create more space */
 `
 
 const FileInput = styled.input`
-  padding: 4px;
+  padding: 3px; /* Reduced padding to make input smaller */
   border: 1px solid #dadce0;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 12px; /* Reduced font size */
   font-family: 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
-  min-width: 100px;
+  min-width: 80px; /* Reduced min-width to make input smaller */
 `
 
 const UploadButton = styled.button`
-  padding: 6px 8px;
+  padding: 5px 6px; /* Reduced padding to make button smaller */
   color: black;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px; /* Reduced font size */
   font-weight: 500;
   font-family: 'Roboto', Arial, sans-serif;
   transition: background 0.3s ease, box-shadow 0.3s ease;
@@ -178,18 +218,18 @@ const UploadButton = styled.button`
 `
 
 const ScreenSelectButton = styled.select`
-  background: black;
+  background: #6034E4;
   color: white;
-  padding: 6px;
-  font-size: 13px;
+  padding: 5px; /* Reduced padding to make button smaller */
+  font-size: 12px; /* Reduced font size */
   font-family: 'Roboto', Arial, sans-serif;
   cursor: pointer;
+  border: 0.5px solid rgb(34, 35, 38);
   border-radius: 4px;
-  border: 1px solid #dadce0;
   transition: background 0.3s ease;
 
   &:hover {
-    background: black;
+    background: #6034E4;
   }
 
   &:focus {
@@ -217,7 +257,6 @@ const ErrorMessage = styled.div`
   }
 `
 
-// Updated styles for the full-screen image modal
 const ImageModalBackground = styled.div`
   position: fixed;
   top: 0;
@@ -242,7 +281,7 @@ const ImageModalContent = styled.div`
   justify-content: center;
   align-items: center;
   margin: 0;
-  padding: 0; // Removed padding to ensure no extra space
+  padding: 0;
 `
 
 const ImageContainer = styled.div`
@@ -252,23 +291,23 @@ const ImageContainer = styled.div`
   justify-content: center;
   align-items: center;
   margin: 0;
-  padding: 0; // Removed padding to ensure no extra space
+  padding: 0;
 `
 
 const StyledImage = styled.img`
   width: 100vw;
   height: 100vh;
-  object-fit: cover; // Use cover to fill the screen while maintaining aspect ratio
+  object-fit: cover;
   transition: transform 0.3s ease;
   ${({ orientation }) =>
     orientation === "portrait"
       ? `
-        object-fit: contain; // Use contain for portrait to avoid cropping
+        object-fit: contain;
         width: auto;
         height: 100vh;
       `
       : `
-        object-fit: cover; // Use cover for landscape to fill the screen
+        object-fit: cover;
         width: 100vw;
         height: auto;
       `}
@@ -282,7 +321,7 @@ const ButtonContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 2100; // Ensure buttons are above the image
+  z-index: 2100;
 `
 
 const OrientationButton = styled.button`
@@ -322,7 +361,7 @@ const ImageModalCloseButton = styled.button`
   justify-content: center;
   border-radius: 50%;
   transition: background 0.3s ease, color 0.3s ease;
-  z-index: 2100; // Ensure close button is above the image
+  z-index: 2100;
 
   &:hover {
     background: rgba(0, 0, 0, 0.9);
@@ -349,8 +388,7 @@ const SplitScreenModal = ({
   const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
   const [selectedImage, setSelectedImage] = useState(null)
   const [orientation, setOrientation] = useState("landscape")
-  // const BACKEND_URL = "https://split-screen-backend.vercel.app"
- const BACKEND_URL ="http://localhost:5000" 
+  const BACKEND_URL = "http://localhost:5000"
 
   useEffect(() => {
     if (!setLeftSrc) {
@@ -462,6 +500,22 @@ const SplitScreenModal = ({
     <>
       <ModalBackground onClick={onClose}>
         <ModalContent onClick={(e) => e.stopPropagation()}>
+          {/* Updated title section with SVG curved line */}
+          <TitleContainer>
+            <Title>Upload and Compare</Title>
+            <Subtitle>Smarter insights with Effortless <span style={{color:'#5F32E4'}}>Side-by-Side</span> Viewing</Subtitle>
+            <SVGCurveContainer>
+              <svg viewBox="0 0 200 60" style={{ width: '100%', height: '100%', marginLeft:'150px' }}>
+                <path
+                  d="M10 40 Q100 0 190 40"
+                  stroke="#20C9A6"
+                  strokeWidth="10"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </SVGCurveContainer>
+          </TitleContainer>
           <HeaderContainer>
             <InputWrapper>
               <SideContainer>
@@ -473,7 +527,7 @@ const SplitScreenModal = ({
                 />
                 <FileInputWrapper>
                   <FileInput type="file" onChange={(e) => setLeftFile(e.target.files[0])} />
-                  <UploadButton style={{backgroundColor: '#5367FF',color:'white'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
+                  <UploadButton style={{backgroundColor: '#20C9A6',color:'white'}} onClick={() => handleUploadComplete("left", leftFile)}>Upload</UploadButton>
                 </FileInputWrapper>
               </SideContainer>
 
@@ -492,11 +546,11 @@ const SplitScreenModal = ({
                 />
                 <FileInputWrapper>
                   <FileInput type="file" onChange={(e) => setRightFile(e.target.files[0])} />
-                  <UploadButton style={{backgroundColor: '#00F3BB'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
+                  <UploadButton style={{backgroundColor: '#20C9A6',color:'white',marginRight:'16px'}} onClick={() => handleUploadComplete("right", rightFile)}>Upload</UploadButton>
                 </FileInputWrapper>
               </SideContainer>
 
-              <CloseButton onClick={onClose}>×</CloseButton>
+              {/* <CloseButton onClick={onClose}>×</CloseButton> */}
             </InputWrapper>
           </HeaderContainer>
           {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -507,7 +561,6 @@ const SplitScreenModal = ({
         </ModalContent>
       </ModalBackground>
 
-      {/* Full-Screen Image Modal */}
       {selectedImage && (
         <ImageModalBackground onClick={closeImageModal}>
           <ImageModalContent onClick={(e) => e.stopPropagation()}>

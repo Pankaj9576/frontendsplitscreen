@@ -4,6 +4,7 @@ import "handsontable/dist/handsontable.full.css";
 import styled from "styled-components";
 import * as XLSX from "xlsx";
 import { HotTable } from "@handsontable/react";
+import Loading from "./Loading";
 
 // Register all Handsontable modules
 registerAllModules();
@@ -376,7 +377,7 @@ const ExcelViewer = ({ blob }) => {
   };
 
   if (loading) {
-    return <LoadingMessage>Loading Excel file...</LoadingMessage>;
+    return <Loading>Loading Excel file...</Loading>;
   }
 
   if (error) {
