@@ -388,7 +388,9 @@ const SplitScreenModal = ({
   const [rightSrc, setLocalRightSrc] = useState(initialRightSrc || "")
   const [selectedImage, setSelectedImage] = useState(null)
   const [orientation, setOrientation] = useState("landscape")
-  const BACKEND_URL = "http://localhost:5000"
+  // const BACKEND_URL = "http://localhost:5000"
+  const BACKEND_URL = "https://split-screen-backend.vercel.app"
+
 
   useEffect(() => {
     if (!setLeftSrc) {
