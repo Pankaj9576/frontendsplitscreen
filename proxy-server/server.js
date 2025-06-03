@@ -5,12 +5,13 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const puppeteer = require('puppeteer');
 
 const app = express();
 
-const users = [];//users
+// In-memory user store (production mein database use karo)
+const users = [];
 
+// JWT secret (production mein environment variable use karo)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // CORS middleware setup
@@ -356,23 +357,27 @@ app.get('/api/proxy', async (req, res) => {
         $('meta[name="DC.contributor"]')
           .map((i, el) => $(el).attr('content').trim())
           .get();
-      const publicationNumber =
+      const publicationNumberRaw =
         $('span[itemprop="publicationNumber"]').text().trim() ||
         targetUrl.split('/').pop() ||
         $('meta[name="DC.identifier"]').attr('content')?.trim();
+
+      const publicationNumberMatch = publicationNumberRaw?.match(/US\d+B\d/) || [];
+      const publicationNumber = publicationNumberMatch[0] || publicationNumberRaw;
 
       const formattedPublicationNumber =
         publicationNumber?.match(/[A-Z]{2}[0-9A-Z]+/g)?.join(', ') ||
         publicationNumber;
 
+
+      // Updated publication date logic
       const publicationDateRaw =
         $('time[itemprop="publicationDate"]').text().trim() ||
         $('span[itemprop="publicationDate"]').text().trim() ||
         $('meta[name="DC.date"]').attr('content')?.trim();
 
-      const publicationDate =
-        publicationDateRaw?.match(/\d{4}-\d{2}-\d{2}/g)?.join(', ') ||
-        publicationDateRaw;
+      const publicationDateMatch = publicationDateRaw?.match(/\d{4}-\d{2}-\d{2}/) || [];
+      const publicationDate = publicationDateMatch[0] || publicationDateRaw;
       const filingDate =
         $('time[itemprop="filingDate"]').text().trim() ||
         $('span[itemprop="filingDate"]').text().trim() ||
@@ -475,156 +480,14 @@ app.get('/api/proxy', async (req, res) => {
         })
         .get();
 
-      // Scrape high-resolution images using Puppeteer
-      let drawingsFromCarousel = [];
-      try {
-        const browser = await puppeteer.launch({
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
-        const page = await browser.newPage();
-        await page.setUserAgent(fetchHeaders['User-Agent']);
-        await page.goto(targetUrl, { waitUntil: 'networkidle2' });
+      // Image Scraping Logic (already updated in previous response)
+      const drawingsFromCarousel = [];
+      $('meta[itemprop="full"]').each((i, elem) => {
+        const content = $(elem).attr('content');
+        if (content) drawingsFromCarousel.push(content);
+      });
+      console.log('Extracted images:', drawingsFromCarousel);
 
-        // Wait for the figures section to load
-        await page.waitForSelector('#figures', { timeout: 10000 }).catch(() => {
-          console.warn('Figures section not found or took too long to load.');
-        });
-
-        // Get all thumbnail images in the carousel
-        const thumbnails = await page.evaluate(() => {
-          const xpath = '//*[@id="figures"]//div[contains(@class, "thumbnails")]//img';
-          const result = document.evaluate(
-            xpath,
-            document,
-            null,
-            XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-            null
-          );
-          const imgElements = [];
-          for (let i = 0; i < result.snapshotLength; i++) {
-            imgElements.push({
-              src: result.snapshotItem(i).src,
-              index: i,
-            });
-          }
-          return imgElements;
-        });
-
-        console.log('Found thumbnails:', thumbnails.length);
-
-        // Simulate clicks on each thumbnail to load high-res images
-        for (let i = 0; i < thumbnails.length; i++) {
-          try {
-            // Click on the thumbnail
-            await page.evaluate((index) => {
-              const xpath = '//*[@id="figures"]//div[contains(@class, "thumbnails")]//img';
-              const result = document.evaluate(
-                xpath,
-                document,
-                null,
-                XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-                null
-              );
-              const img = result.snapshotItem(index);
-              if (img) {
-                img.click();
-              }
-            }, i);
-
-            // Wait for the high-res image to load
-            await page.waitForFunction(
-              () => {
-                const img = document.getElementById('image');
-                return img && img.src && img.src.includes('patentimages.storage.googleapis.com');
-              },
-              { timeout: 5000 }
-            );
-
-            // Extract high-res image URL
-            const highResImage = await page.evaluate(() => {
-              const imageEl = document.getElementById('image');
-              return imageEl ? imageEl.src : null;
-            });
-
-            if (highResImage && !drawingsFromCarousel.includes(highResImage)) {
-              drawingsFromCarousel.push(highResImage);
-            }
-
-            console.log(`Scraped high-res image ${i + 1}: ${highResImage}`);
-
-            // Small delay to ensure stability
-            await page.waitForTimeout(1000);
-          } catch (clickError) {
-            console.warn(`Failed to scrape high-res image for thumbnail ${i}:`, clickError.message);
-          }
-        }
-
-        await browser.close();
-        console.log('High-res images scraped:', drawingsFromCarousel);
-      } catch (puppeteerError) {
-        console.error('Puppeteer error:', puppeteerError.message);
-        // Fallback to static image scraping
-        const defaultImages = [
-          'https://patentimages.storage.googleapis.com/22/82/60/b029c7830b06dc/US08900904-20141202-D00000.png',
-          'https://patentimages.storage.googleapis.com/35/02/e9/b467cffba0c986/US08900904-20141202-D00001.png',
-          'https://patentimages.storage.googleapis.com/73/33/98/48129cf74eb97c/US08900904-20141202-D00002.png',
-        ];
-        drawingsFromCarousel = [...defaultImages];
-
-        const imageElements = $('img').filter((i, el) => {
-          const src = $(el).attr('src') || '';
-          return src.includes('patentimages.storage.googleapis.com') && src.includes('-D');
-        });
-
-        imageElements.each((i, el) => {
-          let src = $(el).attr('src');
-          if (src) {
-            if (!src.startsWith('http')) {
-              src = `https:${src}`;
-            }
-            if (!drawingsFromCarousel.includes(src)) {
-              drawingsFromCarousel.push(src);
-            }
-          }
-        });
-
-        // Fallback: Construct URLs if no images found
-        if (drawingsFromCarousel.length === defaultImages.length && publicationNumber) {
-          const basePatentNumber = publicationNumber.replace(/[^A-Z0-9]/g, '');
-          const publicationDateFormatted = publicationDate
-            ? publicationDate.replace(/-/g, '')
-            : '20141202';
-          let figureIndex = 0;
-          let imageExists = true;
-
-          while (imageExists && figureIndex < 50) {
-            const figureNumber = figureIndex.toString().padStart(5, '0');
-            const imageUrl = `https://patentimages.storage.googleapis.com/patents/${basePatentNumber}-${publicationDateFormatted}-D${figureNumber}.png`;
-
-            try {
-              const imageResponse = await fetch(imageUrl, {
-                method: 'HEAD',
-                headers: fetchHeaders,
-              });
-              if (imageResponse.ok) {
-                if (!drawingsFromCarousel.includes(imageUrl)) {
-                  drawingsFromCarousel.push(imageUrl);
-                }
-                figureIndex++;
-              } else {
-                imageExists = false;
-              }
-            } catch (err) {
-              console.error(`Failed to fetch image ${imageUrl}:`, err.message);
-              imageExists = false;
-            }
-          }
-        }
-      }
-
-      console.log('Constructed Drawings:', drawingsFromCarousel);
-      console.log('Number of Drawings:', drawingsFromCarousel.length);
 
       const claims =
         $('section[itemprop="claims"]').html() ||
@@ -776,8 +639,8 @@ app.get('/api/proxy', async (req, res) => {
           citedBy,
           legalEvents,
           patentFamily,
-          drawings: [], // Keeping old drawings field empty for backward compatibility
-          drawingsFromCarousel, // High-res images
+          drawings: [], // Keeping the old drawings field empty for now
+          drawingsFromCarousel, // New field for constructed image URLs
           claims,
           description,
           similarDocs,
@@ -794,7 +657,7 @@ app.get('/api/proxy', async (req, res) => {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'inline; filename=patent.pdf');
       res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-      response.bodyPipe(res);
+      response.body.pipe(res);
     } else {
       res.setHeader('Content-Disposition', 'inline');
       response.body.pipe(res);
