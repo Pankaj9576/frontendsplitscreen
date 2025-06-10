@@ -563,28 +563,28 @@ const SplitScreenModal = ({
         </ModalContent>
       </ModalBackground>
 
-      {selectedImage && (
-        <ImageModalBackground onClick={closeImageModal}>
-          <ImageModalContent onClick={(e) => e.stopPropagation()}>
-            <ImageContainer>
-              <StyledImage
-                src={selectedImage}
-                alt="Full-screen patent drawing"
-                orientation={orientation}
-              />
-            </ImageContainer>
-            <ButtonContainer>
-              <OrientationButton onClick={() => setOrientation("portrait")}>
-                Portrait
-              </OrientationButton>
-              <OrientationButton onClick={() => setOrientation("landscape")}>
-                Landscape
-              </OrientationButton>
-            </ButtonContainer>
-            <ImageModalCloseButton onClick={closeImageModal}>×</ImageModalCloseButton>
-          </ImageModalContent>
-        </ImageModalBackground>
-      )}
+      // {selectedImage && (
+      //   <ImageModalBackground onClick={closeImageModal}>
+      //     <ImageModalContent onClick={(e) => e.stopPropagation()}>
+      //       <ImageContainer>
+      //         <StyledImage
+      //           src={selectedImage}
+      //           alt="Full-screen patent drawing"
+      //           orientation={orientation}
+      //         />
+      //       </ImageContainer>
+      //       <ButtonContainer>
+      //         <OrientationButton onClick={() => setOrientation("portrait")}>
+      //           Portrait
+      //         </OrientationButton>
+      //         <OrientationButton onClick={() => setOrientation("landscape")}>
+      //           Landscape
+      //         </OrientationButton>
+      //       </ButtonContainer>
+      //       <ImageModalCloseButton onClick={closeImageModal}>×</ImageModalCloseButton>
+      //     </ImageModalContent>
+      //   </ImageModalBackground>
+      // )}
     </>
   )
 }
